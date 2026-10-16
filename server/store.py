@@ -55,7 +55,13 @@ DEFAULT_APPS = [
      "icon": "map", "color": "#34a853", "kind": "embed", "sort": 3},
     {"id": "web", "name": "Navegador", "url": "https://duckduckgo.com/",
      "icon": "compass", "color": "#35d6e6", "kind": "browser", "sort": 4},
+    {"id": "gnome-maps", "name": "GNOME Maps",
+     "url": "gnome-maps", "icon": "map", "color": "#5b9e4a",
+     "kind": "native", "sort": 5},
 ]
+
+# Apps de sistema que sempre existem (nao podem ser removidos pelo painel).
+BUILTIN_APP_IDS = {"nav", "gnome-maps"}
 
 
 class Store:
@@ -212,6 +218,20 @@ class Store:
             n = self._db.execute("SELECT COUNT(*) AS c FROM apps").fetchone()["c"]
             if n:
                 return
+            now_ms = int(time.time() * 1000)
+            for a in defaults:
+                self._db.execute(
+                    "INSERT OR IGNORE INTO apps(id, name, url, icon, color, kind, "
+                    "sort, created_ts) VALUES(?,?,?,?,?,?,?,?)",
+                    (
+                        a["id"], a["name"], a["url"], a.get("icon", "globe"),
+                        a.get("color", "#4aa8ff"), a.get("kind", "web"),
+                        int(a.get("sort", 0)), now_ms,
+                    ),
+                )
+
+    def ensure_apps(self, defaults: list):
+        with self._lock, self._db:
             now_ms = int(time.time() * 1000)
             for a in defaults:
                 self._db.execute(

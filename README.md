@@ -53,8 +53,8 @@ tema escuro estilo Tesla, animações suaves e alertas em tempo real.
 - Grade de aplicativos com YouTube, Spotify, Mapas e navegador embutido (páginas web)
 - Overlay em tela cheia com recarregar e “abrir em nova aba”
 - **Cadastro de apps** (lojinha): adicione qualquer serviço informando nome e URL
-- Como não há instalação de apps nativos, cada app é uma página web incorporada
-  (para apps **Android nativos** reais, veja o **Waydroid** opcional na seção 10)
+- **Apps nativos** do sistema (ex.: **GNOME Maps**) abrem direto no painel, via
+  URI `geo:`/`maps:` (para apps **Android nativos** reais, veja o **Waydroid** na seção 10)
 
 **Assistente de voz (IA)**
 - **Push‑to‑talk**: segure o botão na página **Mídia**, fale e solte — o assistente
@@ -80,6 +80,11 @@ tema escuro estilo Tesla, animações suaves e alertas em tempo real.
   monitores** e deixa você **escolher o que vai em cada um**: painel principal e cluster em barra
 - Opcionalmente organiza sozinho (cluster à direita do painel) e grava a geometria em
   `data/screens.env`, posicionando as janelas e reiniciando o kiosk
+
+**Mapas nativos (GNOME Maps)**
+- Abre o **GNOME Maps instalado no sistema** direto da página **Navegação**, levando o
+  destino/coordenadas para o app (URI `geo:`/`maps:`); instala com `tools/install_gnome_maps.sh`
+- Lançamento habilitado por `CARDASH_ALLOW_NATIVE=1` (segurança); a rota é iniciada no app
 
 **Ajustes**
 - Unidades (km/h↔mph, °C↔°F, L↔gal), tema claro/escuro/auto, brilho, animação de boot
@@ -387,6 +392,9 @@ Variáveis de ambiente:
 | GET | `/media/wallpaper` | serve a imagem de papel de parede enviada (upload) |
 | GET | `/api/screens` | monitores detectados (`xrandr`) + escolha atual painel/cluster |
 | POST | `/api/screens` | `{"main":"HDMI-1","bar":"HDMI-2","arrange":true,"enabled":true}` aplica e reinicia o kiosk |
+| GET | `/api/native` | apps nativos disponíveis (GNOME Maps) + se o lançamento está habilitado |
+| POST | `/api/native/launch` | `{"app":"gnome-maps","lat":…,"lon":…}` ou `{"query":"…"}` abre o app nativo |
+| POST | `/api/native/close` | `{"app":"gnome-maps"}` fecha o app nativo |
 | GET | `/api/apps` | lista de apps + configuração de mapas |
 | POST | `/api/apps` | cria/atualiza app (`{name,url,icon,color,kind}`) |
 | DELETE | `/api/apps/{id}` | remove um app |
@@ -412,6 +420,7 @@ car-dash/
 │   ├── updater.py        atualização via Git (verificar/instalar/reiniciar)
 │   ├── screens.py        monitores HDMI (xrandr) + escolha painel/cluster
 │   ├── wallpaper.py      papel de parede da Mídia (URL ou upload)
+│   ├── native.py         apps nativos (GNOME Maps) — abrir/fechar
 │   ├── sim.py            gerador de dados para bancada (inclui GPS)
 │   ├── alerts.py         regras de alerta
 │   ├── store.py          SQLite (amostras, viagens, DTC, ajustes, apps, rastro)
@@ -425,7 +434,7 @@ car-dash/
 │   └── vendor/leaflet/   Leaflet (mapa offline, sem CDN)
 ├── systemd/              cardash.service, kiosk e kiosk-bar
 ├── kiosk/kiosk.sh        lançador do navegador em tela cheia
-├── tools/                utilitários (monitor serial, setup do assistente)
+├── tools/                utilitários (monitor serial, setup do assistente, GNOME Maps)
 ├── models/               modelo do Whisper (baixado pelo setup_assistant.sh)
 ├── run.py                entrada do servidor
 ├── install.sh            instalador para Orange Pi
@@ -612,7 +621,7 @@ SQLite (`config.yaml` é o valor inicial).
 
 ---
 
-## 13. Wi‑Fi, Bluetooth, telas e atualizações
+## 13. Wi‑Fi, Bluetooth, telas, mapas nativos e atualizações
 
 ### Wi‑Fi e Bluetooth (tela Ajustes)
 
@@ -685,6 +694,43 @@ Na página **Mídia**, o cartão **Papel de parede** troca o fundo da página:
 - **Enviar imagem**: escolha um arquivo do aparelho (PNG, JPG, WEBP, GIF ou BMP, até 8 MB) —
   ele é salvo em `data/wallpapers/` e servido em `/media/wallpaper`.
 - **Remover** volta ao fundo padrão. A escolha fica salva no SQLite e é restaurada sozinha.
+
+### GNOME Maps (app nativo)
+
+O painel pode **abrir o GNOME Maps instalado no sistema** (app nativo, não é página web).
+Na página **Navegação**, o cartão **GNOME Maps (nativo)** mostra se o app está instalado e
+traz os botões **Abrir no GNOME Maps** e **Fechar**. Ao abrir, o destino buscado (ou as
+coordenadas do GPS) é levado para o app via URI `geo:`/`maps:`.
+
+Instalação (no Orange Pi):
+
+```bash
+./tools/install_gnome_maps.sh            # tenta apt, cai para Flatpak se preciso
+./tools/install_gnome_maps.sh --flatpak  # força Flatpak (org.gnome.Maps)
+```
+
+O lançamento precisa ser habilitado de propósito (por segurança), igual à energia:
+
+```bash
+export CARDASH_ALLOW_NATIVE=1
+```
+
+O serviço `cardash.service` já traz `CARDASH_ALLOW_NATIVE=1` e `DISPLAY=:0`. Ajustes em
+`config.yaml`:
+
+```yaml
+native:
+  enabled: true          # liga/desliga o lançamento de apps nativos
+  display: ":0"          # display X onde o app abre
+  maps_app: gnome-maps   # app de mapas nativo
+```
+
+Também é possível cadastrar um tile nativo em **Aplicativos → Adicionar app** escolhendo o
+tipo **App nativo (GNOME Maps)**. Sem `CARDASH_ALLOW_NATIVE=1` ou com o app não instalado, o
+cartão explica o que falta (nada quebra).
+
+> **Observação**: o GNOME Maps abre no **destino/busca**, mas **não aceita uma rota pronta por
+> linha de comando** — a navegação (trajeto) é iniciada dentro do próprio app.
 
 ---
 

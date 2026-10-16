@@ -10,6 +10,10 @@ User=__USER__
 WorkingDirectory=__DIR__
 Environment=CARDASH_CONFIG=__DIR__/config.yaml
 Environment=CARDASH_LOG=0
+# Permite abrir apps nativos (GNOME Maps) no display do carro.
+Environment=CARDASH_ALLOW_NATIVE=1
+Environment=DISPLAY=:0
+EnvironmentFile=-__DIR__/data/screens.env
 ExecStart=__DIR__/.venv/bin/python __DIR__/run.py
 Restart=always
 RestartSec=3

@@ -307,6 +307,17 @@
             </div>
             <div class="nav-route-info" id="navRouteInfo">busca e rota via OpenStreetMap (requer internet)</div>
           </div>
+          <div class="card">
+            <div class="card-title">GNOME Maps (nativo)</div>
+            <div class="native-status" id="nativeStatus">verificando…</div>
+            <div class="btn-row">
+              <button class="btn" id="btnNativeOpen">Abrir no GNOME Maps</button>
+              <button class="btn btn-ghost" id="btnNativeClose">Fechar</button>
+            </div>
+            <div class="nav-route-info" id="nativeInfo">
+              abre o destino/busca atual no GNOME Maps instalado no sistema. A rota é iniciada dentro do app.
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -317,7 +328,7 @@
         <button class="btn" id="btnAddApp">+ Adicionar app</button>
       </div>
       <div class="apps-grid" id="appsGrid"></div>
-      <div class="apps-foot hint">Apps são páginas web incorporadas — não é possível instalar aplicativos nativos. Use o botão “Adicionar app” para cadastrar seus próprios serviços.</div>
+      <div class="apps-foot hint">Apps podem ser páginas web incorporadas ou aplicativos nativos do sistema (ex.: GNOME Maps). Use “Adicionar app” para cadastrar seus próprios serviços.</div>
     </section>
 
     <section class="page" data-page="climate">
@@ -449,6 +460,14 @@
           <label class="field">URL dos tiles <input type="text" data-setting="maps.tile_url" placeholder="https://.../{z}/{x}/{y}.png"></label>
           <label class="field">Chave Google (opcional) <input type="text" data-setting="maps.google_key" placeholder="AIza..."></label>
           <div class="hint">OpenStreetMap é gratuito. Google usa tiles públicos sem chave por padrão; informe a chave para o modo oficial.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Apps nativos</div>
+          <label class="switch"><input type="checkbox" data-setting="native.enabled"><span></span>Permitir abrir apps nativos (GNOME Maps)</label>
+          <label class="field">Display X <input type="text" data-setting="native.display" placeholder=":0"></label>
+          <label class="field">App de mapas <input type="text" data-setting="native.maps_app" placeholder="gnome-maps"></label>
+          <div class="hint">Precisa da variável <code>CARDASH_ALLOW_NATIVE=1</code> no serviço. Instale o app com <code>./tools/install_gnome_maps.sh</code>.</div>
         </div>
 
         <div class="card span-2">
@@ -609,6 +628,7 @@
           <option value="embed">Incorporar (embed)</option>
           <option value="browser">Navegador embutido</option>
           <option value="web">Abrir em nova aba</option>
+          <option value="native">App nativo (GNOME Maps)</option>
         </select>
       </label>
       <div class="btn-row">

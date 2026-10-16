@@ -532,6 +532,8 @@ input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius
 .nav-stats small { font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
 .nav-stats b { font-size: 18px; font-weight: 500; }
 .nav-route-info { font-size: 12px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+.native-status { font-size: 12px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
+.native-status.ok { color: var(--green); }
 .car-marker { display: grid; place-items: center; }
 .car-marker svg { width: 34px; height: 34px; filter: drop-shadow(0 2px 6px rgba(0,0,0,.6)); transition: transform .3s linear; }
 

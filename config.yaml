@@ -107,6 +107,11 @@ media:                    # pagina Multimidia
   wallpaper: ""           # URL externa ou /media/wallpaper (imagem enviada)
   fit: cover              # cover | contain | fill
 
+native:                   # apps nativos (GNOME Maps) abertos no Orange Pi
+  enabled: true           # liga/desliga o lancamento de apps nativos
+  display: ":0"           # display X onde o app abre
+  maps_app: gnome-maps    # app de mapas nativo (gnome-maps)
+
 screens:                  # escolha de monitores (HDMI) pelo Ajustes > Telas
   enabled: false          # true apos aplicar pelo painel
   main: ""                # saida xrandr do painel principal (ex.: HDMI-1)

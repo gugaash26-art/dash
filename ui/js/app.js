@@ -134,7 +134,7 @@
     if (name === "settings") { loadSettings(); loadSystem(); loadNetwork(); loadUpdate(); loadScreens(); }
     if (name === "media") { loadWallpaper(); }
     if (name === "diag") { loadDtcs(); }
-    if (name === "nav") initNav();
+    if (name === "nav") { initNav(); loadNative(); }
     if (name === "apps") loadApps();
     const page = $(`.page[data-page="${name}"]`);
     if (page) page.scrollTop = 0;
@@ -1245,7 +1245,64 @@
     }
   }
 
-  const BUILTIN = new Set(["nav", "youtube", "spotify", "maps", "web"]);
+  // ---------------------------------------------- GNOME Maps (app nativo)
+  const nativeState = { apps: [] };
+
+  function nativeInfo(text) { const el = $("#nativeInfo"); if (el) el.textContent = text; }
+
+  function renderNative(st) {
+    nativeState.apps = (st && st.apps) || [];
+    const el = $("#nativeStatus");
+    if (!el) return;
+    const maps = nativeState.apps.find((a) => a.key === "gnome-maps");
+    const parts = [];
+    if (maps && maps.installed) {
+      parts.push(`GNOME Maps instalado${maps.running ? " · em execução" : ""}`);
+    } else if (maps) {
+      parts.push("GNOME Maps não instalado");
+    } else {
+      parts.push("indisponível");
+    }
+    if (st && !st.allowed) parts.push("lancamento desativado (CARDASH_ALLOW_NATIVE=1)");
+    else if (st && !st.enabled) parts.push("desativado nas configurações");
+    el.textContent = parts.join(" · ");
+    el.classList.toggle("ok", !!(st && st.allowed && st.enabled && maps && maps.installed));
+  }
+
+  function loadNative() {
+    api("/api/native").then(renderNative).catch(() => renderNative(null));
+  }
+
+  function nativeOpen(app) {
+    const body = { app: app || "gnome-maps" };
+    if (nav.dest) {
+      body.lat = nav.dest.lat;
+      body.lon = nav.dest.lon;
+    } else {
+      const q = ($("#navSearch") && $("#navSearch").value.trim()) || "";
+      if (q) body.query = q;
+    }
+    nativeInfo("abrindo no GNOME Maps…");
+    netPostSafe("/api/native/launch", body).then((r) => {
+      if (r.ok) {
+        nativeInfo(`aberto${r.uri ? " em " + r.uri : ""}`);
+        toast("GNOME Maps: " + (r.uri || r.name));
+      } else {
+        nativeInfo(r.error || "falha ao abrir");
+        toast(r.error || "não foi possível abrir o GNOME Maps");
+      }
+      loadNative();
+    }).catch(() => { nativeInfo("falha ao abrir"); });
+  }
+
+  function nativeClose() {
+    netPostSafe("/api/native/close", { app: "gnome-maps" }).then((r) => {
+      nativeInfo(r.ok ? "GNOME Maps fechado" : (r.error || "falha ao fechar"));
+      loadNative();
+    }).catch(() => {});
+  }
+
+  const BUILTIN = new Set(["nav", "gnome-maps"]);
   const ICON_SVG = {
     nav: '<path d="M12 2 4 21l8-4 8 4z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>',
     play: '<path d="M8 5v14l11-7z" fill="#fff"/>',
@@ -1279,8 +1336,11 @@
   function renderApps(list) {
     const grid = $("#appsGrid");
     const tiles = list.map((a) => {
-      const sub = a.kind === "nav" ? "mapa e GPS" : a.kind === "browser" ? "navegador embutido" : hostOf(a.url);
-      const del = BUILTIN.has(a.id) && a.kind === "nav" ? "" :
+      const sub = a.kind === "nav" ? "mapa e GPS"
+        : a.kind === "browser" ? "navegador embutido"
+        : a.kind === "native" ? "app nativo do sistema"
+        : hostOf(a.url);
+      const del = BUILTIN.has(a.id) ? "" :
         `<button class="app-del" data-del="${esc(a.id)}" title="remover">✕</button>`;
       return `<div class="app-tile" data-app="${esc(a.id)}">
         <div class="app-icon" style="background:${esc(a.color || "#4aa8ff")}">${appIcon(a.icon)}</div>
@@ -1304,6 +1364,11 @@
   function openApp(a) {
     if (!a) return;
     if (a.kind === "nav" || a.url === "nav") { setPage("nav"); return; }
+    if (a.kind === "native") {
+      setPage("nav");
+      nativeOpen(a.url || "gnome-maps");
+      return;
+    }
     if (a.kind === "web") {
       try { window.open(a.url, "_blank", "noopener"); } catch (e) { window.location.href = a.url; }
       return;
@@ -1558,6 +1623,10 @@
   });
   $("#navSearch").addEventListener("keydown", (e) => { if (e.key === "Enter") navSearch(); });
   $("#btnNavRoute").addEventListener("click", navRoute);
+  const btnNativeOpen = $("#btnNativeOpen");
+  if (btnNativeOpen) btnNativeOpen.addEventListener("click", () => nativeOpen("gnome-maps"));
+  const btnNativeClose = $("#btnNativeClose");
+  if (btnNativeClose) btnNativeClose.addEventListener("click", nativeClose);
   $("#btnNavCenter").addEventListener("click", () => {
     nav.follow = true;
     if (nav.marker && nav.map) nav.map.setView(nav.marker.getLatLng(), 16);

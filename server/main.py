@@ -16,9 +16,10 @@ from . import config as config_mod
 from .agent import Agent
 from .config import EDITABLE, cfg, validate_setting
 from .hub import Hub
+from .native import Native
 from .net import Net
 from .screens import Screens
-from .store import DEFAULT_APPS, Store
+from .store import BUILTIN_APP_IDS, DEFAULT_APPS, Store
 from .updater import Updater
 from .wallpaper import Wallpaper
 from .ws import WSConn, accept_key
@@ -30,6 +31,7 @@ store = Store(cfg["paths"]["db"])
 
 if (cfg.get("apps") or {}).get("seed_defaults", True):
     store.seed_apps(DEFAULT_APPS)
+    store.ensure_apps([a for a in DEFAULT_APPS if a["id"] in BUILTIN_APP_IDS])
 
 for key, value in store.get_settings().items():
     try:
@@ -45,7 +47,7 @@ STOP = threading.Event()
 START_TIME = time.time()
 MAX_BODY = 64 * 1024
 MAX_WALLPAPER = 12 * 1024 * 1024
-APP_KINDS = {"nav", "embed", "browser", "web"}
+APP_KINDS = {"nav", "embed", "browser", "web", "native"}
 
 
 def broadcast(obj):
@@ -62,6 +64,7 @@ net = Net(cfg)
 updater = Updater(cfg, ROOT)
 screens = Screens(cfg)
 wallpaper = Wallpaper(cfg)
+native = Native(cfg)
 
 
 def auto_update_check():
@@ -268,6 +271,26 @@ class Handler(BaseHTTPRequestHandler):
             return None, err
         return {"ok": True, **result}, None
 
+    def _native_launch(self, payload):
+        payload = payload or {}
+        app = payload.get("app") or config_mod._get(cfg, "native.maps_app") or "gnome-maps"
+        result, err = native.launch(
+            app,
+            lat=payload.get("lat"),
+            lon=payload.get("lon"),
+            query=payload.get("query"),
+        )
+        if err:
+            return self._error(400, err)
+        return self._json(result)
+
+    def _native_close(self, payload):
+        payload = payload or {}
+        result, err = native.close(payload.get("app"))
+        if err:
+            return self._error(400, err)
+        return self._json(result)
+
     def _power(self, payload):
         if os.environ.get("CARDASH_ALLOW_POWER") != "1":
             return None, "power desabilitado (defina CARDASH_ALLOW_POWER=1)"
@@ -332,6 +355,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._send_bytes(data, ctype)
         if path == "/api/screens":
             return self._json(screens.status())
+        if path == "/api/native":
+            return self._json(native.status())
         if path == "/api/settings":
             return self._json(self._settings())
         if path == "/api/system":
@@ -367,6 +392,10 @@ class Handler(BaseHTTPRequestHandler):
             if err:
                 return self._error(400, err)
             return self._json(result)
+        if path == "/api/native/launch":
+            return self._native_launch(self._body())
+        if path == "/api/native/close":
+            return self._native_close(self._body())
         payload = self._body()
         if path == "/api/settings":
             result, err = self._save_settings(payload)
@@ -424,6 +453,8 @@ class Handler(BaseHTTPRequestHandler):
             app_id = unquote(path[len(prefix):]).strip()
             if not app_id:
                 return self._error(400, "id obrigatorio")
+            if app_id in BUILTIN_APP_IDS:
+                return self._error(400, "app do sistema nao pode ser removido")
             ok = store.delete_app(app_id)
             return self._json({"ok": ok, "id": app_id})
         self._error(404, "not found")

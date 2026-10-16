@@ -91,6 +91,11 @@ DEFAULTS = {
         "restart_command": "",
     },
     "media": {"wallpaper": "", "fit": "cover"},
+    "native": {
+        "enabled": True,
+        "display": ":0",
+        "maps_app": "gnome-maps",
+    },
     "screens": {
         "enabled": False,
         "main": "",
@@ -141,6 +146,9 @@ EDITABLE = [
     ("agent.spotify_client_secret", None),
     ("media.wallpaper", None),
     ("media.fit", ["cover", "contain", "fill"]),
+    ("native.enabled", None),
+    ("native.display", None),
+    ("native.maps_app", None),
     ("screens.enabled", None),
     ("screens.main", None),
     ("screens.bar", None),
@@ -225,6 +233,10 @@ def validate_setting(key: str, value):
         value = str(value)[:256]
     if key == "media.wallpaper":
         value = str(value)[:512]
+    if key == "native.enabled":
+        value = bool(value)
+    if key in ("native.display", "native.maps_app"):
+        value = str(value)[:64]
     if key == "screens.enabled" or key == "screens.arrange":
         value = bool(value)
     if key in ("screens.main", "screens.bar"):
