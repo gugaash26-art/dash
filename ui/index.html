@@ -226,13 +226,36 @@
             <b id="volVal">35</b>
           </div>
         </div>
-        <div class="card sources">
-          <div class="card-title">Fontes</div>
-          <button class="source is-active" data-source="Rádio FM">Rádio FM</button>
-          <button class="source" data-source="Bluetooth">Bluetooth</button>
-          <button class="source" data-source="USB">USB</button>
-          <button class="source" data-source="Auxiliar">Auxiliar</button>
-          <div class="hint">a reprodução de mídia é um mock de interface — conecte o player real via API quando quiser</div>
+        <div class="media-side">
+          <div class="card sources">
+            <div class="card-title">Fontes</div>
+            <button class="source is-active" data-source="Rádio FM">Rádio FM</button>
+            <button class="source" data-source="Bluetooth">Bluetooth</button>
+            <button class="source" data-source="USB">USB</button>
+            <button class="source" data-source="Auxiliar">Auxiliar</button>
+            <div class="hint">a reprodução de mídia é um mock de interface — conecte o player real via API quando quiser</div>
+          </div>
+
+          <div class="card agent-card">
+            <div class="agent-head">
+              <div class="card-title">Assistente · IA</div>
+              <span class="agent-status" id="agentStatus"><i class="dot"></i><span id="agentStatusText">pronto</span></span>
+            </div>
+            <button class="agent-mic" id="agentMic">
+              <svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <span>Segure para falar</span>
+            </button>
+            <div class="agent-log">
+              <div class="agent-line"><small>você</small><p id="agentYou">—</p></div>
+              <div class="agent-line"><small>assistente</small><p id="agentReply">—</p></div>
+            </div>
+            <div class="agent-ask">
+              <input type="text" id="agentText" placeholder="ou digite uma pergunta...">
+              <button class="btn" id="agentSend">Enviar</button>
+            </div>
+            <label class="switch agent-speak"><input type="checkbox" id="agentSpeak" checked><span></span>Falar respostas</label>
+            <div class="hint" id="agentHint">Ex.: “tocar Imagine no Spotify”, “abrir YouTube”, “traçar rota para o centro”, “condições do carro?”</div>
+          </div>
         </div>
       </div>
     </section>
@@ -417,6 +440,67 @@
         </div>
 
         <div class="card span-2">
+          <div class="card-title">Assistente de voz (IA)</div>
+          <div class="agent-settings">
+            <div>
+              <label class="switch"><input type="checkbox" data-setting="agent.enabled"><span></span>Assistente habilitado</label>
+              <label class="switch"><input type="checkbox" data-setting="agent.speak"><span></span>Falar as respostas (TTS)</label>
+              <label class="switch"><input type="checkbox" data-setting="agent.play_local"><span></span>Tocar áudio no Orange Pi</label>
+              <label class="field">Microfone (ALSA) <input type="text" data-setting="agent.mic_device" placeholder="default"></label>
+              <label class="field">Duração máx. do áudio (s) <input type="number" data-setting="agent.record_seconds" min="1" max="20" step="1"></label>
+              <label class="field">Idioma (STT) <input type="text" data-setting="agent.stt_lang" placeholder="pt"></label>
+            </div>
+            <div>
+              <label class="field">URL da IA (OpenAI-compatível) <input type="text" data-setting="agent.llm_base_url" placeholder="https://api.groq.com/openai/v1"></label>
+              <label class="field">Modelo <input type="text" data-setting="agent.llm_model" placeholder="llama-3.3-70b-versatile"></label>
+              <label class="field">Variável da chave <input type="text" data-setting="agent.llm_key_env" placeholder="GROQ_API_KEY"></label>
+              <label class="field">Chave da API <input type="text" data-setting="agent.llm_key" placeholder="gsk_..."></label>
+              <label class="field">Voz (edge-tts) <input type="text" data-setting="agent.tts_voice" placeholder="pt-BR-ThalitaMultilingualNeural"></label>
+            </div>
+            <div>
+              <label class="field">whisper-cli <input type="text" data-setting="agent.whisper_bin" placeholder="whisper-cli"></label>
+              <label class="field">Modelo Whisper (.bin) <input type="text" data-setting="agent.whisper_model" placeholder="/car-dash/models/ggml-base.bin"></label>
+              <label class="field">Spotify client id <input type="text" data-setting="agent.spotify_client_id" placeholder="(opcional)"></label>
+              <label class="field">Spotify client secret <input type="text" data-setting="agent.spotify_client_secret" placeholder="(opcional)"></label>
+              <div class="sys-grid" id="agentSys"></div>
+            </div>
+          </div>
+          <div class="hint">Software livre: whisper.cpp (voz→texto) + IA OpenAI-compatível (ex.: Groq, grátis) + edge-tts (fala). Precisa de internet para a IA e a fala.</div>
+        </div>
+
+        <div class="card span-2">
+          <div class="card-title">Wi-Fi</div>
+          <div class="net-head">
+            <label class="switch"><input type="checkbox" id="wifiEnabled"><span></span>Wi-Fi ligado</label>
+            <span class="net-status" id="wifiStatus">—</span>
+            <button class="btn btn-ghost" id="wifiScan">Escanear</button>
+          </div>
+          <div class="net-list" id="wifiList"><div class="empty">toque em “Escanear” para procurar redes</div></div>
+        </div>
+
+        <div class="card span-2">
+          <div class="card-title">Bluetooth</div>
+          <div class="net-head">
+            <label class="switch"><input type="checkbox" id="btEnabled"><span></span>Bluetooth ligado</label>
+            <span class="net-status" id="btStatus">—</span>
+            <button class="btn btn-ghost" id="btScan">Escanear</button>
+          </div>
+          <div class="net-list" id="btList"><div class="empty">toque em “Escanear” para procurar aparelhos</div></div>
+        </div>
+
+        <div class="card span-2">
+          <div class="card-title">Atualizações do sistema</div>
+          <div class="net-head">
+            <span class="net-status" id="updateStatus">—</span>
+            <button class="btn btn-ghost" id="updateCheck">Verificar</button>
+            <button class="btn" id="updateInstall" disabled>Atualizar agora</button>
+          </div>
+          <div class="sys-grid" id="updateInfo"></div>
+          <pre class="update-log" id="updateLog" hidden></pre>
+          <div class="hint">Quando você envia uma nova versão para o GitHub, o botão baixa e instala no Orange Pi (git pull + dependências) e reinicia o painel.</div>
+        </div>
+
+        <div class="card span-2">
           <div class="card-title">Sistema</div>
           <div class="sys-grid" id="sysGrid"></div>
           <div class="btn-row">
@@ -499,6 +583,19 @@
         <button class="btn" id="appSave">Salvar</button>
         <button class="btn btn-ghost" id="appCancel">Cancelar</button>
         <span class="muted" id="appFormInfo"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="wifiModal" hidden>
+    <div class="modal-card card">
+      <div class="card-title">Conectar ao Wi-Fi</div>
+      <p class="muted" id="wifiModalSsid">—</p>
+      <label class="field">Senha <input type="password" id="wifiPassword" placeholder="deixe vazio se for rede aberta"></label>
+      <div class="btn-row">
+        <button class="btn" id="wifiConnect">Conectar</button>
+        <button class="btn btn-ghost" id="wifiCancel">Cancelar</button>
+        <span class="muted" id="wifiFormInfo"></span>
       </div>
     </div>
   </div>

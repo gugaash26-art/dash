@@ -60,6 +60,36 @@ DEFAULTS = {
         "zoom": 16,
     },
     "apps": {"seed_defaults": True},
+    "agent": {
+        "enabled": True,
+        "stt": "whisper",
+        "whisper_bin": "whisper-cli",
+        "whisper_model": str(ROOT / "models" / "ggml-base.bin"),
+        "stt_lang": "pt",
+        "mic_device": "default",
+        "record_seconds": 6,
+        "llm_provider": "groq",
+        "llm_base_url": "https://api.groq.com/openai/v1",
+        "llm_model": "llama-3.3-70b-versatile",
+        "llm_key_env": "GROQ_API_KEY",
+        "llm_key": "",
+        "tts": "edge",
+        "tts_voice": "pt-BR-ThalitaMultilingualNeural",
+        "speak": True,
+        "play_local": False,
+        "spotify_client_id": "",
+        "spotify_client_secret": "",
+        "max_turns": 8,
+    },
+    "update": {
+        "enabled": True,
+        "remote": "origin",
+        "branch": "main",
+        "auto_check": True,
+        "check_hours": 6,
+        "install_deps": True,
+        "restart_command": "",
+    },
     "paths": {"data_dir": str(ROOT / "data"), "db": str(ROOT / "data" / "cardash.db")},
     "ui": {"boot_animation": True, "theme": "auto", "brightness": 100},
 }
@@ -86,6 +116,21 @@ EDITABLE = [
     ("maps.provider", ["osm", "google"]),
     ("maps.tile_url", None),
     ("maps.google_key", None),
+    ("agent.enabled", None),
+    ("agent.mic_device", None),
+    ("agent.record_seconds", None),
+    ("agent.stt_lang", None),
+    ("agent.whisper_bin", None),
+    ("agent.whisper_model", None),
+    ("agent.llm_base_url", None),
+    ("agent.llm_model", None),
+    ("agent.llm_key_env", None),
+    ("agent.llm_key", None),
+    ("agent.tts_voice", None),
+    ("agent.speak", None),
+    ("agent.play_local", None),
+    ("agent.spotify_client_id", None),
+    ("agent.spotify_client_secret", None),
 ]
 
 
@@ -153,5 +198,15 @@ def validate_setting(key: str, value):
     if key in ("car.name", "serial.port", "gps.port"):
         value = str(value)[:64]
     if key in ("maps.tile_url", "maps.google_key"):
+        value = str(value)[:256]
+    if key in ("agent.enabled", "agent.speak", "agent.play_local"):
+        value = bool(value)
+    if key == "agent.record_seconds":
+        value = max(1, min(20, int(value)))
+    if key in ("agent.mic_device", "agent.stt_lang", "agent.whisper_bin"):
+        value = str(value)[:64]
+    if key in ("agent.whisper_model", "agent.llm_base_url", "agent.llm_model",
+               "agent.llm_key_env", "agent.llm_key", "agent.tts_voice",
+               "agent.spotify_client_id", "agent.spotify_client_secret"):
         value = str(value)[:256]
     return value

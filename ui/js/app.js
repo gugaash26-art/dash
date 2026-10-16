@@ -1,4 +1,8 @@
 (function () {
+  if (new URLSearchParams(location.search).get("screen") === "bar") {
+    location.replace("bar.html");
+    return;
+  }
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
@@ -127,7 +131,7 @@
     $$(".page").forEach((p) => p.classList.toggle("is-active", p.dataset.page === name));
     $$(".tab").forEach((t) => t.classList.toggle("is-active", t.dataset.pageGo === name));
     if (name === "energy") { loadTrips(); loadChart(true); }
-    if (name === "settings") { loadSettings(); loadSystem(); }
+    if (name === "settings") { loadSettings(); loadSystem(); loadNetwork(); loadUpdate(); }
     if (name === "diag") { loadDtcs(); }
     if (name === "nav") initNav();
     if (name === "apps") loadApps();
@@ -182,6 +186,8 @@
       let msg;
       try { msg = JSON.parse(ev.data); } catch (e) { return; }
       if (msg.type === "state") { applyState(msg.data); }
+      else if (msg.type === "agent") { agentEvent(msg.data); }
+      else if (msg.type === "update") { renderUpdate(msg.data); toast("Atualização disponível"); }
     };
     ws.onclose = () => {
       ctx.wsRetry = Math.min(ctx.wsRetry + 1, 8);
@@ -579,6 +585,266 @@
     });
   }
 
+  // ---------------------------------------------------------- Wi-Fi e Bluetooth
+  function netPost(path, body) {
+    return api(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body || {}),
+    });
+  }
+
+  function signalBars(sig) {
+    const lvl = sig >= 75 ? 4 : sig >= 50 ? 3 : sig >= 25 ? 2 : 1;
+    return '<span class="net-bars">' +
+      [1, 2, 3, 4].map((i) => `<i class="${i <= lvl ? "on" : ""}"></i>`).join("") +
+      "</span>";
+  }
+
+  function loadNetwork() {
+    api("/api/network").then((s) => {
+      ctx.net = s;
+      renderWifiStatus(s.wifi);
+      renderBtStatus(s.bluetooth);
+    }).catch(() => {});
+    api("/api/bluetooth").then((b) => {
+      if (b && b.available) renderBtList(b.devices || []);
+    }).catch(() => {});
+  }
+
+  function renderWifiStatus(w) {
+    const el = $("#wifiStatus");
+    if (!el) return;
+    const chk = $("#wifiEnabled");
+    const scan = $("#wifiScan");
+    if (!w || !w.available) {
+      el.textContent = (w && w.reason) || "indisponível";
+      el.className = "net-status warn";
+      if (chk) { chk.checked = false; chk.disabled = true; }
+      if (scan) scan.disabled = true;
+      const list = $("#wifiList");
+      if (list && !list.dataset.loaded) list.innerHTML = `<div class="empty">${esc((w && w.reason) || "Wi-Fi indisponível")}</div>`;
+      return;
+    }
+    if (chk) { chk.disabled = false; chk.checked = !!w.enabled; }
+    if (scan) scan.disabled = !w.enabled;
+    if (w.ssid) {
+      el.textContent = "conectado a " + w.ssid + (w.ip ? " · " + w.ip : "");
+      el.className = "net-status ok";
+    } else {
+      el.textContent = w.enabled ? "desconectado" : "desligado";
+      el.className = "net-status";
+    }
+  }
+
+  function renderWifiList(networks) {
+    const list = $("#wifiList");
+    if (!list) return;
+    list.dataset.loaded = "1";
+    if (!networks || !networks.length) {
+      list.innerHTML = '<div class="empty">nenhuma rede encontrada</div>';
+      return;
+    }
+    list.innerHTML = networks.map((n) => {
+      const lock = n.security && n.security !== "aberta" && n.security !== "--";
+      return `<div class="net-item ${n.active ? "active" : ""}">
+        <span class="net-ico">${lock ? "🔒" : "📶"}</span>
+        <span class="info"><b>${esc(n.ssid)}</b><small>${esc(n.security)}${n.active ? " · conectada" : ""}</small></span>
+        ${signalBars(Number(n.signal) || 0)}
+        <span class="actions">${n.active
+          ? '<button class="btn btn-ghost" data-wifi-action="disconnect">Desconectar</button>'
+          : `<button class="btn" data-wifi-connect="${esc(n.ssid)}">Conectar</button>`}</span>
+      </div>`;
+    }).join("");
+  }
+
+  function renderBtStatus(b) {
+    const el = $("#btStatus");
+    if (!el) return;
+    const chk = $("#btEnabled");
+    const scan = $("#btScan");
+    if (!b || !b.available) {
+      el.textContent = (b && b.reason) || "indisponível";
+      el.className = "net-status warn";
+      if (chk) { chk.checked = false; chk.disabled = true; }
+      if (scan) scan.disabled = true;
+      return;
+    }
+    if (chk) { chk.disabled = false; chk.checked = !!b.powered; }
+    if (scan) scan.disabled = !b.powered;
+    el.textContent = b.powered ? ("ligado" + (b.name ? " · " + b.name : "")) : "desligado";
+    el.className = "net-status" + (b.powered ? " ok" : "");
+  }
+
+  function renderBtList(devices) {
+    const list = $("#btList");
+    if (!list) return;
+    if (!devices || !devices.length) {
+      list.innerHTML = '<div class="empty">nenhum aparelho encontrado — pareie pelo celular</div>';
+      return;
+    }
+    list.innerHTML = devices.map((d) => {
+      let btn;
+      if (d.connected) btn = `<button class="btn btn-ghost" data-bt-action="disconnect" data-mac="${d.mac}">Desconectar</button>`;
+      else if (d.paired) btn = `<button class="btn" data-bt-action="connect" data-mac="${d.mac}">Conectar</button>`;
+      else btn = `<button class="btn" data-bt-action="pair" data-mac="${d.mac}">Parear</button>`;
+      const badge = d.connected ? '<span class="net-badge on">conectado</span>'
+        : d.paired ? '<span class="net-badge">pareado</span>' : "";
+      return `<div class="net-item ${d.connected ? "active" : ""}">
+        <span class="net-ico">🎧</span>
+        <span class="info"><b>${esc(d.name)}</b><small>${esc(d.mac)}</small></span>
+        ${badge}<span class="actions">${btn}</span>
+      </div>`;
+    }).join("");
+  }
+
+  async function wifiScan() {
+    const b = $("#wifiScan");
+    if (b) { b.disabled = true; b.textContent = "escanear..."; }
+    try {
+      const r = await netPost("/api/wifi", { action: "scan" });
+      if (r.available === false) toast(r.reason || "Wi-Fi indisponível");
+      renderWifiList(r.networks || []);
+      loadNetwork();
+    } catch (e) { toast("falha ao escanear redes"); }
+    if (b) { b.disabled = false; b.textContent = "Escanear"; }
+  }
+
+  async function btScan() {
+    const b = $("#btScan");
+    if (b) { b.disabled = true; b.textContent = "escanear..."; }
+    try {
+      const r = await netPost("/api/bluetooth", { action: "scan" });
+      renderBtList(r.devices || []);
+      loadNetwork();
+    } catch (e) { toast("falha ao escanear bluetooth"); }
+    if (b) { b.disabled = false; b.textContent = "Escanear"; }
+  }
+
+  async function btAction(action, mac) {
+    try {
+      const r = await netPost("/api/bluetooth", { action, mac });
+      if (r.devices) renderBtList(r.devices);
+      if (!r.ok && r.error) toast(r.error);
+      else toast(action === "pair" ? "pareado" : action === "connect" ? "conectado" : "desconectado");
+      loadNetwork();
+    } catch (e) { toast("falha no bluetooth"); }
+  }
+
+  let wifiPending = null;
+  function openWifiModal(ssid) {
+    wifiPending = ssid;
+    $("#wifiModalSsid").textContent = ssid;
+    $("#wifiPassword").value = "";
+    $("#wifiFormInfo").textContent = "";
+    $("#wifiModal").hidden = false;
+    setTimeout(() => $("#wifiPassword").focus(), 60);
+  }
+  async function wifiConnectNow() {
+    if (!wifiPending) return;
+    const info = $("#wifiFormInfo");
+    const btn = $("#wifiConnect");
+    info.textContent = "conectando...";
+    btn.disabled = true;
+    try {
+      const r = await netPost("/api/wifi", {
+        action: "connect", ssid: wifiPending, password: $("#wifiPassword").value,
+      });
+      if (r.ok) { $("#wifiModal").hidden = true; toast("conectado a " + wifiPending); wifiScan(); }
+      else info.textContent = r.error || "não foi possível conectar";
+    } catch (e) { info.textContent = "erro ao conectar"; }
+    btn.disabled = false;
+  }
+
+  if ($("#wifiScan")) $("#wifiScan").addEventListener("click", wifiScan);
+  if ($("#btScan")) $("#btScan").addEventListener("click", btScan);
+  if ($("#wifiEnabled")) $("#wifiEnabled").addEventListener("change", (e) => {
+    netPost("/api/wifi", { action: e.target.checked ? "enable" : "disable" })
+      .then(() => setTimeout(loadNetwork, 1500)).catch(() => {});
+  });
+  if ($("#btEnabled")) $("#btEnabled").addEventListener("change", (e) => {
+    netPost("/api/bluetooth", { action: e.target.checked ? "enable" : "disable" })
+      .then(() => setTimeout(loadNetwork, 1500)).catch(() => {});
+  });
+  if ($("#wifiConnect")) $("#wifiConnect").addEventListener("click", wifiConnectNow);
+  if ($("#wifiCancel")) $("#wifiCancel").addEventListener("click", () => { $("#wifiModal").hidden = true; });
+  if ($("#wifiPassword")) $("#wifiPassword").addEventListener("keydown", (e) => { if (e.key === "Enter") wifiConnectNow(); });
+  if ($("#wifiModal")) $("#wifiModal").addEventListener("click", (e) => { if (e.target.id === "wifiModal") e.target.hidden = true; });
+
+  document.addEventListener("click", (ev) => {
+    const wc = ev.target.closest("[data-wifi-connect]");
+    if (wc) { openWifiModal(wc.dataset.wifiConnect); return; }
+    const wa = ev.target.closest("[data-wifi-action]");
+    if (wa) {
+      netPost("/api/wifi", { action: wa.dataset.wifiAction })
+        .then(() => { toast("Wi-Fi desconectado"); wifiScan(); }).catch(() => {});
+      return;
+    }
+    const ba = ev.target.closest("[data-bt-action]");
+    if (ba) btAction(ba.dataset.btAction, ba.dataset.mac);
+  });
+
+  // -------------------------------------------------------------- Atualizações
+  function renderUpdate(u) {
+    const st = $("#updateStatus");
+    const info = $("#updateInfo");
+    const btn = $("#updateInstall");
+    if (!st) return;
+    if (u && u.available) {
+      if (u.available_update) {
+        st.textContent = `atualização disponível (${u.behind} commit${u.behind > 1 ? "s" : ""})`;
+        st.className = "net-status warn";
+        if (btn) btn.disabled = false;
+      } else {
+        st.textContent = "sistema atualizado";
+        st.className = "net-status ok";
+        if (btn) btn.disabled = true;
+      }
+      const rows = [
+        ["Versão atual", (u.current || "—") + (u.dirty ? " · alterações locais" : "")],
+        ["Descrição", u.subject || "—"],
+        ["Branch", u.branch || "—"],
+        ["Repositório", u.remote_url || "—"],
+      ];
+      if (u.behind) rows.push(["Novidade", `${u.latest || ""}`]);
+      if (u.fetch_error) rows.push(["Erro", u.fetch_error]);
+      info.innerHTML = rows.map(([k, v]) => `<div><small>${esc(k)}</small><b>${esc(v)}</b></div>`).join("");
+    } else {
+      st.textContent = (u && u.reason) || "indisponível";
+      st.className = "net-status warn";
+      if (btn) btn.disabled = true;
+      if (info) info.innerHTML = "";
+    }
+  }
+
+  function loadUpdate() { api("/api/update").then(renderUpdate).catch(() => {}); }
+
+  async function updateCheck() {
+    const b = $("#updateCheck");
+    b.disabled = true; b.textContent = "verificando...";
+    try { renderUpdate(await netPost("/api/update", { action: "check" })); }
+    catch (e) { toast("falha ao verificar atualizações"); }
+    b.disabled = false; b.textContent = "Verificar";
+  }
+
+  async function updateInstall() {
+    const b = $("#updateInstall");
+    const log = $("#updateLog");
+    b.disabled = true; b.textContent = "atualizando...";
+    if (log) { log.hidden = false; log.textContent = "baixando e instalando..."; }
+    try {
+      const r = await netPost("/api/update", { action: "install", restart: true });
+      if (log) log.textContent = (r.log || []).join("\n") || (r.error || r.message || "concluído");
+      if (r.ok && r.updated) { toast("Atualizado! reiniciando o painel..."); setTimeout(() => location.reload(), 7000); return; }
+      if (r.ok) { toast(r.message || "já está atualizado"); loadUpdate(); }
+      else toast(r.error || "falha na atualização");
+    } catch (e) { if (log) log.textContent = "erro na atualização"; }
+    b.disabled = false; b.textContent = "Atualizar agora";
+  }
+
+  if ($("#updateCheck")) $("#updateCheck").addEventListener("click", updateCheck);
+  if ($("#updateInstall")) $("#updateInstall").addEventListener("click", updateInstall);
+
   $("#btnDtcRead").addEventListener("click", () => send({ type: "cmd", cmd: "dtc_read" }));
   $("#btnDtcClear").addEventListener("click", () => {
     send({ type: "cmd", cmd: "dtc_clear" });
@@ -848,6 +1114,17 @@
     grid.innerHTML = tiles || '<div class="empty">nenhum aplicativo cadastrado</div>';
   }
 
+  function showOverlay(title, url) {
+    $("#appTitle").textContent = title || "App";
+    const frame = $("#appFrame");
+    frame.src = url;
+    $("#appOverlay").hidden = false;
+    nav.follow = false;
+    clearTimeout(openApp._t);
+    openApp._t = setTimeout(() => {
+      if (!$("#appOverlay").hidden) toast("Se o app não aparecer, use ↗ para abrir em outra aba");
+    }, 3500);
+  }
   function openApp(a) {
     if (!a) return;
     if (a.kind === "nav" || a.url === "nav") { setPage("nav"); return; }
@@ -855,16 +1132,7 @@
       try { window.open(a.url, "_blank", "noopener"); } catch (e) { window.location.href = a.url; }
       return;
     }
-    $("#appTitle").textContent = a.name;
-    const frame = $("#appFrame");
-    frame.src = a.url;
-    $("#appOverlay").hidden = false;
-    nav.follow = false;
-    frame.onload = () => {};
-    clearTimeout(openApp._t);
-    openApp._t = setTimeout(() => {
-      if (!$("#appOverlay").hidden) toast("Se o app não aparecer, use ↗ para abrir em outra aba");
-    }, 3500);
+    showOverlay(a.name, a.url);
   }
   function closeOverlay() {
     const frame = $("#appFrame");
@@ -878,6 +1146,186 @@
     t.innerHTML = `<b>${esc(text)}</b>`;
     $("#toasts").appendChild(t);
     setTimeout(() => { t.classList.add("gone"); setTimeout(() => t.remove(), 400); }, 4500);
+  }
+
+  // --------------------------------------------------------- Assistente de IA
+  const agentState = { recording: false, speaking: localStorage.getItem("cardash.agent.speak") !== "0" };
+
+  function agentSetStatus(text, cls) {
+    const el = $("#agentStatus");
+    if (!el) return;
+    el.classList.remove("ok", "rec", "think");
+    if (cls) el.classList.add(cls);
+    $("#agentStatusText").textContent = text;
+  }
+
+  function agentPost(path, body) {
+    return api(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body || {}),
+    });
+  }
+
+  function refreshAgentStatus() {
+    return api("/api/agent").then((s) => {
+      ctx.agent = s;
+      if (!s.enabled) agentSetStatus("desligado", "think");
+      else if (!s.llm_ready) agentSetStatus("sem chave de IA", "think");
+      else if (!s.arecord) agentSetStatus("sem microfone", "think");
+      else if (!s.stt_ready) agentSetStatus("falta o Whisper", "think");
+      else agentSetStatus("pronto", "ok");
+      const box = $("#agentSys");
+      if (box) {
+        box.innerHTML = [
+          ["Voz→texto", s.stt_ready ? "pronto" : "instalar"],
+          ["Microfone", s.arecord ? "ok" : "sem arecord"],
+          ["IA", s.llm_ready ? "pronta" : "falta chave"],
+          ["Voz (TTS)", s.tts === "edge" ? "edge-tts" : (s.tts || "—")],
+        ].map(([k, v]) => `<div><small>${k}</small><b>${esc(v)}</b></div>`).join("");
+      }
+    }).catch(() => agentSetStatus("indisponível", "think"));
+  }
+
+  function agentEvent(data) {
+    if (!data) return;
+    if (data.phase === "listening") { agentSetStatus("ouvindo…", "rec"); return; }
+    if (data.phase === "transcribing") { agentSetStatus("transcrevendo…", "think"); return; }
+    if (data.phase === "thinking") {
+      agentSetStatus("pensando…", "think");
+      if (data.transcript) $("#agentYou").textContent = data.transcript;
+      return;
+    }
+    if (data.done) {
+      agentSetStatus(data.ok ? "pronto" : "erro", data.ok ? "ok" : "think");
+      $("#agentYou").textContent = data.transcript || "—";
+      $("#agentReply").textContent = data.reply || "—";
+      agentRunActions(data.actions || []);
+      if (agentState.speaking && data.audio) agentPlayAudio(data.audio);
+    }
+  }
+
+  function agentPlayAudio(b64) {
+    try {
+      const a = new Audio("data:audio/mpeg;base64," + b64);
+      a.play().catch(() => {});
+    } catch (e) { /* ignora */ }
+  }
+
+  function agentFindApp(name) {
+    if (!name || !ctx.appsCache) return null;
+    const q = String(name).toLowerCase();
+    return ctx.appsCache.find((a) => a.id.toLowerCase() === q)
+      || ctx.appsCache.find((a) => a.name.toLowerCase() === q)
+      || ctx.appsCache.find((a) => a.name.toLowerCase().includes(q) || a.id.toLowerCase().includes(q));
+  }
+
+  function agentMedia(act) {
+    setPage("media");
+    if (act.provider === "youtube") {
+      const q = encodeURIComponent(act.query || "");
+      showOverlay("YouTube", `https://www.youtube-nocookie.com/embed?listType=search&list=${q}`);
+    } else if (act.provider === "spotify") {
+      if (act.uri && act.uri.indexOf("spotify:") === 0) {
+        const parts = act.uri.split(":");
+        showOverlay("Spotify", `https://open.spotify.com/embed/${parts[1]}/${parts[2]}`);
+      } else {
+        showOverlay("Spotify", `https://open.spotify.com/search/${encodeURIComponent(act.query || "")}`);
+      }
+    }
+  }
+
+  function agentMediaControl(action) {
+    if (action === "play" && !ctx.media.playing) togglePlay();
+    else if (action === "pause" && ctx.media.playing) togglePlay();
+    else if (action === "proxima" || action === "anterior") {
+      ctx.media.pos = 0;
+      const p = $("#mediaProgress");
+      if (p) p.style.width = "0%";
+    }
+  }
+
+  function agentRunActions(actions) {
+    actions.forEach((act) => {
+      if (!act || !act.type) return;
+      if (act.type === "open_app") {
+        const app = agentFindApp(act.name);
+        if (app) openApp(app);
+        else { setPage("apps"); toast("Não achei o app: " + act.name); }
+      } else if (act.type === "media") {
+        agentMedia(act);
+      } else if (act.type === "media_control") {
+        agentMediaControl(act.action);
+      } else if (act.type === "navigate") {
+        setPage("nav");
+        setTimeout(() => {
+          const inp = $("#navSearch");
+          if (inp) { inp.value = act.destination || ""; if (navSearch && navRoute) navSearch().then(() => navRoute()); }
+        }, 400);
+      } else if (act.type === "climate") {
+        if (act.fan !== null && act.fan !== undefined) ctx.climate.fan = Number(act.fan);
+        if (act.ac !== null && act.ac !== undefined) ctx.climate.ac = act.ac ? 1 : 0;
+        if (act.temp) ctx.climate.temp = Number(act.temp);
+        ctx.climateLocal = true;
+        renderClimate();
+        setPage("climate");
+      } else if (act.type === "page") {
+        setPage(act.page);
+      } else if (act.type === "open_url") {
+        showOverlay("Web", act.url);
+      }
+    });
+  }
+
+  function agentAskText() {
+    const inp = $("#agentText");
+    const text = (inp.value || "").trim();
+    if (!text) return;
+    inp.value = "";
+    $("#agentYou").textContent = text;
+    agentSetStatus("pensando…", "think");
+    agentPost("/api/agent/ask", { text })
+      .then((r) => agentEvent(r))
+      .catch(() => agentSetStatus("erro", "think"));
+  }
+
+  const micBtn = $("#agentMic");
+  function agentListenStart() {
+    if (agentState.recording) return;
+    agentState.recording = true;
+    if (micBtn) micBtn.classList.add("rec");
+    agentSetStatus("ouvindo…", "rec");
+    agentPost("/api/agent/listen/start").then((r) => {
+      if (!r.ok) {
+        agentState.recording = false;
+        if (micBtn) micBtn.classList.remove("rec");
+        toast(r.error || "microfone indisponível");
+        refreshAgentStatus();
+      }
+    }).catch(() => { agentState.recording = false; if (micBtn) micBtn.classList.remove("rec"); });
+  }
+  function agentListenStop() {
+    if (!agentState.recording) return;
+    agentState.recording = false;
+    if (micBtn) micBtn.classList.remove("rec");
+    agentSetStatus("processando…", "think");
+    agentPost("/api/agent/listen/stop").catch(() => {});
+  }
+
+  if (micBtn) {
+    micBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); agentListenStart(); });
+    ["pointerup", "pointerleave", "pointercancel"].forEach((ev) =>
+      micBtn.addEventListener(ev, agentListenStop));
+    document.addEventListener("pointerup", agentListenStop);
+  }
+  if ($("#agentSend")) $("#agentSend").addEventListener("click", agentAskText);
+  if ($("#agentText")) $("#agentText").addEventListener("keydown", (e) => { if (e.key === "Enter") agentAskText(); });
+  if ($("#agentSpeak")) {
+    $("#agentSpeak").checked = agentState.speaking;
+    $("#agentSpeak").addEventListener("change", (e) => {
+      agentState.speaking = e.target.checked;
+      localStorage.setItem("cardash.agent.speak", e.target.checked ? "1" : "0");
+    });
   }
 
   function openAppModal() {
@@ -942,6 +1390,8 @@
   async function startup() {
     connect();
     renderClimate();
+    loadApps();
+    refreshAgentStatus();
     try {
       const { settings } = await api("/api/settings");
       ctx.settings = settings;

@@ -13,9 +13,12 @@ from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
 from . import config as config_mod
+from .agent import Agent
 from .config import EDITABLE, cfg, validate_setting
 from .hub import Hub
+from .net import Net
 from .store import DEFAULT_APPS, Store
+from .updater import Updater
 from .ws import WSConn, accept_key
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -40,6 +43,34 @@ STOP = threading.Event()
 START_TIME = time.time()
 MAX_BODY = 64 * 1024
 APP_KINDS = {"nav", "embed", "browser", "web"}
+
+
+def broadcast(obj):
+    payload = json.dumps(obj, default=str)
+    for conn in list(CLIENTS):
+        try:
+            conn.send_text(payload)
+        except Exception:
+            CLIENTS.discard(conn)
+
+
+agent = Agent(cfg, hub, on_event=broadcast)
+net = Net(cfg)
+updater = Updater(cfg, ROOT)
+
+
+def auto_update_check():
+    time.sleep(8)
+    while not STOP.is_set():
+        try:
+            status = updater.check()
+            if status.get("available_update"):
+                log(f"atualizacao disponivel: {status.get('behind')} commit(s) - {status.get('latest')}")
+                broadcast({"type": "update", "data": status})
+        except Exception as exc:
+            log(f"checagem de atualizacao falhou: {exc}")
+        hours = float((cfg.get("update") or {}).get("check_hours", 6) or 6)
+        STOP.wait(max(0.5, hours) * 3600)
 
 
 def _slug(name: str) -> str:
@@ -228,6 +259,17 @@ class Handler(BaseHTTPRequestHandler):
             minutes = int((parse_qs(parsed.query).get("minutes") or ["180"])[0])
             minutes = max(1, min(1440, minutes))
             return self._json({"track": store.track(minutes)})
+        if path == "/api/agent":
+            return self._json(agent.status())
+        if path == "/api/network":
+            return self._json(net.status())
+        if path == "/api/wifi":
+            scan = (parse_qs(parsed.query).get("scan") or ["0"])[0] in ("1", "true", "yes")
+            return self._json(net.wifi_scan(rescan=scan) if scan else net.wifi_status())
+        if path == "/api/bluetooth":
+            return self._json(net.bt_devices())
+        if path == "/api/update":
+            return self._json(updater.status())
         if path == "/api/settings":
             return self._json(self._settings())
         if path == "/api/system":
@@ -276,6 +318,29 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(result)
         if path == "/api/trips":
             return self._json({"trips": store.trips(20)})
+        if path == "/api/agent/ask":
+            return self._json(agent.run_ask(payload.get("text")))
+        if path == "/api/agent/listen/start":
+            return self._json(agent.start_listen())
+        if path == "/api/agent/listen/stop":
+            threading.Thread(target=agent.listen_finish, daemon=True).start()
+            return self._json({"ok": True, "pending": True})
+        if path == "/api/agent/say":
+            return self._json({"ok": True, "audio": agent.tts_b64(payload.get("text"))})
+        if path == "/api/wifi":
+            return self._json(net.wifi_action(payload.get("action"),
+                                              payload.get("ssid"), payload.get("password")))
+        if path == "/api/bluetooth":
+            return self._json(net.bt_action(payload.get("action"), payload.get("mac")))
+        if path == "/api/update":
+            action = payload.get("action")
+            if action == "check":
+                return self._json(updater.check())
+            if action == "install":
+                return self._json(updater.install(restart=bool(payload.get("restart"))))
+            if action == "restart":
+                return self._json(updater.restart())
+            return self._error(400, "acao invalida")
         if path.startswith("/api/"):
             return self._error(404, "rota desconhecida")
         self._error(404, "not found")
@@ -333,6 +398,8 @@ def main():
     port = int(cfg["server"]["port"])
     hub.start()
     threading.Thread(target=ticker, daemon=True, name="ticker").start()
+    if (cfg.get("update") or {}).get("auto_check", True):
+        threading.Thread(target=auto_update_check, daemon=True, name="updater").start()
 
     server = ThreadingHTTPServer((host, port), Handler)
     server.daemon_threads = True

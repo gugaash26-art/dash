@@ -73,6 +73,36 @@ maps:
 apps:
   seed_defaults: true
 
+agent:                    # assistente de voz (IA) da pagina Multimidia
+  enabled: true
+  stt: whisper            # voz->texto: whisper (whisper.cpp)
+  whisper_bin: whisper-cli
+  whisper_model: /car-dash/models/ggml-base.bin
+  stt_lang: pt
+  mic_device: default     # dispositivo ALSA (arecord -l)
+  record_seconds: 6       # duracao maxima do push-to-talk
+  llm_provider: groq      # groq | openai-compativel (base_url)
+  llm_base_url: https://api.groq.com/openai/v1
+  llm_model: llama-3.3-70b-versatile
+  llm_key_env: GROQ_API_KEY
+  llm_key: ""             # alternativa a variavel de ambiente
+  tts: edge               # fala: edge (edge-tts)
+  tts_voice: pt-BR-ThalitaMultilingualNeural
+  speak: true             # o painel fala a resposta
+  play_local: false       # tocar o audio tambem no Orange Pi (aplay/ffplay)
+  spotify_client_id: ""   # opcional: permite buscar faixa no Spotify
+  spotify_client_secret: ""
+  max_turns: 8
+
+update:                   # atualizacao pelo GitHub (botao em Ajustes)
+  enabled: true
+  remote: origin
+  branch: main            # branch que sera baixada
+  auto_check: true        # verifica sozinho ao ligar e de tempo em tempo
+  check_hours: 6
+  install_deps: true      # roda pip install -r requirements.txt apos atualizar
+  restart_command: ""     # vazio: tenta systemctl restart cardash e, senao, reinicia sozinho
+
 paths:
   data_dir: /car-dash/data
   db: /car-dash/data/cardash.db

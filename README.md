@@ -54,6 +54,25 @@ tema escuro estilo Tesla, animações suaves e alertas em tempo real.
 - Como não há instalação de apps nativos, cada app é uma página web incorporada
   (para apps **Android nativos** reais, veja o **Waydroid** opcional na seção 10)
 
+**Assistente de voz (IA)**
+- **Push‑to‑talk**: segure o botão na página **Mídia**, fale e solte — o assistente
+  entende e executa (abrir app, tocar música, traçar rota, mexer no clima, trocar de página)
+- **100% gratuito e de código aberto**: voz→texto com **whisper.cpp**, respostas com uma
+  IA **OpenAI‑compatível** (padrão **Groq**, grátis) e fala com **edge‑tts**
+- Também aceita **texto** (caixa de digitação) — útil para testar sem microfone
+
+**Conectividade (Wi‑Fi e Bluetooth)**
+- **Wi‑Fi**: liga/desliga o rádio, lista as redes, conecta (com senha) e desconecta —
+  direto pela tela **Ajustes** (usa o NetworkManager/`nmcli`)
+- **Bluetooth**: liga/desliga, procura aparelhos (celular, caixa de som), pareia,
+  conecta e desconecta (usa o BlueZ/`bluetoothctl`)
+- Sem as ferramentas instaladas o painel apenas informa o que falta — nada quebra
+
+**Atualizações via GitHub**
+- Um botão em **Ajustes → Atualizações do sistema** verifica se você subiu commits
+  novos no repositório, **baixa e instala** (`git pull` + dependências) e reinicia o painel
+- Verificação automática ao ligar e a cada algumas horas, com aviso no painel
+
 **Ajustes**
 - Unidades (km/h↔mph, °C↔°F, L↔gal), tema claro/escuro/auto, brilho, animação de boot
 - Modo simulação (sem Arduino), porta serial, tanque, consumo nominal, odômetro, nome do carro
@@ -222,6 +241,41 @@ para abrir sozinho após o login automático do desktop.
 | Aba **Navegação** | mapa com GPS, rastro, busca de destino e rota |
 | Aba **Apps** | abrir YouTube/Spotify/Mapas/navegador e cadastrar novos apps |
 
+### Duas telas (cluster em barra + touch)
+
+O OpenDash tem **duas interfaces** no mesmo servidor:
+
+| Tela | URL | Indicada para |
+|---|---|---|
+| **Painel completo** | `/` (ou `/?screen=full`) | touch 8" — todas as páginas e apps |
+| **Cluster em barra** | `/bar.html` (ou `/?screen=bar`) | monitor longo tipo **1920×480** (11.3"/8.8"/7.9") |
+
+O cluster em barra mostra, lado a lado: setas e indicadores, **velocímetro** com marcha,
+**rotação** + acelerador, autonomia/odômetro/viagem, resumo (consumo, combustível, água),
+mini‑medidores (água, óleo, bateria, carga) e o **tanque** vertical. Ele lê o mesmo
+estado em tempo real, com alertas e relógio.
+
+Para rodar as duas juntas (mesmo servidor X, lado a lado):
+
+```bash
+# geometria de cada tela (ajuste às suas resoluções/posições)
+export CARDASH_TOUCH_SIZE=1024,600 CARDASH_TOUCH_POS=0,0
+export CARDASH_BAR_SIZE=1920,480   CARDASH_BAR_POS=1024,0
+sudo ./install.sh --duo
+```
+
+Isso cria/ativa dois serviços systemd (`cardash-kiosk.service` e
+`cardash-kiosk-bar.service`) que abrem cada URL na sua janela. Para uma tela só, o
+`./install.sh --kiosk` continua valendo. Também dá para abrir manualmente:
+
+```bash
+CARDASH_SCREEN=bar CARDASH_WINDOW_SIZE=1920,480 CARDASH_WINDOW_POS=1024,0 ./kiosk/kiosk.sh
+```
+
+> **Hardware:** duas saídas de vídeo dependem da placa — **RK3588 (Orange Pi 5)** tem
+> 2× HDMI; **H6 (Orange Pi 3)** costuma ter 1× HDMI (use um adaptador USB→HDMI ou uma
+> placa com duas saídas). Alternativamente, use dois servidores X (`DISPLAY=:0` e `:1`).
+
 ---
 
 ## 6. Configuração
@@ -242,6 +296,31 @@ trip:     { fuel_capacity_l: 55, consumption_l100: 8.5, odometer_km: 0 }
 units:    { speed: kmh, temp: c, volume: l }
 gps:      { enabled: true, source: auto, baud: 9600 }   # source: auto|arduino|usb|off
 maps:     { provider: osm, tile_url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png" }
+agent:                                                   # assistente de voz (seção 12)
+  enabled: true
+  whisper_bin: whisper-cli
+  whisper_model: models/ggml-base.bin
+  stt_lang: pt
+  mic_device: default
+  record_seconds: 6
+  llm_base_url: "https://api.groq.com/openai/v1"        # qualquer IA OpenAI-compatível
+  llm_model: llama-3.3-70b-versatile
+  llm_key_env: GROQ_API_KEY                              # nome da variável de ambiente
+  llm_key: ""                                            # ou cole a chave aqui
+  tts: edge
+  tts_voice: pt-BR-ThalitaMultilingualNeural
+  speak: true
+  play_local: false
+  spotify_client_id: ""
+  spotify_client_secret: ""
+update:                                                  # atualização via GitHub (seção 13)
+  enabled: true
+  remote: origin
+  branch: main
+  auto_check: true
+  check_hours: 6
+  install_deps: true
+  restart_command: ""                                    # vazio: systemctl restart cardash ou re-exec
 ```
 
 > **GPS.** Com `source: auto` o servidor usa o USB (se presente) e, senão, o GPS do
@@ -268,6 +347,18 @@ Variáveis de ambiente:
 | GET | `/api/dtc` | códigos ativos |
 | POST | `/api/dtc/clear` | apaga códigos |
 | GET | `/api/gps/track?minutes=180` | rastro GPS (lat/lon/vel/rumo) |
+| GET | `/api/agent` | estado do assistente (mic, STT, IA, TTS) |
+| POST | `/api/agent/ask` | `{"text":"..."}` → resposta + ações + áudio |
+| POST | `/api/agent/listen/start` | inicia a gravação do microfone (push‑to‑talk) |
+| POST | `/api/agent/listen/stop` | encerra, transcreve e responde (via chat/WS) |
+| POST | `/api/agent/say` | `{"text":"..."}` → áudio TTS em base64 |
+| GET | `/api/network` | status do Wi‑Fi e do Bluetooth (+ ferramentas disponíveis) |
+| GET | `/api/wifi?scan=1` | lista de redes Wi‑Fi (com `scan=1` reescaneia) |
+| POST | `/api/wifi` | `{"action":"scan\|connect\|disconnect\|forget\|enable\|disable","ssid":…,"password":…}` |
+| GET | `/api/bluetooth` | aparelhos Bluetooth conhecidos |
+| POST | `/api/bluetooth` | `{"action":"scan\|pair\|connect\|disconnect\|remove\|enable\|disable","mac":…}` |
+| GET | `/api/update` | versão atual, remoto e se há atualização |
+| POST | `/api/update` | `{"action":"check\|install\|restart","restart":true}` |
 | GET | `/api/apps` | lista de apps + configuração de mapas |
 | POST | `/api/apps` | cria/atualiza app (`{name,url,icon,color,kind}`) |
 | DELETE | `/api/apps/{id}` | remove um app |
@@ -288,17 +379,24 @@ car-dash/
 │   ├── main.py           HTTP + WebSocket + rotas REST
 │   ├── hub.py            serial, estado, viagens, GPS, comandos
 │   ├── gps.py            parser NMEA + leitor do GPS USB
+│   ├── agent.py          assistente de voz (STT + IA + TTS + ações)
+│   ├── net.py            Wi-Fi (nmcli) e Bluetooth (bluetoothctl)
+│   ├── updater.py        atualização via Git (verificar/instalar/reiniciar)
 │   ├── sim.py            gerador de dados para bancada (inclui GPS)
 │   ├── alerts.py         regras de alerta
 │   ├── store.py          SQLite (amostras, viagens, DTC, ajustes, apps, rastro)
 │   ├── config.py         config.yaml + validação
 │   └── ws.py             WebSocket (RFC 6455)
 ├── ui/                   interface (HTML/CSS/JS, sem build)
-│   ├── index.html  css/style.css  js/app.js  js/gauges.js
+│   ├── index.html        painel completo (touch)
+│   ├── bar.html          cluster em barra (ex.: 1920x480)
+│   ├── css/style.css  css/bar.css
+│   ├── js/app.js  js/bar.js  js/gauges.js
 │   └── vendor/leaflet/   Leaflet (mapa offline, sem CDN)
-├── systemd/              serviços cardash.service e kiosk
+├── systemd/              cardash.service, kiosk e kiosk-bar
 ├── kiosk/kiosk.sh        lançador do navegador em tela cheia
-├── tools/                utilitários (monitor serial)
+├── tools/                utilitários (monitor serial, setup do assistente)
+├── models/               modelo do Whisper (baixado pelo setup_assistant.sh)
 ├── run.py                entrada do servidor
 ├── install.sh            instalador para Orange Pi
 ├── install_waydroid.sh   instala apps Android (Waydroid) — opcional
@@ -405,7 +503,109 @@ desenham caixas e rótulos sobre a tela) e `"anim"` (usa `assets/ui-anim.mp4`, o
 
 ---
 
-## 12. Segurança elétrica (leia)
+## 12. Assistente de voz (IA) — grátis e de código aberto
+
+Na página **Mídia** há o cartão **Assistente · IA**. **Segure** o botão do microfone,
+fale e solte: o áudio é gravado no Orange Pi, transcrito (voz→texto), enviado a uma IA
+que decide **o que fazer** e responde — e a resposta pode ser **falada**.
+
+O que ele sabe fazer (via *function calling*):
+
+| Você diz | O assistente faz |
+|---|---|
+| “abre o YouTube”, “abre o Spotify” | abre o app cadastrado (ou a página **Apps**) |
+| “toca Imagine no Spotify”, “põe um vídeo de jazz” | busca e abre a mídia (Spotify usa a API; YouTube por embed) |
+| “pausa”, “toca”, “próxima faixa” | controla o player |
+| “traça rota para a avenida Paulista” | vai para **Navegação** e calcula a rota |
+| “liga o ar, ventilador 3” | envia o clima ao Arduino (relés) |
+| “abre o diagnóstico” | troca de página |
+| “como está o carro?”, “qual a autonomia?” | lê o estado real do veículo (ferramenta) |
+
+### Como funciona (tudo local + IA gratuita)
+
+- **Voz→texto**: **whisper.cpp** (`whisper-cli`), 100% offline após baixar o modelo.
+- **IA**: qualquer endpoint **OpenAI‑compatível**. O padrão é o **Groq** (chave gratuita
+  em `https://console.groq.com/keys`) com `llama-3.3-70b-versatile`. Sem internet, o
+  resto do painel continua funcionando normalmente.
+- **Fala**: **edge‑tts** (voz `pt-BR-ThalitaMultilingualNeural`), tocada no navegador
+  do painel; opcionalmente também no alto‑falante do Orange Pi (`play_local: true`).
+
+### Instalação
+
+```bash
+cd /car-dash
+./tools/setup_assistant.sh              # instala arecord/ffmpeg, compila whisper.cpp e baixa o modelo
+export GROQ_API_KEY="gsk_sua_chave"     # ou cole em Ajustes > Assistente de voz (IA)
+arecord -l                              # veja o nome do microfone e ajuste mic_device
+sudo systemctl restart cardash         # se usar o serviço
+```
+
+O script aceita `--model base|small|medium` (maior = mais preciso e mais pesado) e
+`--no-apt`. O microfone é um **USB/P2** comum; sem microfone, o assistente ainda
+responde ao que você **digitar** na caixa de texto.
+
+### Ajustes (tela Ajustes)
+
+Liga/desliga o assistente, escolhe microfone e idioma, define a **URL/modelo/chave** da
+IA, a voz do TTS, “falar as respostas” e “tocar no Orange Pi”. As chaves ficam no
+SQLite (`config.yaml` é o valor inicial).
+
+---
+
+## 13. Wi‑Fi, Bluetooth e atualizações
+
+### Wi‑Fi e Bluetooth (tela Ajustes)
+
+Os cartões **Wi‑Fi** e **Bluetooth** controlam o sistema do Orange Pi:
+
+- **Wi‑Fi**: liga/desliga o rádio, **Escanear** lista as redes com sinal e cadeado,
+  **Conectar** pede a senha (rede aberta conecta direto), **Desconectar** para a rede atual.
+- **Bluetooth**: liga/desliga, **Escanear** procura aparelhos por 8 s, **Parear** pareia
+  (e conecta), **Conectar/Desconectar** alternam o aparelho ativo.
+
+Requisitos no Orange Pi:
+
+```bash
+sudo apt-get install -y network-manager bluez
+sudo systemctl enable --now NetworkManager bluetooth
+```
+
+Sem essas ferramentas o cartão mostra o que falta (nada quebra). O estado atual aparece
+no cabeçalho de cada cartão (rede conectada + IP, ou aparelho ativo).
+
+### Atualizações via GitHub
+
+Na tela **Ajustes → Atualizações do sistema**:
+
+- **Verificar**: faz `git fetch` no repositório configurado e mostra quantos commits há
+  à frente, o resumo (`latest`) e a versão atual.
+- **Atualizar agora**: quando há novidade, executa `git pull --ff-only`,
+  reinstala dependências (`pip install -r requirements.txt`) e **reinicia o painel**.
+  Os “alterações locais” são guardados em `git stash` antes do pull.
+
+O servidor também verifica sozinho ao iniciar e a cada `check_hours` horas, avisando no
+painel quando há versão nova.
+
+Configuração (`config.yaml`):
+
+```yaml
+update:
+  enabled: true
+  remote: origin
+  branch: main
+  auto_check: true
+  check_hours: 6
+  install_deps: true
+  restart_command: ""   # ex.: "sudo systemctl restart cardash"
+```
+
+> Para repositório **privado**, configure a autenticação do Git no Orange Pi (um token no
+> remote: `https://usuario:TOKEN@github.com/usuario/repo.git`) ou use uma chave SSH — o
+> botão reaproveita as credenciais do próprio `git`.
+
+---
+
+## 14. Segurança elétrica (leia)
 
 - Alimente o Orange Pi/Arduino por um **conversor DC‑DC 12 V→5 V com fusível** (2–3 A);
   não use o carregador original na tomada 12 V.

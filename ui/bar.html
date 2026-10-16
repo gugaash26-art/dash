@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#05070b">
+<title>OpenDash · Cluster</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/bar.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23e82127'/><path d='M9 22 16 9l7 13' stroke='white' stroke-width='3' fill='none' stroke-linejoin='round'/></svg>">
+</head>
+<body>
+
+<div id="boot" class="boot">
+  <div class="boot-logo">
+    <svg viewBox="0 0 120 80"><path d="M8 66 60 8l52 58" fill="none" stroke="currentColor" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/></svg>
+  </div>
+  <div class="boot-name">OpenDash</div>
+  <div class="boot-bar"><span></span></div>
+  <div class="boot-sub" id="bootSub">iniciando sistema</div>
+</div>
+
+<div id="app" class="app bar-app is-hidden">
+
+  <header class="topbar bar-topbar">
+    <div class="brand">
+      <svg viewBox="0 0 120 80" class="brand-mark"><path d="M8 66 60 8l52 58" fill="none" stroke="currentColor" stroke-width="11" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      <span class="brand-name" data-bind="car.name">OpenDash</span>
+    </div>
+    <div class="warn-strip" id="warnStrip"></div>
+    <div class="top-right">
+      <div class="pill pill-env"><span data-bind="iat" data-fmt="temp">--</span></div>
+      <button class="pill pill-link" id="linkPill">
+        <i class="dot"></i><span id="linkText">conectando</span>
+      </button>
+      <div class="pill pill-clock"><b id="clock">--:--</b><small id="date">--/--</small></div>
+    </div>
+  </header>
+
+  <main class="bar-main">
+    <div class="bar-layout">
+
+      <div class="bar-left">
+        <div class="turn-row">
+          <div class="turn turn-l" id="turnLeft">
+            <svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="turn turn-r" id="turnRight">
+            <svg viewBox="0 0 24 24"><path d="M9 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="chips" id="statusChips">
+          <div class="chip" data-flag="hl">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M6 6l1.5 1.5M16.5 16.5 18 18M18 6l-1.5 1.5M7.5 16.5 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <span>Farol</span>
+          </div>
+          <div class="chip" data-flag="hb">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <span>Alto</span>
+          </div>
+          <div class="chip" data-flag="hz">
+            <svg viewBox="0 0 24 24"><path d="M12 3 2 20h20L12 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v5M12 16.5v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <span>Pisca</span>
+          </div>
+          <div class="chip" data-flag="brk">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 7h2.4a2.4 2.4 0 0 1 0 4.8H10V7zm0 4.8V17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <span>Freio</span>
+          </div>
+          <div class="chip" data-flag="sbl">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M6 21v-4l6-4 6 4v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            <span>Cinto</span>
+          </div>
+          <div class="chip" data-flag="door">
+            <svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="16" cy="12" r="1.3" fill="currentColor"/></svg>
+            <span>Porta</span>
+          </div>
+          <div class="chip" data-flag="mil">
+            <svg viewBox="0 0 24 24"><path d="M4 17h16M5 17v-5l2-1 2-4h4l2 3h3v7" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="9" cy="18.5" r="1.6" fill="currentColor"/></svg>
+            <span>Motor</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bar-speed">
+        <div class="speed-wrap">
+          <svg class="speed-svg" id="speedGauge" viewBox="0 0 320 320"></svg>
+          <div class="speed-readout">
+            <div class="speed-value" id="speedValue">0</div>
+            <div class="speed-unit" id="speedUnit">km/h</div>
+            <div class="gear-badge" id="gear">P</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bar-mid">
+        <div class="card rpm-card">
+          <div class="card-head"><span>Rotação</span><b id="rpmValue">0</b><small>rpm</small></div>
+          <div class="segs" id="rpmSegs"></div>
+          <div class="bar"><span class="bar-label">acelerador</span><div class="bar-track"><div class="bar-fill" id="throttleBar"></div></div></div>
+        </div>
+        <div class="odo-row">
+          <div class="odo"><small>Autonomia</small><b id="odoRange">--</b></div>
+          <div class="odo"><small>Odômetro</small><b id="odoTotal">--</b></div>
+          <div class="odo"><small>Viagem</small><b id="odoTrip">--</b></div>
+        </div>
+        <div class="card bar-cons">
+          <div class="bar-cons-item"><small>Consumo</small><b id="barCons">--</b><span>L/100</span></div>
+          <div class="bar-cons-item"><small>Combustível</small><b id="barFuelL">--</b><span>L</span></div>
+          <div class="bar-cons-item"><small>Água</small><b id="barCoolant" data-bind="coolant" data-fmt="temp">--</b></div>
+        </div>
+      </div>
+
+      <div class="bar-right">
+        <div class="mini-grid">
+          <div class="card mini" id="miniCoolant">
+            <svg class="mini-svg" data-gauge="coolant" data-min="40" data-max="130" data-color="amber"></svg>
+            <div class="mini-val"><b data-bind="coolant" data-fmt="temp">--</b></div>
+            <div class="mini-label">Água</div>
+          </div>
+          <div class="card mini" id="miniOil">
+            <svg class="mini-svg" data-gauge="oilp" data-min="0" data-max="100" data-color="blue"></svg>
+            <div class="mini-val"><b id="oilVal">--</b><small id="oilUnit">psi</small></div>
+            <div class="mini-label">Óleo</div>
+          </div>
+          <div class="card mini" id="miniBatt">
+            <svg class="mini-svg" data-gauge="batt" data-min="10" data-max="16" data-color="green"></svg>
+            <div class="mini-val"><b data-bind="volt" data-fmt="v1">--</b></div>
+            <div class="mini-label">Bateria</div>
+          </div>
+          <div class="card mini" id="miniLoad">
+            <svg class="mini-svg" data-gauge="load" data-min="0" data-max="100" data-color="cyan"></svg>
+            <div class="mini-val"><b data-bind="load" data-fmt="pct">--</b></div>
+            <div class="mini-label">Carga</div>
+          </div>
+        </div>
+        <div class="fuel card">
+          <div class="vbar">
+            <div class="vbar-fill" id="fuelFill"></div>
+            <div class="vbar-ticks"></div>
+          </div>
+          <div class="fuel-meta">
+            <b id="fuelPct">--</b><span>%</span>
+            <small id="fuelL">-- L</small>
+            <small class="muted" id="rangeTxt">-- km</small>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <div class="toasts" id="toasts"></div>
+</div>
+
+<script src="js/gauges.js"></script>
+<script src="js/bar.js"></script>
+</body>
+</html>
