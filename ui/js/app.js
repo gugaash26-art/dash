@@ -1,8 +1,12 @@
 (function () {
-  if (new URLSearchParams(location.search).get("screen") === "bar") {
+  const SCREEN = new URLSearchParams(location.search).get("screen") || "";
+  if (SCREEN === "bar") {
     location.replace("bar.html");
     return;
   }
+  // ?screen=cluster -> só o painel de velocidade (velocímetro redondo), sem menus.
+  const CLUSTER = SCREEN === "cluster";
+  if (CLUSTER) document.body.classList.add("is-cluster");
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
@@ -142,7 +146,7 @@
 
   document.addEventListener("click", (ev) => {
     const go = ev.target.closest("[data-page-go]");
-    if (go) { setPage(go.dataset.pageGo); return; }
+    if (go && !CLUSTER) { setPage(go.dataset.pageGo); return; }
     const alert = ev.target.closest(".warn, .toast");
     if (alert && alert.dataset.alert) {
       send({ type: "cmd", cmd: "ack", id: alert.dataset.alert });
@@ -156,6 +160,7 @@
     touchT = Date.now();
   }, { passive: true });
   $(".pages").addEventListener("touchend", (e) => {
+    if (CLUSTER) return;
     const dx = e.changedTouches[0].clientX - touchX;
     const dy = e.changedTouches[0].clientY - touchY;
     if (Date.now() - touchT < 700 && Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6) {
@@ -1667,6 +1672,7 @@
     const tag = (e.target && e.target.tagName) || "";
     if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
     if (e.key === "Escape") { closeOverlay(); closeAppModal(); return; }
+    if (CLUSTER) return;
     const i = PAGES.indexOf(ctx.page);
     if (e.key === "ArrowRight") setPage(PAGES[Math.min(PAGES.length - 1, i + 1)]);
     if (e.key === "ArrowLeft") setPage(PAGES[Math.max(0, i - 1)]);

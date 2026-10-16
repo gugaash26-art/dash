@@ -115,8 +115,8 @@ native:                   # apps nativos (GNOME Maps) abertos no Orange Pi
 screens:                  # escolha de monitores (HDMI) pelo Ajustes > Telas
   enabled: false          # true apos aplicar pelo painel
   main: ""                # saida xrandr do painel principal (ex.: HDMI-1)
-  bar: ""                 # saida xrandr do cluster em barra (ex.: HDMI-2)
-  arrange: false          # organiza automaticamente (cluster a direita do painel)
+  bar: ""                 # saida xrandr da segunda tela (barra ou painel de velocidade)
+  arrange: false          # organiza automaticamente (segunda tela a direita do painel)
   display: ":0"           # servidor X usado para detectar monitores
 
 paths:

@@ -77,8 +77,9 @@ tema escuro estilo Tesla, animações suaves e alertas em tempo real.
 
 **Telas (monitores HDMI)**
 - Ao ligar um **HDMI**, o painel detecta os monitores (`xrandr`) em **Ajustes → Telas e
-  monitores** e deixa você **escolher o que vai em cada um**: painel principal e cluster em barra
-- Opcionalmente organiza sozinho (cluster à direita do painel) e grava a geometria em
+  monitores** e deixa você **escolher o que vai em cada um**: painel principal (com menus) e
+  segunda tela — painel de velocidade (velocímetro, sem menus) ou cluster em barra
+- Opcionalmente organiza sozinho (segunda tela à direita do painel) e grava a geometria em
   `data/screens.env`, posicionando as janelas e reiniciando o kiosk
 
 **Mapas nativos (GNOME Maps)**
@@ -205,6 +206,7 @@ git clone <este-repositorio> car-dash      # ou copie a pasta
 cd car-dash
 ./install.sh                               # instala deps, venv, serviço systemd
 ./install.sh --kiosk                       # (opcional) autostart do navegador kiosk
+./install.sh --app --cluster               # (opcional) aplicativo nativo: painel + painel de velocidade
 ```
 
 O instalador:
@@ -240,6 +242,34 @@ simulation:
 O `install.sh --kiosk` cria o autostart em `~/.config/autostart/cardash-kiosk.desktop`
 para abrir sozinho após o login automático do desktop.
 
+### Aplicativo nativo (sem navegador)
+
+Além do navegador em modo kiosk, o OpenDash pode rodar como um **aplicativo nativo**
+(uma janela própria, **sem barra de endereço, abas ou qualquer cara de navegador**),
+usando **WebKitGTK**. É o mesmo motor web por baixo, mas vira um "app" de verdade — com
+atalho no menu e autostart — em vez de abrir o Chromium:
+
+```bash
+sudo ./install.sh --app --cluster    # app nativo: painel completo (menus) + painel de velocidade
+# ou
+sudo ./install.sh --app --kiosk      # app nativo em uma tela só (painel completo)
+```
+
+Isso instala as dependências (`python3-gi`, `gir1.2-gtk-3.0` e `gir1.2-webkit2-4.1`),
+registra o atalho `/usr/share/applications/opendash.desktop` e faz os serviços do kiosk
+usarem a janela nativa (`CARDASH_APP=1`) em vez do navegador. O lançador é
+`kiosk/opendash.py` e aceita as mesmas variáveis do kiosk:
+
+```bash
+CARDASH_SCREEN=cluster CARDASH_CLUSTER_SIZE=1280,400 CARDASH_CLUSTER_POS=1024,0 \
+  python3 kiosk/opendash.py            # abre o painel de velocidade numa janela nativa
+python3 kiosk/opendash.py --print      # só imprime a URL e a geometria, sem abrir janela
+```
+
+Para abrir uma janela sem moldura, em tela cheia, escondendo o cursor (padrão), com
+`F11` alternando tela cheia e `Ctrl+Q` para sair. Em placas antigas (ex.: H618) use
+`CARDASH_SOFTWARE=1` para desligar a aceleração de hardware do WebKit.
+
 ---
 
 ## 5. Uso do painel
@@ -254,16 +284,23 @@ para abrir sozinho após o login automático do desktop.
 | Aba **Navegação** | mapa com GPS, rastro, busca de destino e rota |
 | Aba **Apps** | abrir YouTube/Spotify/Mapas/navegador e cadastrar novos apps |
 
-### Duas telas (cluster em barra + touch)
+### Duas telas (painel com menus + painel de velocidade)
 
-O OpenDash tem **duas interfaces** no mesmo servidor:
+O OpenDash tem **três interfaces** no mesmo servidor:
 
 | Tela | URL | Indicada para |
 |---|---|---|
-| **Painel completo** | `/` (ou `/?screen=full`) | touch 8" — todas as páginas e apps |
+| **Painel completo** | `/` (ou `/?screen=full`) | touch 8" — todas as páginas, apps e **menus** |
+| **Painel de velocidade** | `/?screen=cluster` | segunda tela — **velocímetro redondo, sem menus** |
 | **Cluster em barra** | `/bar.html` (ou `/?screen=bar`) | monitor longo tipo **1920×480** (11.3"/8.8"/7.9") |
 
-O cluster em barra mostra, lado a lado: setas e indicadores, **velocímetro** com marcha,
+O **painel de velocidade** (`?screen=cluster`) é a mesma tela do velocímetro redondo do
+painel completo, mas **isolada**: mostra velocímetro, marcha, rotação, indicadores, tanque,
+mini‑medidores e odômetro — e **esconde as abas/menus** e o widget de mídia, para ficar
+numa HDMI dedicada (a multimídia com menus fica na outra). Os menus **só** aparecem no
+painel completo (`/`).
+
+O **cluster em barra** mostra, lado a lado: setas e indicadores, **velocímetro** com marcha,
 **rotação** + acelerador, autonomia/odômetro/viagem, resumo (consumo, combustível, água),
 mini‑medidores (água, óleo, bateria, carga) e o **tanque** vertical. Ele lê o mesmo
 estado em tempo real, com alertas e relógio.
@@ -274,22 +311,27 @@ Para rodar as duas juntas (mesmo servidor X, lado a lado):
 # geometria de cada tela (ajuste às suas resoluções/posições)
 export CARDASH_TOUCH_SIZE=1024,600 CARDASH_TOUCH_POS=0,0
 export CARDASH_BAR_SIZE=1920,480   CARDASH_BAR_POS=1024,0
-sudo ./install.sh --duo
+
+sudo ./install.sh --cluster   # painel completo (com menus) + painel de velocidade (sem menus)
+# ou
+sudo ./install.sh --duo       # painel completo (com menus) + cluster em barra
 ```
 
-Isso cria/ativa dois serviços systemd (`cardash-kiosk.service` e
-`cardash-kiosk-bar.service`) que abrem cada URL na sua janela. Para uma tela só, o
+`--cluster` cria/ativa `cardash-kiosk.service` (painel completo, com menus) e
+`cardash-kiosk-cluster.service` (painel de velocidade, sem menus); `--duo` usa o
+`cardash-kiosk-bar.service` (barra) no lugar do segundo. Para uma tela só, o
 `./install.sh --kiosk` continua valendo. Também dá para abrir manualmente:
 
 ```bash
-CARDASH_SCREEN=bar CARDASH_BAR_SIZE=1920,480 CARDASH_BAR_POS=1024,0 ./kiosk/kiosk.sh
+CARDASH_SCREEN=cluster CARDASH_BAR_SIZE=1920,480 CARDASH_BAR_POS=1024,0 ./kiosk/kiosk.sh
 ```
 
 **Escolher o monitor pela tela:** depois de instalar, abra **Ajustes → Telas e monitores
 (HDMI)**, toque em **Detectar** e escolha qual monitor recebe o **painel principal** e qual
-recebe o **cluster em barra**; marque *Organizar sozinho* se quiser o cluster à direita do
-painel. O servidor descobre a geometria com `xrandr`, grava `data/screens.env` e reinicia os
-serviços do kiosk. As janelas são posicionadas exatamente sobre cada monitor.
+recebe a **segunda tela** (barra ou velocidade, conforme o kiosk instalado); marque
+*Organizar sozinho* se quiser a segunda tela à direita do painel. O servidor descobre a
+geometria com `xrandr`, grava `data/screens.env` e reinicia os serviços do kiosk. As janelas
+são posicionadas exatamente sobre cada monitor.
 
 > **Hardware:** duas saídas de vídeo dependem da placa — **RK3588 (Orange Pi 5)** tem
 > 2× HDMI; **H6 (Orange Pi 3)** costuma ter 1× HDMI (use um adaptador USB→HDMI ou uma
@@ -427,13 +469,15 @@ car-dash/
 │   ├── config.py         config.yaml + validação
 │   └── ws.py             WebSocket (RFC 6455)
 ├── ui/                   interface (HTML/CSS/JS, sem build)
-│   ├── index.html        painel completo (touch)
+│   ├── index.html        painel completo (touch) e painel de velocidade (?screen=cluster)
 │   ├── bar.html          cluster em barra (ex.: 1920x480)
 │   ├── css/style.css  css/bar.css
 │   ├── js/app.js  js/bar.js  js/gauges.js
 │   └── vendor/leaflet/   Leaflet (mapa offline, sem CDN)
-├── systemd/              cardash.service, kiosk e kiosk-bar
-├── kiosk/kiosk.sh        lançador do navegador em tela cheia
+├── systemd/              cardash.service, kiosk, kiosk-bar e kiosk-cluster
+├── kiosk/kiosk.sh        lançador do navegador em tela cheia (ou do app nativo)
+├── kiosk/opendash.py     aplicativo nativo (WebKitGTK, sem navegador)
+├── kiosk/opendash.desktop  atalho do aplicativo (menu/autostart)
 ├── tools/                utilitários (monitor serial, setup do assistente, GNOME Maps)
 ├── models/               modelo do Whisper (baixado pelo setup_assistant.sh)
 ├── run.py                entrada do servidor
@@ -704,13 +748,16 @@ Com dois monitores ligados (ex.: touch 1024×600 + barra 1920×480), abra **Ajus
 monitores (HDMI)**:
 
 - **Detectar** lista as saídas detectadas pelo `xrandr` (nome, resolução, posição, principal).
-- Escolha, nos seletores, a saída do **Painel principal** e a do **Cluster em barra**.
-- **Organizar sozinho** tenta colocar o cluster à direita do painel (`xrandr --right-of`).
+- Escolha, nos seletores, a saída do **Painel principal** e a da **segunda tela** (barra ou
+  painel de velocidade, conforme o kiosk instalado).
+- **Organizar sozinho** tenta colocar a segunda tela à direita do painel (`xrandr --right-of`).
 - **Aplicar e reiniciar** grava a geometria em `data/screens.env` (lida pelos serviços do
-  kiosk) e reinicia `cardash-kiosk.service` e `cardash-kiosk-bar.service`.
+  kiosk) e reinicia os serviços do kiosk instalados (`cardash-kiosk.service` e
+  `cardash-kiosk-bar.service` ou `cardash-kiosk-cluster.service`).
 
 Requisitos: ambiente **X11** com `xrandr` (`sudo apt-get install -y x11-xserver-utils`) e o
-kiosk instalado (`./install.sh --duo`). Sem `xrandr` o cartão apenas informa o que falta.
+kiosk instalado (`./install.sh --cluster` ou `--duo`). Sem `xrandr` o cartão apenas informa o
+que falta.
 
 ### Papel de parede (Mídia)
 

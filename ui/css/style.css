@@ -571,3 +571,12 @@ input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius
   .grid-2 { grid-template-columns: 1fr; }
   .span-2 { grid-column: span 1; }
 }
+
+/* ---- modo cluster (segunda tela): só o painel de velocidade, sem menus ---- */
+/* Ativado por ?screen=cluster (ajax no app.js): esconde abas e itens de
+   navegação/multimídia, deixando o velocímetro redondo ocupar a tela toda. */
+body.is-cluster .tabbar { display: none; }
+body.is-cluster .media-mini { display: none; }
+body.is-cluster .page[data-page="drive"] { padding: 6px 18px 10px; }
+body.is-cluster .cluster { gap: 18px; }
+body.is-cluster .topbar { padding-top: 8px; }

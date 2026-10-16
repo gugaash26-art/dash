@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=OpenDash
+GenericName=Painel automotivo
+Comment=Painel automotivo OpenDash (aplicativo nativo, sem navegador)
+Exec=env CARDASH_SCREEN=full CARDASH_APP=1 __DIR__/kiosk/kiosk.sh
+Path=__DIR__
+Terminal=false
+Categories=Utility;AudioVideo;
+StartupNotify=false
+X-GNOME-Autostart-enabled=false

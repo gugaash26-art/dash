@@ -527,16 +527,16 @@
             <button class="btn" id="screensApply">Aplicar e reiniciar</button>
           </div>
           <div class="screens-grid">
-            <label class="field">Painel principal
+            <label class="field">Painel principal (com menus)
               <select id="screenMain"><option value="">— automático —</option></select>
             </label>
-            <label class="field">Cluster em barra
+            <label class="field">Segunda tela (barra ou velocidade)
               <select id="screenBar"><option value="">— automático —</option></select>
             </label>
-            <label class="switch"><input type="checkbox" id="screensArrange"><span></span>Organizar sozinho (cluster à direita do painel)</label>
+            <label class="switch"><input type="checkbox" id="screensArrange"><span></span>Organizar sozinho (segunda tela à direita do painel)</label>
           </div>
           <div class="screens-list" id="screensList"><div class="empty">toque em “Detectar” para listar os monitores</div></div>
-          <div class="hint">Escolha em qual monitor vai cada coisa. O Orange Pi posiciona as janelas do painel e do cluster conforme os monitores detectados (precisa de X11/xrandr e do kiosk instalado).</div>
+          <div class="hint">Escolha em qual monitor vai cada coisa. O painel principal fica com os menus; a segunda tela mostra o cluster em barra (<code>--duo</code>) ou o painel de velocidade com velocímetro redondo e sem menus (<code>--cluster</code>). O Orange Pi posiciona as janelas conforme os monitores detectados (precisa de X11/xrandr e do kiosk instalado).</div>
         </div>
 
         <div class="card span-2">

@@ -10,6 +10,7 @@ WorkingDirectory=__DIR__
 Environment=DISPLAY=:0
 Environment=XAUTHORITY=/home/__USER__/.Xauthority
 Environment=CARDASH_SCREEN=bar
+Environment=CARDASH_APP=__APP__
 Environment=CARDASH_BAR_SIZE=__BAR_SIZE__
 Environment=CARDASH_BAR_POS=__BAR_POS__
 EnvironmentFile=-__DIR__/data/screens.env

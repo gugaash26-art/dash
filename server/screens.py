@@ -82,7 +82,8 @@ class Screens:
         }
 
     def _kiosk_state(self):
-        units = ["cardash-kiosk.service", "cardash-kiosk-bar.service"]
+        units = ["cardash-kiosk.service", "cardash-kiosk-bar.service",
+                 "cardash-kiosk-cluster.service"]
         present = []
         if shutil.which("systemctl"):
             for unit in units:
@@ -172,10 +173,10 @@ class Screens:
         messages.append(f"geometria gravada em {self.env_path.name}")
 
         restarted = False
-        if enabled and self._kiosk_state()["installed"]:
+        kiosk = self._kiosk_state()
+        if enabled and kiosk["installed"]:
             try:
-                res = self._run(["sudo", "systemctl", "restart",
-                                 "cardash-kiosk.service", "cardash-kiosk-bar.service"],
+                res = self._run(["sudo", "systemctl", "restart", *kiosk["units"]],
                                 timeout=20)
                 restarted = res.returncode == 0
                 messages.append("kiosk reiniciado" if restarted

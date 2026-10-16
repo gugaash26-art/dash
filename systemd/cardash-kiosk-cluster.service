@@ -1,0 +1,22 @@
+[Unit]
+Description=OpenDash Kiosk - painel de velocidade (segunda tela, sem menus)
+After=graphical.target cardash.service
+Wants=cardash.service
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__DIR__
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/__USER__/.Xauthority
+Environment=CARDASH_SCREEN=cluster
+Environment=CARDASH_APP=__APP__
+Environment=CARDASH_CLUSTER_SIZE=__BAR_SIZE__
+Environment=CARDASH_CLUSTER_POS=__BAR_POS__
+EnvironmentFile=-__DIR__/data/screens.env
+ExecStart=__DIR__/kiosk/kiosk.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target

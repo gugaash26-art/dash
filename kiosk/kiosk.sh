@@ -2,12 +2,14 @@
 set -uo pipefail
 
 # Tela a abrir:
-#   CARDASH_SCREEN=full  (padrão)  -> interface completa (páginas/apps)
-#   CARDASH_SCREEN=bar             -> cluster horizontal (ex.: 1920x480)
+#   CARDASH_SCREEN=full     (padrão) -> interface completa (páginas/apps, com menus)
+#   CARDASH_SCREEN=bar               -> cluster horizontal (ex.: 1920x480)
+#   CARDASH_SCREEN=cluster           -> painel de velocidade (velocímetro redondo, sem menus)
 #
 # Para duas telas no mesmo servidor X (Xinerama), defina a geometria de cada uma:
-#   CARDASH_TOUCH_SIZE=1024,600  CARDASH_TOUCH_POS=0,0     (painel / touch 8")
-#   CARDASH_BAR_SIZE=1920,480    CARDASH_BAR_POS=1024,0    (cluster / barra 11.3")
+#   CARDASH_TOUCH_SIZE=1024,600  CARDASH_TOUCH_POS=0,0     (painel / touch, com menus)
+#   CARDASH_BAR_SIZE=1920,480    CARDASH_BAR_POS=1024,0    (segunda tela: barra ou velocidade)
+#   CARDASH_CLUSTER_SIZE/POS                               (opcional; cai no CARDASH_BAR_*)
 # Estes valores vem de data/screens.env (Ajustes > Telas) ou podem ser exportados
 # direto; CARDASH_WINDOW_SIZE/POS continuam aceitos e tem prioridade.
 # Sem geometria o navegador abre em modo kiosk (tela cheia na primária).
@@ -15,11 +17,15 @@ set -uo pipefail
 URL="${CARDASH_URL:-http://127.0.0.1:8080/}"
 BASE="${URL%/}/"
 SCREEN="${CARDASH_SCREEN:-full}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 case "$SCREEN" in
   bar)  PAGE="${BASE}bar.html"; NAME="cardash-bar"
         WIN_SIZE="${CARDASH_WINDOW_SIZE:-${CARDASH_BAR_SIZE:-}}"
         WIN_POS="${CARDASH_WINDOW_POS:-${CARDASH_BAR_POS:-}}" ;;
+  cluster) PAGE="${BASE}?screen=cluster"; NAME="cardash-cluster"
+        WIN_SIZE="${CARDASH_WINDOW_SIZE:-${CARDASH_CLUSTER_SIZE:-${CARDASH_BAR_SIZE:-}}}"
+        WIN_POS="${CARDASH_WINDOW_POS:-${CARDASH_CLUSTER_POS:-${CARDASH_BAR_POS:-}}}" ;;
   *)    PAGE="${BASE}";         NAME="cardash-full"
         WIN_SIZE="${CARDASH_WINDOW_SIZE:-${CARDASH_TOUCH_SIZE:-}}"
         WIN_POS="${CARDASH_WINDOW_POS:-${CARDASH_TOUCH_POS:-}}" ;;
@@ -40,6 +46,17 @@ fi
 
 if command -v unclutter >/dev/null 2>&1; then
   unclutter -idle 0.5 -root &
+fi
+
+# --- backend nativo (aplicativo WebKitGTK, sem navegador) ---
+# CARDASH_APP=1 (ou CARDASH_BROWSER=webkit) abre a janela nativa do OpenDash.
+if [ "${CARDASH_APP:-0}" = "1" ] || [ "${CARDASH_BROWSER:-chromium}" = "webkit" ]; then
+  PY="${CARDASH_PYTHON:-python3}"
+  if ! "$PY" -c "import gi" >/dev/null 2>&1; then
+    echo "OpenDash: PyGObject ausente; instale python3-gi gir1.2-gtk-3.0 gir1.2-webkit2-4.1" >&2
+    exit 3
+  fi
+  exec "$PY" "$SCRIPT_DIR/opendash.py"
 fi
 
 COMMON_FLAGS=(
