@@ -1,0 +1,20 @@
+[Unit]
+Description=OpenDash - painel automotivo (servidor + WebSocket)
+Documentation=file://__DIR__/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__DIR__
+Environment=CARDASH_CONFIG=__DIR__/config.yaml
+Environment=CARDASH_LOG=0
+ExecStart=__DIR__/.venv/bin/python __DIR__/run.py
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

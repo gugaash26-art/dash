@@ -1,0 +1,981 @@
+(function () {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+  const PAGES = ["drive", "energy", "nav", "media", "apps", "climate", "diag", "settings"];
+  const MI = 0.621371;
+  const GAL = 0.264172;
+
+  const app = $("#app");
+  const boot = $("#boot");
+  const bootSub = $("#bootSub");
+
+  const ctx = {
+    data: null,
+    units: { speed: "kmh", temp: "c", volume: "l" },
+    settings: null,
+    page: "drive",
+    ws: null,
+    wsRetry: 0,
+    lastMsg: 0,
+    chart: null,
+    chartAt: 0,
+    tripsAt: 0,
+    settingsReady: false,
+    alertsShown: new Map(),
+    turn: { lt: 0, rt: 0, next: 0, phase: 1 },
+    climate: { fan: 0, ac: 0, defrost: 0, recirc: 0, temp: 22 },
+    media: { playing: false, pos: 0, source: "Rádio FM", t: 0 },
+    disp: { speed: 0, rpm: 0, coolant: 20, fuel: 50, throttle: 0, load: 0, volt: 12.4, oilp: 0, batt: 12.4 },
+  };
+
+  const savedClimate = (() => {
+    try { return JSON.parse(localStorage.getItem("cardash.climate") || "null"); } catch (e) { return null; }
+  })();
+  if (savedClimate) Object.assign(ctx.climate, savedClimate);
+
+  const sound = {
+    ctx: null,
+    enabled: true,
+    init() {
+      if (this.ctx) return;
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AC();
+      } catch (e) { this.enabled = false; }
+    },
+    tone(freq, dur, gain, type) {
+      if (!this.enabled || !this.ctx) return;
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = type || "sine";
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(gain || 0.05, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      osc.connect(g).connect(this.ctx.destination);
+      osc.start(t);
+      osc.stop(t + dur + 0.02);
+    },
+    click(freq) { this.tone(freq || 1200, 0.045, 0.03, "square"); },
+    alert(level) {
+      if (level === "crit") {
+        this.tone(880, 0.18, 0.09, "square");
+        setTimeout(() => this.tone(660, 0.22, 0.09, "square"), 190);
+      } else {
+        this.tone(990, 0.12, 0.05, "sine");
+      }
+    },
+  };
+  const resumeAudio = () => { sound.init(); if (sound.ctx && sound.ctx.state === "suspended") sound.ctx.resume(); };
+  document.addEventListener("pointerdown", resumeAudio, { once: true });
+
+  function n(v, dec) {
+    const x = Number(v);
+    if (!isFinite(x)) return "--";
+    return dec ? x.toFixed(dec) : Math.round(x).toString();
+  }
+  const U = {
+    speed(v) { return ctx.units.speed === "mph" ? n(v * MI) : n(v); },
+    speedUnit() { return ctx.units.speed === "mph" ? "mph" : "km/h"; },
+    temp(v) { return ctx.units.temp === "f" ? n(v * 9 / 5 + 32) : n(v); },
+    tempUnit() { return ctx.units.temp === "f" ? "°F" : "°C"; },
+    dist(v, dec) {
+      const x = ctx.units.speed === "mph" ? v * MI : v;
+      return dec ? n(x, dec) : n(x);
+    },
+    distUnit() { return ctx.units.speed === "mph" ? "mi" : "km"; },
+    vol(v, dec) { return ctx.units.volume === "gal" ? n(v * GAL, dec || 1) : n(v, dec || 1); },
+    volUnit() { return ctx.units.volume === "gal" ? "gal" : "L"; },
+  };
+
+  function fmtBy(kind, v) {
+    switch (kind) {
+      case "speed": return U.speed(v);
+      case "temp": return U.temp(v) + "°";
+      case "dist": return U.dist(v) + " " + U.distUnit();
+      case "dist1": return U.dist(v, 1) + " " + U.distUnit();
+      case "v1": return n(v, 1);
+      case "v2": return n(v, 2);
+      case "pct": return n(v) + "%";
+      case "int": return n(v);
+      default: return n(v);
+    }
+  }
+
+  const bindings = $$("[data-bind]").map((elm) => ({
+    el: elm, path: elm.dataset.bind, fmt: elm.dataset.fmt, last: null,
+  }));
+
+  const speedGauge = Gauges.main($("#speedGauge"));
+  const rpmSegs = Gauges.segments($("#rpmSegs"), 26);
+  const miniGauges = $$(".mini-svg").map((s) => ({ key: s.dataset.gauge, g: Gauges.mini(s) }));
+
+  function pick(path, src) {
+    let cur = src;
+    for (const part of path.split(".")) {
+      if (cur == null) return null;
+      cur = cur[part];
+    }
+    return cur;
+  }
+
+  function setPage(name) {
+    if (!PAGES.includes(name)) return;
+    ctx.page = name;
+    $$(".page").forEach((p) => p.classList.toggle("is-active", p.dataset.page === name));
+    $$(".tab").forEach((t) => t.classList.toggle("is-active", t.dataset.pageGo === name));
+    if (name === "energy") { loadTrips(); loadChart(true); }
+    if (name === "settings") { loadSettings(); loadSystem(); }
+    if (name === "diag") { loadDtcs(); }
+    if (name === "nav") initNav();
+    if (name === "apps") loadApps();
+    const page = $(`.page[data-page="${name}"]`);
+    if (page) page.scrollTop = 0;
+  }
+
+  document.addEventListener("click", (ev) => {
+    const go = ev.target.closest("[data-page-go]");
+    if (go) { setPage(go.dataset.pageGo); return; }
+    const alert = ev.target.closest(".warn, .toast");
+    if (alert && alert.dataset.alert) {
+      send({ type: "cmd", cmd: "ack", id: alert.dataset.alert });
+    }
+  });
+
+  let touchX = 0, touchY = 0, touchT = 0;
+  $(".pages").addEventListener("touchstart", (e) => {
+    touchX = e.touches[0].clientX;
+    touchY = e.touches[0].clientY;
+    touchT = Date.now();
+  }, { passive: true });
+  $(".pages").addEventListener("touchend", (e) => {
+    const dx = e.changedTouches[0].clientX - touchX;
+    const dy = e.changedTouches[0].clientY - touchY;
+    if (Date.now() - touchT < 700 && Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6) {
+      const i = PAGES.indexOf(ctx.page);
+      setPage(PAGES[Math.max(0, Math.min(PAGES.length - 1, i + (dx < 0 ? 1 : -1)))]);
+    }
+  }, { passive: true });
+
+  function send(obj) {
+    if (ctx.ws && ctx.ws.readyState === WebSocket.OPEN) {
+      ctx.ws.send(JSON.stringify(obj));
+      return true;
+    }
+    return false;
+  }
+
+  async function api(path, opts) {
+    const res = await fetch(path, opts);
+    if (!res.ok) throw new Error(path + " " + res.status);
+    return res.json();
+  }
+
+  function connect() {
+    const proto = location.protocol === "https:" ? "wss" : "ws";
+    const ws = new WebSocket(`${proto}://${location.host}/ws`);
+    ctx.ws = ws;
+    ws.onopen = () => { ctx.wsRetry = 0; };
+    ws.onmessage = (ev) => {
+      let msg;
+      try { msg = JSON.parse(ev.data); } catch (e) { return; }
+      if (msg.type === "state") { applyState(msg.data); }
+    };
+    ws.onclose = () => {
+      ctx.wsRetry = Math.min(ctx.wsRetry + 1, 8);
+      setTimeout(connect, 400 * ctx.wsRetry);
+    };
+    ws.onerror = () => ws.close();
+  }
+
+  function applyState(data) {
+    ctx.data = data;
+    ctx.lastMsg = Date.now();
+    if (data.units) ctx.units = data.units;
+    if (data.climate && !ctx.climateLocal) {
+      ctx.climate.fan = data.climate.fan;
+      ctx.climate.ac = data.climate.ac;
+    }
+    updateAlerts(data.alerts || []);
+    updateConn(data);
+  }
+
+  function updateConn(data) {
+    const pill = $("#linkPill");
+    const txt = $("#linkText");
+    pill.classList.remove("ok", "sim", "off");
+    let label = "sem sinal";
+    let cls = "off";
+    if (data.conn === "serial") { cls = "ok"; label = data.mode && data.mode.port ? data.mode.port.replace("/dev/", "") : "OBD online"; }
+    else if (data.conn === "sim") { cls = "sim"; label = "simulação"; }
+    pill.classList.add(cls);
+    if (txt.textContent !== label) txt.textContent = label;
+  }
+
+  function updateAlerts(alerts) {
+    const strip = $("#warnStrip");
+    const toasts = $("#toasts");
+    const seen = new Set();
+    alerts.forEach((a) => {
+      seen.add(a.id);
+      if (ctx.alertsShown.has(a.id)) {
+        const existing = ctx.alertsShown.get(a.id);
+        if (existing.level !== a.level || existing.text !== a.text) {
+          const node = strip.querySelector(`[data-alert="${a.id}"]`);
+          if (node) node.innerHTML = `<b>${a.title}</b> · ${a.text}`;
+          existing.level = a.level;
+          existing.text = a.text;
+        }
+        return;
+      }
+      const el = document.createElement("div");
+      el.className = "warn " + a.level;
+      el.dataset.alert = a.id;
+      el.innerHTML = `<b>${a.title}</b> · ${a.text} <span class="x">✕</span>`;
+      strip.appendChild(el);
+
+      const toast = document.createElement("div");
+      toast.className = "toast " + a.level;
+      toast.dataset.alert = a.id;
+      toast.innerHTML = `<b>${a.title}</b><small>${a.text}</small>`;
+      toasts.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.add("gone");
+        setTimeout(() => toast.remove(), 400);
+      }, a.level === "crit" ? 9000 : 5000);
+
+      ctx.alertsShown.set(a.id, { level: a.level, text: a.text });
+      sound.alert(a.level);
+    });
+    ctx.alertsShown.forEach((_, id) => {
+      if (!seen.has(id)) {
+        ctx.alertsShown.delete(id);
+        const node = strip.querySelector(`[data-alert="${id}"]`);
+        if (node) { node.remove(); }
+        toasts.querySelectorAll(`[data-alert="${id}"]`).forEach((t) => t.remove());
+      }
+    });
+  }
+
+  function updateClock() {
+    const d = new Date();
+    $("#clock").textContent = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    $("#date").textContent = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+    if (ctx.settings && ctx.settings["ui.theme"] === "auto") applyTheme("auto");
+  }
+
+  function applyTheme(theme) {
+    let t = theme;
+    if (t === "auto") {
+      const h = new Date().getHours();
+      t = h >= 7 && h < 19 ? "light" : "dark";
+    }
+    document.documentElement.dataset.theme = t;
+  }
+
+  function applyBrightness(v) {
+    let dim = $("#dim");
+    if (!dim) {
+      dim = document.createElement("div");
+      dim.id = "dim";
+      dim.style.cssText = "position:fixed;inset:0;background:#000;pointer-events:none;z-index:90;transition:opacity .4s";
+      document.body.appendChild(dim);
+    }
+    dim.style.opacity = String(Math.max(0, Math.min(0.65, (100 - v) / 100 * 0.65)));
+  }
+
+  function ease(cur, target, k) { return cur + (target - cur) * k; }
+
+  let lastFrame = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.1, (now - lastFrame) / 1000);
+    lastFrame = now;
+    const d = ctx.data;
+    if (d) {
+      const k = 1 - Math.pow(0.001, dt);
+      const dp = ctx.disp;
+      dp.speed = ease(dp.speed, Number(d.speed) || 0, k);
+      dp.rpm = ease(dp.rpm, Number(d.rpm) || 0, k);
+      dp.throttle = ease(dp.throttle, Number(d.throttle) || 0, k);
+      dp.load = ease(dp.load, Number(d.load) || 0, k);
+      dp.coolant = ease(dp.coolant, Number(d.coolant) || 0, k * 0.5);
+      dp.fuel = ease(dp.fuel, Number(d.fuel) || 0, k * 0.5);
+      dp.volt = ease(dp.volt, Number(d.volt) || 0, k);
+      dp.oilp = ease(dp.oilp, Number(d.oilp) || 0, k);
+
+      renderCluster(d, dp);
+      bindings.forEach((b) => {
+        const v = pick(b.path, d);
+        if (v === null || v === undefined) return;
+        const out = b.fmt ? fmtBy(b.fmt, v) : String(v);
+        if (out !== b.last) { b.last = out; b.el.textContent = out; }
+      });
+      if (ctx.page === "energy") renderEnergy(d);
+      if (ctx.page === "diag") renderLive(d);
+      if (ctx.page === "nav") renderNav(d);
+    }
+    tickTurnSignals(dt);
+    requestAnimationFrame(frame);
+  }
+
+  function renderCluster(d, dp) {
+    const maxSpeed = ctx.units.speed === "mph" ? 140 : 220;
+    speedGauge.set(U.speed(dp.speed), maxSpeed);
+    rpmSegs.set(dp.rpm / 7000);
+    $("#speedUnit").textContent = U.speedUnit();
+    $("#speedValue").textContent = U.speed(dp.speed);
+    $("#throttleBar").style.width = Math.max(0, Math.min(100, dp.throttle)) + "%";
+    $("#rpmValue").textContent = n(dp.rpm);
+
+    const gear = d.gear || "P";
+    const gEl = $("#gear");
+    if (gEl.textContent !== gear) gEl.textContent = gear;
+    gEl.classList.toggle("rev", gear === "R");
+
+    const fuel = Number(d.fuel) || 0;
+    const fill = $("#fuelFill");
+    fill.style.height = Math.max(2, Math.min(100, dp.fuel)) + "%";
+    fill.classList.toggle("low", fuel <= 20 && fuel > 10);
+    fill.classList.toggle("crit", fuel <= 10);
+    $("#fuelPct").textContent = n(fuel);
+    $("#fuelL").textContent = U.vol(fuel / 100 * (ctx.settings ? ctx.settings["trip.fuel_capacity_l"] : 55), 1) + " " + U.volUnit();
+    $("#rangeTxt").textContent = U.dist(d.range) + " " + U.distUnit();
+    $("#odoRange").textContent = fmtBy("dist", d.range);
+    $("#odoTotal").textContent = U.dist(d.odo) + " " + U.distUnit();
+    $("#odoTrip").textContent = U.dist(d.trip ? d.trip.km : 0, 1) + " " + U.distUnit();
+
+    const tEl = $("#turnLeft"), trEl = $("#turnRight");
+    const lt = d.lt || d.hz, rt = d.rt || d.hz;
+    const blink = ctx.turn.phase === 1;
+    tEl.classList.toggle("on", !!(lt && blink));
+    trEl.classList.toggle("on", !!(rt && blink));
+
+    $$(".chip").forEach((chip) => {
+      const key = chip.dataset.flag;
+      const on = key === "mil" ? !!d.mil : !!d[key];
+      chip.classList.toggle("on", on);
+    });
+
+    miniGauges.forEach(({ key, g }) => {
+      const val = key === "batt" ? dp.volt : dp[key];
+      g.set(Number(val) || 0);
+    });
+    $("#oilVal").textContent = n(dp.oilp, 0);
+  }
+
+  function tickTurnSignals(dt) {
+    const d = ctx.data;
+    if (!d) return;
+    const active = (d.lt || d.hz) || (d.rt || d.hz);
+    if (!active) { ctx.turn.next = 0; ctx.turn.phase = 1; return; }
+    ctx.turn.next -= dt;
+    if (ctx.turn.next <= 0) {
+      ctx.turn.next = 0.42;
+      ctx.turn.phase = ctx.turn.phase ? 0 : 1;
+      if (ctx.turn.phase) sound.click(1350);
+    }
+  }
+
+  function renderEnergy(d) {
+    const fuel = Number(d.fuel) || 0;
+    const cap = ctx.settings ? ctx.settings["trip.fuel_capacity_l"] : 55;
+    $("#tankFill").style.height = Math.max(2, fuel) + "%";
+    $("#energyPct").textContent = n(fuel);
+    $("#energyLiters").textContent = U.vol(fuel / 100 * cap, 1) + " " + U.volUnit();
+    $("#energyRange").textContent = U.dist(d.range) + " " + U.distUnit() + " de autonomia";
+    const t = d.trip || {};
+    const cons = t.cons || 0;
+    $("#consNow").textContent = cons ? n(cons, 1) : (Number(d.speed) > 1 ? "--" : "0.0");
+    $("#consTrip").textContent = cons ? n(cons, 1) + " L/100km" : "--";
+    $("#consLiters").textContent = U.vol(t.fuel_l || 0, 2) + " " + U.volUnit();
+    $("#tDist").textContent = U.dist(t.km || 0, 1) + " " + U.distUnit();
+    $("#tTime").textContent = fmtDuration(t.s || 0);
+    $("#tAvg").textContent = fmtBy("speed", t.avg || 0) + " " + U.speedUnit();
+    $("#tMax").textContent = fmtBy("speed", t.max || 0) + " " + U.speedUnit();
+    const now = Date.now();
+    if (now - ctx.chartAt > 5000) loadChart();
+  }
+
+  function fmtDuration(s) {
+    s = Math.round(s);
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    return (h ? h + "h " : "") + m + "min";
+  }
+
+  function loadChart(force) {
+    if (!force && Date.now() - ctx.chartAt < 5000) return;
+    ctx.chartAt = Date.now();
+    if (!ctx.chart) ctx.chart = Gauges.chart($("#historyChart"));
+    api("/api/history?minutes=15").then((h) => ctx.chart.set(h)).catch(() => {});
+  }
+
+  function loadTrips(force) {
+    if (!force && Date.now() - ctx.tripsAt < 15000) return;
+    ctx.tripsAt = Date.now();
+    api("/api/trips?limit=12").then(({ trips }) => {
+      const box = $("#tripList");
+      if (!trips.length) { box.innerHTML = '<div class="empty">sem viagens registradas</div>'; return; }
+      box.innerHTML = trips.map((t) => {
+        const date = new Date(t.end_ts || t.start_ts);
+        return `<div class="trip-item">
+          <span>${date.toLocaleDateString("pt-BR")} <small>${date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</small></span>
+          <b>${U.dist(t.distance_km, 1)} ${U.distUnit()}</b>
+          <small>${fmtDuration(t.duration_s || 0)}</small>
+          <small>${n(t.avg_kmh, 0)} km/h</small>
+        </div>`;
+      }).join("");
+    }).catch(() => {});
+  }
+
+  const PID_ROWS = [
+    ["speed", "Velocidade", "speed"], ["rpm", "Rotação", "int"],
+    ["coolant", "Água", "temp"], ["iat", "Admissão", "temp"],
+    ["oilt", "Óleo motor", "temp"], ["oilp", "Pressão óleo", "v1"],
+    ["throttle", "Acelerador", "pct"], ["load", "Carga motor", "pct"],
+    ["fuel", "Combustível", "pct"], ["volt", "Tensão", "v2"],
+    ["batt", "Bateria", "v2"], ["runtime", "Tempo motor", "runtime"],
+  ];
+
+  function buildPidGrid() {
+    const grid = $("#pidGrid");
+    if (grid.dataset.built) return;
+    grid.dataset.built = "1";
+    grid.innerHTML = PID_ROWS.map(([k, label]) => `<div class="pid"><small>${label}</small><b data-pid="${k}">--</b></div>`).join("");
+  }
+
+  function renderLive(d) {
+    buildPidGrid();
+    $$("[data-pid]").forEach((elm) => {
+      const key = elm.dataset.pid;
+      const v = d[key];
+      let out = "--";
+      if (key === "runtime") out = fmtDuration(v || 0);
+      else if (v !== undefined && v !== null) {
+        const row = PID_ROWS.find((r) => r[0] === key);
+        out = fmtBy(row ? row[2] : "int", v);
+      }
+      if (elm.textContent !== out) elm.textContent = out;
+    });
+    const mil = $("#milBadge");
+    mil.classList.toggle("bad", !!d.mil);
+    mil.textContent = d.mil ? "FALHA" : "OK";
+    $("#diagConn").textContent = d.conn === "serial" ? "Conectado via serial" : d.conn === "sim" ? "Simulação ativa" : "Sem comunicação";
+    $("#diagPort").textContent = (d.mode && d.mode.port) || (d.conn === "sim" ? "modo bancada" : "verifique o cabo USB");
+    const list = $("#dtcList");
+    const codes = d.dtc || [];
+    if (!codes.length && !list.dataset.filled) {
+      list.innerHTML = '<div class="empty">nenhum código ativo</div>';
+    } else if (codes.length) {
+      list.dataset.filled = "1";
+      list.innerHTML = codes.map((c) => `<div class="dtc-item"><code>${c}</code><small>${describeDtc(c)}</small></div>`).join("");
+    } else {
+      list.dataset.filled = "";
+    }
+  }
+
+  const DTC_DESC = {
+    P0300: "Falha de ignição aleatória", P0301: "Falha de ignição cilindro 1",
+    P0302: "Falha de ignição cilindro 2", P0303: "Falha de ignição cilindro 3",
+    P0304: "Falha de ignição cilindro 4", P0420: "Eficiência do catalisador",
+    P0171: "Mistura pobre (banco 1)", P0172: "Mistura rica (banco 1)",
+    P0128: "Termostato / temperatura", P0113: "Sensor de ar de admissão",
+    P0135: "Sonda lambda aquecimento", P0325: "Sensor de detonação",
+    P0340: "Sensor de fase", P0505: "Controle de marcha lenta",
+    P0442: "Vazamento pequeno EVAP", P0455: "Vazamento grande EVAP",
+  };
+  function describeDtc(code) { return DTC_DESC[code] || "código de falha registrado pela ECU"; }
+
+  function loadDtcs() {
+    api("/api/dtc").then((d) => {
+      const list = $("#dtcList");
+      list.dataset.filled = d.dtc.length ? "1" : "";
+      list.innerHTML = d.dtc.length
+        ? d.dtc.map((x) => `<div class="dtc-item"><code>${x.code}</code><small>${describeDtc(x.code)} · visto ${new Date(x.last_seen).toLocaleString("pt-BR")}</small></div>`).join("")
+        : '<div class="empty">nenhum código ativo</div>';
+    }).catch(() => {});
+  }
+
+  function loadSettings() {
+    api("/api/settings").then(({ settings }) => {
+      ctx.settings = settings;
+      ctx.settingsReady = true;
+      $$("[data-setting]").forEach((elm) => {
+        const key = elm.dataset.setting;
+        const val = settings[key];
+        if (val === undefined) return;
+        if (elm.type === "checkbox") elm.checked = !!val;
+        else elm.value = val;
+      });
+      applyTheme(settings["ui.theme"] || "auto");
+      applyBrightness(Number(settings["ui.brightness"]) || 100);
+    }).catch(() => {});
+  }
+
+  function loadSystem() {
+    api("/api/system").then((s) => {
+      const rows = [
+        ["Conexão", s.conn === "serial" ? "Arduino serial" : s.conn === "sim" ? "Simulação" : "Offline"],
+        ["Porta", s.port || "—"],
+        ["Host", s.hostname || "—"],
+        ["Python", s.python],
+        ["Arquitetura", s.machine],
+        ["Uptime", fmtDuration(s.uptime_s)],
+      ];
+      $("#sysGrid").innerHTML = rows.map(([k, v]) => `<div><small>${k}</small><b>${v}</b></div>`).join("");
+    }).catch(() => {});
+  }
+
+  let saveTimer = null;
+  function saveSetting(key, value) {
+    const payload = { settings: {} };
+    payload.settings[key] = value;
+    api("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).then(({ settings }) => {
+      ctx.settings = Object.assign({}, ctx.settings, settings);
+      const info = $("#saveInfo");
+      info.textContent = "ajustes salvos";
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => { info.textContent = ""; }, 2200);
+      if (key === "ui.theme") applyTheme(value);
+      if (key === "ui.brightness") applyBrightness(Number(value));
+    }).catch(() => {});
+  }
+
+  $$("[data-setting]").forEach((elm) => {
+    const key = elm.dataset.setting;
+    const ev = elm.tagName === "SELECT" || elm.type === "checkbox" ? "change" : "change";
+    elm.addEventListener(ev, () => {
+      let value;
+      if (elm.type === "checkbox") value = elm.checked;
+      else if (elm.type === "number" || elm.type === "range") value = Number(elm.value);
+      else value = elm.value;
+      saveSetting(key, value);
+    });
+    if (elm.type === "range") {
+      elm.addEventListener("input", () => {
+        if (key === "ui.brightness") applyBrightness(Number(elm.value));
+      });
+    }
+  });
+
+  $("#btnSave").addEventListener("click", loadSettings);
+  $("#btnReboot").addEventListener("click", () => power("reboot"));
+  $("#btnShutdown").addEventListener("click", () => power("shutdown"));
+  function power(action) {
+    api("/api/system/power", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    }).catch(() => {
+      const info = $("#saveInfo");
+      info.textContent = "recurso desabilitado (CARDASH_ALLOW_POWER=1)";
+      setTimeout(() => { info.textContent = ""; }, 3000);
+    });
+  }
+
+  $("#btnDtcRead").addEventListener("click", () => send({ type: "cmd", cmd: "dtc_read" }));
+  $("#btnDtcClear").addEventListener("click", () => {
+    send({ type: "cmd", cmd: "dtc_clear" });
+    loadDtcs();
+  });
+  $("#btnSimDtc").addEventListener("click", () => {
+    send({ type: "cmd", cmd: "sim_dtc", code: "P0301" });
+  });
+
+  $$("#fanSteps button").forEach((b) => b.addEventListener("click", () => {
+    ctx.climate.fan = Number(b.dataset.fan);
+    ctx.climateLocal = true;
+    sendClimate();
+    renderClimate();
+  }));
+  $("#acToggle").addEventListener("click", () => {
+    ctx.climate.ac = ctx.climate.ac ? 0 : 1;
+    ctx.climateLocal = true;
+    sendClimate();
+    renderClimate();
+  });
+  $("#defrostToggle").addEventListener("click", () => { ctx.climate.defrost = ctx.climate.defrost ? 0 : 1; renderClimate(); });
+  $("#recircToggle").addEventListener("click", () => { ctx.climate.recirc = ctx.climate.recirc ? 0 : 1; renderClimate(); });
+  $("#tempUp").addEventListener("click", () => { ctx.climate.temp = Math.min(30, ctx.climate.temp + 1); renderClimate(); });
+  $("#tempDown").addEventListener("click", () => { ctx.climate.temp = Math.max(16, ctx.climate.temp - 1); renderClimate(); });
+
+  function sendClimate() {
+    localStorage.setItem("cardash.climate", JSON.stringify(ctx.climate));
+    send({ type: "cmd", cmd: "climate", fan: ctx.climate.fan, ac: ctx.climate.ac });
+  }
+
+  function renderClimate() {
+    $("#climateTemp").textContent = ctx.climate.temp;
+    $("#acToggle").classList.toggle("on", !!ctx.climate.ac);
+    $("#acToggle").querySelector("b").textContent = ctx.climate.ac ? "ON" : "OFF";
+    $("#defrostToggle").classList.toggle("on", !!ctx.climate.defrost);
+    $("#defrostToggle").querySelector("b").textContent = ctx.climate.defrost ? "ON" : "OFF";
+    $("#recircToggle").classList.toggle("on", !!ctx.climate.recirc);
+    $("#recircToggle").querySelector("b").textContent = ctx.climate.recirc ? "ON" : "OFF";
+    $$("#fanSteps button").forEach((b) => b.classList.toggle("on", Number(b.dataset.fan) === ctx.climate.fan));
+  }
+
+  const MEDIA = [
+    { title: "Rádio FM 89.1", artist: "OpenDash Player" },
+    { title: "Bluetooth · Celular", artist: "Playlist da estrada" },
+    { title: "USB · MP3", artist: "Coletânea" },
+    { title: "Auxiliar", artist: "Entrada externa" },
+  ];
+  $$(".source").forEach((b, i) => b.addEventListener("click", () => {
+    $$(".source").forEach((x) => x.classList.remove("is-active"));
+    b.classList.add("is-active");
+    ctx.media.source = b.dataset.source;
+    const meta = MEDIA[i] || { title: b.dataset.source, artist: "OpenDash" };
+    $("#mediaTitle").textContent = meta.title;
+    $("#mediaArtist").textContent = meta.artist;
+    $("#miniTitle").textContent = meta.title;
+    $("#miniArtist").textContent = meta.artist;
+  }));
+
+  function togglePlay() {
+    ctx.media.playing = !ctx.media.playing;
+    const path = ctx.media.playing ? "M6 5h4v14H6zm8 0h4v14h-4z" : "M8 5v14l11-7z";
+    $("#playPath").setAttribute("d", path);
+    $("#miniPlayPath").setAttribute("d", path);
+  }
+  $("#btnPlay").addEventListener("click", togglePlay);
+  $("#miniPlay").addEventListener("click", (e) => { e.stopPropagation(); togglePlay(); });
+  $("#btnNext").addEventListener("click", () => { ctx.media.pos = 0; });
+  $("#btnPrev").addEventListener("click", () => { ctx.media.pos = 0; });
+  $("#volume").addEventListener("input", (e) => {
+    $("#volVal").textContent = e.target.value;
+    ctx.media.volume = Number(e.target.value);
+  });
+  setInterval(() => {
+    if (ctx.media.playing) {
+      ctx.media.pos = (ctx.media.pos + 0.5) % 100;
+      $("#mediaProgress").style.width = ctx.media.pos + "%";
+    }
+  }, 500);
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => (
+      { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+    ));
+  }
+  function hostOf(u) {
+    try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return u; }
+  }
+
+  const nav = {
+    map: null, marker: null, trackLine: null, routeLine: null, destMarker: null,
+    dest: null, follow: true, ready: false, trackAt: 0, tries: 0,
+  };
+
+  function initNav() {
+    if (typeof L === "undefined") return;
+    if (!nav.map) {
+      try {
+        nav.map = L.map("map", { zoomControl: false, attributionControl: true })
+          .setView([-23.5613, -46.6565], 14);
+        L.control.zoom({ position: "bottomright" }).addTo(nav.map);
+        nav.map.on("dragstart", () => { nav.follow = false; });
+      } catch (e) { nav.map = null; }
+      loadApps();
+    }
+    setTimeout(() => { if (nav.map) nav.map.invalidateSize(); }, 60);
+    loadTrack(true);
+  }
+
+  function tileLayer(cfg) {
+    if (cfg && cfg.provider === "google") {
+      return L.tileLayer("https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", {
+        subdomains: ["mt0", "mt1", "mt2", "mt3"], maxZoom: 20,
+        attribution: "© Google",
+      });
+    }
+    const url = (cfg && cfg.tile_url) || "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+    return L.tileLayer(url, { maxZoom: 19, attribution: "© OpenStreetMap" });
+  }
+
+  function carIcon(heading) {
+    return L.divIcon({
+      className: "car-marker",
+      html: `<svg viewBox="0 0 24 24" style="transform:rotate(${Number(heading) || 0}deg)">`
+        + `<path d="M12 2 19 21 12 17 5 21 12 2z" fill="#4aa8ff" stroke="#fff" `
+        + `stroke-width="1.3" stroke-linejoin="round"/></svg>`,
+      iconSize: [34, 34], iconAnchor: [17, 17],
+    });
+  }
+
+  function renderNav(d) {
+    const g = (d && d.gps) || {};
+    const has = !!g.has && g.lat != null && g.lon != null;
+    $("#navFix").classList.toggle("ok", has);
+    $("#navFixText").textContent = has ? (g.fix ? "sinal GPS" : "sem fix") : "sem sinal";
+    $("#navLat").textContent = has ? Number(g.lat).toFixed(5) : "--";
+    $("#navLon").textContent = has ? Number(g.lon).toFixed(5) : "--";
+    $("#navSpeed").textContent = g.speed != null ? n(g.speed) + " km/h" : "--";
+    $("#navHeading").textContent = g.heading != null ? n(g.heading) + "°" : "--";
+    $("#navSats").textContent = g.sats != null ? String(g.sats) : "--";
+    $("#navAlt").textContent = g.alt != null ? n(g.alt) + " m" : "--";
+    $("#navHdop").textContent = g.hdop != null ? Number(g.hdop).toFixed(1) : "--";
+    $("#navSrc").textContent = { usb: "USB", arduino: "Arduino", sim: "Simulação" }[g.src] || "—";
+    if (has && nav.map) {
+      const pos = [Number(g.lat), Number(g.lon)];
+      if (!nav.marker) {
+        nav.marker = L.marker(pos, { icon: carIcon(g.heading) }).addTo(nav.map);
+      } else {
+        nav.marker.setLatLng(pos);
+        nav.marker.setIcon(carIcon(g.heading));
+      }
+      if (!nav.ready) { nav.map.setView(pos, 15); nav.ready = true; }
+      else if (nav.follow) nav.map.panTo(pos, { animate: true, duration: 0.4 });
+    }
+  }
+
+  function loadTrack(force) {
+    if (!nav.map) return;
+    if (!force && Date.now() - nav.trackAt < 10000) return;
+    nav.trackAt = Date.now();
+    api("/api/gps/track?minutes=180").then(({ track }) => {
+      const pts = (track || []).filter((p) => p.lat != null).map((p) => [p.lat, p.lon]);
+      if (!pts.length) return;
+      if (nav.trackLine) { nav.trackLine.setLatLngs(pts); return; }
+      nav.trackLine = L.polyline(pts, { color: "#4aa8ff", weight: 4, opacity: 0.75 }).addTo(nav.map);
+    }).catch(() => {});
+  }
+
+  function navInfo(text) { $("#navRouteInfo").textContent = text; }
+
+  async function navSearch() {
+    const q = $("#navSearch").value.trim();
+    if (!q) return null;
+    const m = q.match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+    let dest = null;
+    if (m) {
+      dest = { lat: Number(m[1]), lon: Number(m[2]), name: q };
+    } else {
+      navInfo("buscar...");
+      try {
+        const r = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(q));
+        const arr = await r.json();
+        if (arr && arr[0]) dest = { lat: Number(arr[0].lat), lon: Number(arr[0].lon), name: arr[0].display_name };
+      } catch (e) { /* offline */ }
+    }
+    if (!dest) { navInfo("destino não encontrado (precisa de internet)"); return null; }
+    nav.dest = dest;
+    if (nav.map) {
+      const ll = [dest.lat, dest.lon];
+      if (nav.destMarker) nav.destMarker.setLatLng(ll);
+      else nav.destMarker = L.marker(ll).addTo(nav.map);
+      nav.follow = false;
+      nav.map.fitBounds([ll, nav.marker ? nav.marker.getLatLng() : ll], { padding: [60, 60], maxZoom: 15 });
+    }
+    navInfo(dest.name);
+    return dest;
+  }
+
+  async function navRoute() {
+    if (typeof L === "undefined") return;
+    if (!nav.dest) { if (!(await navSearch())) return; }
+    if (!nav.marker) { navInfo("sem posição GPS"); return; }
+    const a = nav.marker.getLatLng();
+    navInfo("calculando rota...");
+    const url = `https://router.project-osrm.org/route/v1/driving/${a.lng},${a.lat};`
+      + `${nav.dest.lon},${nav.dest.lat}?overview=full&geometries=geojson`;
+    try {
+      const r = await fetch(url);
+      const j = await r.json();
+      if (!j.routes || !j.routes[0]) throw new Error("sem rota");
+      const route = j.routes[0];
+      const latlngs = route.geometry.coordinates.map((c) => [c[1], c[0]]);
+      if (nav.routeLine) nav.map.removeLayer(nav.routeLine);
+      nav.routeLine = L.polyline(latlngs, { color: "#e82127", weight: 6, opacity: 0.9 }).addTo(nav.map);
+      nav.map.fitBounds(nav.routeLine.getBounds(), { padding: [60, 60] });
+      nav.follow = false;
+      const km = route.distance / 1000;
+      const min = Math.round(route.duration / 60);
+      navInfo(`${km.toFixed(1)} km · ${min} min · via ${(route.legs[0].summary) || "rota"}`);
+    } catch (e) {
+      navInfo("não foi possível calcular a rota (precisa de internet)");
+    }
+  }
+
+  const BUILTIN = new Set(["nav", "youtube", "spotify", "maps", "web"]);
+  const ICON_SVG = {
+    nav: '<path d="M12 2 4 21l8-4 8 4z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>',
+    play: '<path d="M8 5v14l11-7z" fill="#fff"/>',
+    music: '<path d="M9 18V6l10-2v12" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><circle cx="7" cy="18" r="2.4" fill="#fff"/><circle cx="17" cy="16" r="2.4" fill="#fff"/>',
+    map: '<path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M9 3v16M15 5v16" stroke="#fff" stroke-width="2"/>',
+    compass: '<circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2"/><path d="m15 9-2 6-4 2 2-6z" fill="#fff"/>',
+    globe: '<circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" fill="none" stroke="#fff" stroke-width="2"/>',
+  };
+  function appIcon(v) {
+    const svg = ICON_SVG[v];
+    if (svg) return `<svg viewBox="0 0 24 24" width="30" height="30">${svg}</svg>`;
+    return esc((v && v.length <= 3) ? v : "🌐");
+  }
+
+  function loadApps() {
+    api("/api/apps").then((data) => {
+      if (data.maps) applyMapConfig(data.maps);
+      ctx.appsCache = data.apps || [];
+      renderApps(ctx.appsCache);
+    }).catch(() => {});
+  }
+
+  let mapCfgLoaded = false;
+  function applyMapConfig(cfg) {
+    ctx.mapsCfg = cfg;
+    if (!nav.map || mapCfgLoaded) return;
+    mapCfgLoaded = true;
+    tileLayer(cfg).addTo(nav.map);
+  }
+
+  function renderApps(list) {
+    const grid = $("#appsGrid");
+    const tiles = list.map((a) => {
+      const sub = a.kind === "nav" ? "mapa e GPS" : a.kind === "browser" ? "navegador embutido" : hostOf(a.url);
+      const del = BUILTIN.has(a.id) && a.kind === "nav" ? "" :
+        `<button class="app-del" data-del="${esc(a.id)}" title="remover">✕</button>`;
+      return `<div class="app-tile" data-app="${esc(a.id)}">
+        <div class="app-icon" style="background:${esc(a.color || "#4aa8ff")}">${appIcon(a.icon)}</div>
+        <b>${esc(a.name)}</b><small>${esc(sub)}</small>${del}
+      </div>`;
+    }).join("");
+    grid.innerHTML = tiles || '<div class="empty">nenhum aplicativo cadastrado</div>';
+  }
+
+  function openApp(a) {
+    if (!a) return;
+    if (a.kind === "nav" || a.url === "nav") { setPage("nav"); return; }
+    if (a.kind === "web") {
+      try { window.open(a.url, "_blank", "noopener"); } catch (e) { window.location.href = a.url; }
+      return;
+    }
+    $("#appTitle").textContent = a.name;
+    const frame = $("#appFrame");
+    frame.src = a.url;
+    $("#appOverlay").hidden = false;
+    nav.follow = false;
+    frame.onload = () => {};
+    clearTimeout(openApp._t);
+    openApp._t = setTimeout(() => {
+      if (!$("#appOverlay").hidden) toast("Se o app não aparecer, use ↗ para abrir em outra aba");
+    }, 3500);
+  }
+  function closeOverlay() {
+    const frame = $("#appFrame");
+    $("#appOverlay").hidden = true;
+    frame.src = "about:blank";
+    clearTimeout(openApp._t);
+  }
+  function toast(text) {
+    const t = document.createElement("div");
+    t.className = "toast";
+    t.innerHTML = `<b>${esc(text)}</b>`;
+    $("#toasts").appendChild(t);
+    setTimeout(() => { t.classList.add("gone"); setTimeout(() => t.remove(), 400); }, 4500);
+  }
+
+  function openAppModal() {
+    $("#appName").value = "";
+    $("#appUrl").value = "";
+    $("#appIcon").value = "";
+    $("#appColor").value = "#4aa8ff";
+    $("#appKind").value = "embed";
+    $("#appFormInfo").textContent = "";
+    $("#appModal").hidden = false;
+    $("#appName").focus();
+  }
+  function closeAppModal() { $("#appModal").hidden = true; }
+
+  function saveApp() {
+    const name = $("#appName").value.trim();
+    const url = $("#appUrl").value.trim();
+    if (!name || !url) { $("#appFormInfo").textContent = "informe nome e URL"; return; }
+    api("/api/apps", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name, url,
+        icon: $("#appIcon").value.trim() || "🌐",
+        color: $("#appColor").value || "#4aa8ff",
+        kind: $("#appKind").value,
+      }),
+    }).then(() => { closeAppModal(); loadApps(); })
+      .catch(() => { $("#appFormInfo").textContent = "falha ao salvar"; });
+  }
+
+  $("#appsGrid").addEventListener("click", (ev) => {
+    const del = ev.target.closest("[data-del]");
+    if (del) {
+      const id = del.dataset.del;
+      api("/api/apps/" + encodeURIComponent(id), { method: "DELETE" })
+        .then(() => loadApps()).catch(() => {});
+      return;
+    }
+    const tile = ev.target.closest("[data-app]");
+    if (tile && ctx.appsCache) openApp(ctx.appsCache.find((a) => a.id === tile.dataset.app));
+  });
+
+  $("#btnAddApp").addEventListener("click", openAppModal);
+  $("#appSave").addEventListener("click", saveApp);
+  $("#appCancel").addEventListener("click", closeAppModal);
+  $("#appClose").addEventListener("click", closeOverlay);
+  $("#appReload").addEventListener("click", () => {
+    const frame = $("#appFrame");
+    frame.src = frame.src;
+  });
+  $("#appExt").addEventListener("click", () => {
+    try { window.open($("#appFrame").src, "_blank", "noopener"); } catch (e) {}
+  });
+  $("#navSearch").addEventListener("keydown", (e) => { if (e.key === "Enter") navSearch(); });
+  $("#btnNavRoute").addEventListener("click", navRoute);
+  $("#btnNavCenter").addEventListener("click", () => {
+    nav.follow = true;
+    if (nav.marker && nav.map) nav.map.setView(nav.marker.getLatLng(), 16);
+  });
+
+  async function startup() {
+    connect();
+    renderClimate();
+    try {
+      const { settings } = await api("/api/settings");
+      ctx.settings = settings;
+      applyTheme(settings["ui.theme"] || "auto");
+      applyBrightness(Number(settings["ui.brightness"]) || 100);
+      const bootAnim = settings["ui.boot_animation"] !== false;
+      bootSub.textContent = "verificando sensores";
+      setTimeout(() => {
+        boot.classList.add("is-done");
+        app.classList.remove("is-hidden");
+        requestAnimationFrame(frame);
+      }, bootAnim ? 1900 : 200);
+    } catch (e) {
+      bootSub.textContent = "servidor indisponível";
+      setTimeout(() => {
+        boot.classList.add("is-done");
+        app.classList.remove("is-hidden");
+        requestAnimationFrame(frame);
+      }, 1200);
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+    setInterval(() => { if (ctx.page === "energy") loadChart(); }, 5000);
+  }
+
+  document.addEventListener("keydown", (e) => {
+    const tag = (e.target && e.target.tagName) || "";
+    if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+    if (e.key === "Escape") { closeOverlay(); closeAppModal(); return; }
+    const i = PAGES.indexOf(ctx.page);
+    if (e.key === "ArrowRight") setPage(PAGES[Math.min(PAGES.length - 1, i + 1)]);
+    if (e.key === "ArrowLeft") setPage(PAGES[Math.max(0, i - 1)]);
+    if (e.key === "d" && ctx.data) send({ type: "cmd", cmd: "ack_all" });
+  });
+
+  startup();
+})();

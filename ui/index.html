@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#05070b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>OpenDash</title>
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23e82127'/><path d='M9 22 16 9l7 13' stroke='white' stroke-width='3' fill='none' stroke-linejoin='round'/></svg>">
+</head>
+<body>
+
+<div id="boot" class="boot">
+  <div class="boot-logo">
+    <svg viewBox="0 0 120 80"><path d="M8 66 60 8l52 58" fill="none" stroke="currentColor" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/></svg>
+  </div>
+  <div class="boot-name">OpenDash</div>
+  <div class="boot-bar"><span></span></div>
+  <div class="boot-sub" id="bootSub">iniciando sistema</div>
+</div>
+
+<div id="app" class="app is-hidden">
+
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 120 80" class="brand-mark"><path d="M8 66 60 8l52 58" fill="none" stroke="currentColor" stroke-width="11" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      <span class="brand-name" data-bind="car.name">OpenDash</span>
+    </div>
+    <div class="warn-strip" id="warnStrip"></div>
+    <div class="top-right">
+      <button class="pill pill-link" id="linkPill" data-page-go="diag">
+        <i class="dot"></i><span id="linkText">conectando</span>
+      </button>
+      <div class="pill pill-env"><span data-bind="iat" data-fmt="temp">--</span></div>
+      <div class="pill pill-clock"><b id="clock">--:--</b><small id="date">--/--</small></div>
+    </div>
+  </header>
+
+  <main class="pages">
+
+    <section class="page is-active" data-page="drive">
+      <div class="cluster">
+
+        <aside class="rail rail-left">
+          <div class="turn-row">
+            <div class="turn turn-l" id="turnLeft">
+              <svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="turn turn-r" id="turnRight">
+              <svg viewBox="0 0 24 24"><path d="M9 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>
+
+          <div class="chips" id="statusChips">
+            <div class="chip" data-flag="hl">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M6 6l1.5 1.5M16.5 16.5 18 18M18 6l-1.5 1.5M7.5 16.5 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <span>Farol</span>
+            </div>
+            <div class="chip" data-flag="hb">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <span>Alto</span>
+            </div>
+            <div class="chip" data-flag="hz">
+              <svg viewBox="0 0 24 24"><path d="M12 3 2 20h20L12 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v5M12 16.5v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <span>Pisca</span>
+            </div>
+            <div class="chip" data-flag="brk">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 7h2.4a2.4 2.4 0 0 1 0 4.8H10V7zm0 4.8V17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <span>Freio</span>
+            </div>
+            <div class="chip" data-flag="sbl">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M6 21v-4l6-4 6 4v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+              <span>Cinto</span>
+            </div>
+            <div class="chip" data-flag="door">
+              <svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="16" cy="12" r="1.3" fill="currentColor"/></svg>
+              <span>Porta</span>
+            </div>
+            <div class="chip" data-flag="mil">
+              <svg viewBox="0 0 24 24"><path d="M4 17h16M5 17v-5l2-1 2-4h4l2 3h3v7" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="9" cy="18.5" r="1.6" fill="currentColor"/></svg>
+              <span>Motor</span>
+            </div>
+          </div>
+
+          <div class="fuel card">
+            <div class="vbar">
+              <div class="vbar-fill" id="fuelFill"></div>
+              <div class="vbar-ticks"></div>
+            </div>
+            <div class="fuel-meta">
+              <b id="fuelPct">--</b><span>%</span>
+              <small id="fuelL">-- L</small>
+              <small class="muted" id="rangeTxt">-- km</small>
+            </div>
+          </div>
+        </aside>
+
+        <div class="center">
+          <div class="speed-wrap">
+            <svg class="speed-svg" id="speedGauge" viewBox="0 0 320 320"></svg>
+            <div class="speed-readout">
+              <div class="speed-value" id="speedValue">0</div>
+              <div class="speed-unit" id="speedUnit">km/h</div>
+              <div class="gear-badge" id="gear">P</div>
+            </div>
+          </div>
+          <div class="odo-row">
+            <div class="odo"><small>Autonomia</small><b id="odoRange">--</b></div>
+            <div class="odo"><small>Odômetro</small><b id="odoTotal">--</b></div>
+            <div class="odo"><small>Viagem</small><b id="odoTrip">--</b></div>
+          </div>
+        </div>
+
+        <aside class="rail rail-right">
+          <div class="card rpm-card">
+            <div class="card-head"><span>Rotação</span><b id="rpmValue">0</b><small>rpm</small></div>
+            <div class="segs" id="rpmSegs"></div>
+            <div class="bar"><span class="bar-label">acelerador</span><div class="bar-track"><div class="bar-fill" id="throttleBar"></div></div></div>
+          </div>
+
+          <div class="mini-grid">
+            <div class="card mini" id="miniCoolant">
+              <svg class="mini-svg" data-gauge="coolant" data-min="40" data-max="130" data-color="amber"></svg>
+              <div class="mini-val"><b data-bind="coolant" data-fmt="temp">--</b></div>
+              <div class="mini-label">Água</div>
+            </div>
+            <div class="card mini" id="miniOil">
+              <svg class="mini-svg" data-gauge="oilp" data-min="0" data-max="100" data-color="blue"></svg>
+              <div class="mini-val"><b id="oilVal">--</b><small id="oilUnit">psi</small></div>
+              <div class="mini-label">Óleo</div>
+            </div>
+            <div class="card mini" id="miniBatt">
+              <svg class="mini-svg" data-gauge="batt" data-min="10" data-max="16" data-color="green"></svg>
+              <div class="mini-val"><b data-bind="volt" data-fmt="v1">--</b></div>
+              <div class="mini-label">Bateria</div>
+            </div>
+            <div class="card mini" id="miniLoad">
+              <svg class="mini-svg" data-gauge="load" data-min="0" data-max="100" data-color="cyan"></svg>
+              <div class="mini-val"><b data-bind="load" data-fmt="pct">--</b></div>
+              <div class="mini-label">Carga</div>
+            </div>
+          </div>
+
+          <div class="card media-mini" data-page-go="media">
+            <div class="media-art" id="miniArt">♪</div>
+            <div class="media-info">
+              <b id="miniTitle">Rádio</b>
+              <small id="miniArtist">sintonize a viagem</small>
+            </div>
+            <button class="transport" id="miniPlay" aria-label="play">
+              <svg viewBox="0 0 24 24"><path id="miniPlayPath" d="M8 5v14l11-7z" fill="currentColor"/></svg>
+            </button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="page" data-page="energy">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Nível de combustível</div>
+          <div class="energy-level">
+            <div class="tank">
+              <div class="tank-fill" id="tankFill"></div>
+            </div>
+            <div class="energy-figures">
+              <b id="energyPct">--</b><span>%</span>
+              <small id="energyLiters">-- L</small>
+              <small class="muted" id="energyRange">-- km de autonomia</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Consumo instantâneo</div>
+          <div class="big-stat"><b id="consNow">--</b><small>L/100 km</small></div>
+          <div class="stat-row">
+            <div><small>Média da viagem</small><b id="consTrip">--</b></div>
+            <div><small>Litros usados</small><b id="consLiters">--</b></div>
+          </div>
+        </div>
+
+        <div class="card span-2">
+          <div class="card-title">Últimos 15 minutos</div>
+          <canvas id="historyChart" class="chart"></canvas>
+          <div class="legend"><span><i class="sw speed"></i>Velocidade (km/h)</span><span><i class="sw coolant"></i>Água (°C)</span><span><i class="sw fuel"></i>Combustível (%)</span></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Viagem atual</div>
+          <div class="stat-grid">
+            <div><small>Distância</small><b id="tDist">--</b></div>
+            <div><small>Tempo</small><b id="tTime">--</b></div>
+            <div><small>Vel. média</small><b id="tAvg">--</b></div>
+            <div><small>Vel. máxima</small><b id="tMax">--</b></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Histórico de viagens</div>
+          <div class="trip-list" id="tripList"><div class="empty">sem viagens registradas</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" data-page="media">
+      <div class="media-layout">
+        <div class="card media-main">
+          <div class="cover" id="cover">♪</div>
+          <div class="media-now">
+            <small>tocando agora</small>
+            <h2 id="mediaTitle">Rádio FM</h2>
+            <p id="mediaArtist">OpenDash Player</p>
+          </div>
+          <div class="progress"><div class="progress-fill" id="mediaProgress"></div></div>
+          <div class="transport-row">
+            <button class="tbtn" id="btnPrev"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zm12 0v14l-9-7z" fill="currentColor"/></svg></button>
+            <button class="tbtn tbtn-main" id="btnPlay"><svg viewBox="0 0 24 24"><path id="playPath" d="M8 5v14l11-7z" fill="currentColor"/></svg></button>
+            <button class="tbtn" id="btnNext"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM6 5l9 7-9 7z" fill="currentColor"/></svg></button>
+          </div>
+          <div class="volume">
+            <svg viewBox="0 0 24 24"><path d="M5 9v6h3l5 4V5L8 9H5z" fill="currentColor"/><path d="M16 9a4 4 0 0 1 0 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <input type="range" id="volume" min="0" max="100" value="35">
+            <b id="volVal">35</b>
+          </div>
+        </div>
+        <div class="card sources">
+          <div class="card-title">Fontes</div>
+          <button class="source is-active" data-source="Rádio FM">Rádio FM</button>
+          <button class="source" data-source="Bluetooth">Bluetooth</button>
+          <button class="source" data-source="USB">USB</button>
+          <button class="source" data-source="Auxiliar">Auxiliar</button>
+          <div class="hint">a reprodução de mídia é um mock de interface — conecte o player real via API quando quiser</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" data-page="nav">
+      <div class="nav-layout">
+        <div class="card nav-map-card">
+          <div id="map" class="map"></div>
+          <div class="nav-hud">
+            <div class="nav-badge" id="navFix"><i class="dot"></i><span id="navFixText">sem sinal</span></div>
+            <div class="nav-coords">
+              <div><b id="navLat">--</b><small>latitude</small></div>
+              <div><b id="navLon">--</b><small>longitude</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="nav-side">
+          <div class="card">
+            <div class="card-title">Navegação · GPS</div>
+            <div class="nav-stats">
+              <div><small>Vel. GPS</small><b id="navSpeed">--</b></div>
+              <div><small>Rumo</small><b id="navHeading">--</b></div>
+              <div><small>Satélites</small><b id="navSats">--</b></div>
+              <div><small>Altitude</small><b id="navAlt">--</b></div>
+              <div><small>HDOP</small><b id="navHdop">--</b></div>
+              <div><small>Fonte</small><b id="navSrc">--</b></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Destino</div>
+            <label class="field">Buscar endereço
+              <input type="text" id="navSearch" placeholder="rua, cidade ou coordenadas">
+            </label>
+            <div class="btn-row">
+              <button class="btn" id="btnNavRoute">Traçar rota</button>
+              <button class="btn btn-ghost" id="btnNavCenter">Centralizar</button>
+            </div>
+            <div class="nav-route-info" id="navRouteInfo">busca e rota via OpenStreetMap (requer internet)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" data-page="apps">
+      <div class="apps-head">
+        <div class="card-title">Aplicativos</div>
+        <button class="btn" id="btnAddApp">+ Adicionar app</button>
+      </div>
+      <div class="apps-grid" id="appsGrid"></div>
+      <div class="apps-foot hint">Apps são páginas web incorporadas — não é possível instalar aplicativos nativos. Use o botão “Adicionar app” para cadastrar seus próprios serviços.</div>
+    </section>
+
+    <section class="page" data-page="climate">
+      <div class="climate-layout">
+        <div class="card climate-main">
+          <div class="card-title">Climatização · saídas por relé</div>
+          <div class="climate-temp">
+            <button class="round" id="tempDown">−</button>
+            <div class="climate-figure"><b id="climateTemp">22</b><small>°C</small></div>
+            <button class="round" id="tempUp">+</button>
+          </div>
+          <div class="climate-side">
+            <button class="toggle" id="acToggle"><span>Ar-condicionado</span><b>OFF</b></button>
+            <button class="toggle" id="defrostToggle"><span>Desembaçador</span><b>OFF</b></button>
+            <button class="toggle" id="recircToggle"><span>Recirculação</span><b>OFF</b></button>
+          </div>
+        </div>
+        <div class="card fan-card">
+          <div class="card-title">Ventilador</div>
+          <div class="fan-steps" id="fanSteps">
+            <button data-fan="0">0</button>
+            <button data-fan="1">1</button>
+            <button data-fan="2">2</button>
+            <button data-fan="3">3</button>
+            <button data-fan="4">4</button>
+          </div>
+          <div class="hint">comandos enviados ao Arduino (relés nas saídas configuradas)</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" data-page="diag">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Injeção eletrônica</div>
+          <div class="diag-status">
+            <div class="mil-badge" id="milBadge">OK</div>
+            <div>
+              <b id="diagConn">--</b>
+              <small id="diagPort">--</small>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn" id="btnDtcRead">Ler códigos</button>
+            <button class="btn btn-ghost" id="btnDtcClear">Apagar códigos</button>
+            <button class="btn btn-ghost" id="btnSimDtc">Simular falha</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Códigos de falha</div>
+          <div class="dtc-list" id="dtcList"><div class="empty">nenhum código ativo</div></div>
+        </div>
+
+        <div class="card span-2">
+          <div class="card-title">Sensores em tempo real</div>
+          <div class="pid-grid" id="pidGrid"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" data-page="settings">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Unidades</div>
+          <label class="field">Velocidade
+            <select data-setting="units.speed"><option value="kmh">km/h</option><option value="mph">mph</option></select>
+          </label>
+          <label class="field">Temperatura
+            <select data-setting="units.temp"><option value="c">°C</option><option value="f">°F</option></select>
+          </label>
+          <label class="field">Volume
+            <select data-setting="units.volume"><option value="l">litros</option><option value="gal">galões</option></select>
+          </label>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Veículo</div>
+          <label class="field">Nome <input type="text" data-setting="car.name" maxlength="24"></label>
+          <label class="field">Tanque (L) <input type="number" data-setting="trip.fuel_capacity_l" step="0.5" min="5"></label>
+          <label class="field">Consumo nominal (L/100) <input type="number" data-setting="trip.consumption_l100" step="0.1" min="1"></label>
+          <label class="field">Odômetro (km) <input type="number" data-setting="trip.odometer_km" step="1" min="0"></label>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Interface</div>
+          <label class="field">Tema
+            <select data-setting="ui.theme"><option value="auto">automático</option><option value="dark">escuro</option><option value="light">claro</option></select>
+          </label>
+          <label class="field">Brilho <input type="range" data-setting="ui.brightness" min="20" max="100"></label>
+          <label class="switch"><input type="checkbox" data-setting="ui.boot_animation"><span></span>Animação de boot</label>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Conexão e modo</div>
+          <label class="switch"><input type="checkbox" data-setting="simulation.enabled"><span></span>Modo simulação (bancada)</label>
+          <label class="switch"><input type="checkbox" data-setting="serial.enabled"><span></span>Ler Arduino pela serial</label>
+          <label class="field">Porta serial <input type="text" data-setting="serial.port"></label>
+          <label class="field">Baud <input type="number" data-setting="serial.baud" step="1"></label>
+          <div class="btn-row">
+            <button class="btn btn-ghost" id="btnReboot">Reiniciar Orange Pi</button>
+            <button class="btn btn-ghost" id="btnShutdown">Desligar</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">GPS</div>
+          <label class="switch"><input type="checkbox" data-setting="gps.enabled"><span></span>GPS habilitado</label>
+          <label class="field">Fonte
+            <select data-setting="gps.source">
+              <option value="auto">automático</option>
+              <option value="arduino">Arduino (Serial1)</option>
+              <option value="usb">USB no Orange Pi</option>
+              <option value="off">desligado</option>
+            </select>
+          </label>
+          <label class="field">Porta <input type="text" data-setting="gps.port" placeholder="auto"></label>
+          <label class="field">Baud <input type="number" data-setting="gps.baud" step="1"></label>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Mapas</div>
+          <label class="field">Provedor
+            <select data-setting="maps.provider">
+              <option value="osm">OpenStreetMap</option>
+              <option value="google">Google</option>
+            </select>
+          </label>
+          <label class="field">URL dos tiles <input type="text" data-setting="maps.tile_url" placeholder="https://.../{z}/{x}/{y}.png"></label>
+          <label class="field">Chave Google (opcional) <input type="text" data-setting="maps.google_key" placeholder="AIza..."></label>
+          <div class="hint">OpenStreetMap é gratuito. Google usa tiles públicos sem chave por padrão; informe a chave para o modo oficial.</div>
+        </div>
+
+        <div class="card span-2">
+          <div class="card-title">Sistema</div>
+          <div class="sys-grid" id="sysGrid"></div>
+          <div class="btn-row">
+            <button class="btn" id="btnSave">Salvar ajustes</button>
+            <span id="saveInfo" class="muted"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <nav class="tabbar" id="tabbar">
+    <button class="tab is-active" data-page-go="drive">
+      <svg viewBox="0 0 24 24"><path d="M12 13a5 5 0 1 1 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 12l4-3M4 17h16M6 17l1-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>Painel</span>
+    </button>
+    <button class="tab" data-page-go="energy">
+      <svg viewBox="0 0 24 24"><path d="M4 17c2-1 4-1 6 0s4 1 6 0 2-1 4 0M5 13l3-4h3l2 4M4 20h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Energia</span>
+    </button>
+    <button class="tab" data-page-go="nav">
+      <svg viewBox="0 0 24 24"><path d="M12 2 4 21l8-4 8 4-8-19z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      <span>Navegação</span>
+    </button>
+    <button class="tab" data-page-go="media">
+      <svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="7" cy="18" r="2.4" fill="currentColor"/><circle cx="17" cy="16" r="2.4" fill="currentColor"/></svg>
+      <span>Mídia</span>
+    </button>
+    <button class="tab" data-page-go="apps">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      <span>Apps</span>
+    </button>
+    <button class="tab" data-page-go="climate">
+      <svg viewBox="0 0 24 24"><path d="M12 3v18M5 7l14 10M19 7 5 17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>Clima</span>
+    </button>
+    <button class="tab" data-page-go="diag">
+      <svg viewBox="0 0 24 24"><path d="M9 3v4M15 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="4" y="7" width="16" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="m8 13 2 2 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Diagnóstico</span>
+    </button>
+    <button class="tab" data-page-go="settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>Ajustes</span>
+    </button>
+  </nav>
+
+  <div class="toasts" id="toasts"></div>
+
+  <div class="app-overlay" id="appOverlay" hidden>
+    <div class="app-bar">
+      <button class="app-ico-btn" id="appClose" title="fechar">✕</button>
+      <b id="appTitle">App</b>
+      <div class="app-bar-spacer"></div>
+      <button class="app-ico-btn" id="appReload" title="recarregar">⟳</button>
+      <button class="app-ico-btn" id="appExt" title="abrir em nova aba">↗</button>
+    </div>
+    <iframe id="appFrame" class="app-frame"
+      allow="autoplay; encrypted-media; clipboard-write; fullscreen"
+      referrerpolicy="no-referrer"></iframe>
+  </div>
+
+  <div class="modal" id="appModal" hidden>
+    <div class="modal-card card">
+      <div class="card-title">Adicionar aplicativo</div>
+      <label class="field">Nome <input type="text" id="appName" maxlength="40" placeholder="Ex: Waze"></label>
+      <label class="field">URL / endereço <input type="text" id="appUrl" placeholder="https://..."></label>
+      <div class="modal-2col">
+        <label class="field">Ícone (emoji) <input type="text" id="appIcon" maxlength="4" placeholder="🌐"></label>
+        <label class="field">Cor <input type="color" id="appColor" value="#4aa8ff"></label>
+      </div>
+      <label class="field">Tipo
+        <select id="appKind">
+          <option value="embed">Incorporar (embed)</option>
+          <option value="browser">Navegador embutido</option>
+          <option value="web">Abrir em nova aba</option>
+        </select>
+      </label>
+      <div class="btn-row">
+        <button class="btn" id="appSave">Salvar</button>
+        <button class="btn btn-ghost" id="appCancel">Cancelar</button>
+        <span class="muted" id="appFormInfo"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="js/gauges.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

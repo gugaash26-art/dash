@@ -1,0 +1,2 @@
+# Dependencias apenas para gerar o video-tutorial (nao fazem parte do servidor)
+edge-tts>=7.0

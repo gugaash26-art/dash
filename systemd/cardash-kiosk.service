@@ -1,0 +1,17 @@
+[Unit]
+Description=OpenDash Kiosk (navegador em tela cheia)
+After=graphical.target cardash.service
+Wants=cardash.service
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__DIR__
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/__USER__/.Xauthority
+ExecStart=__DIR__/kiosk/kiosk.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target

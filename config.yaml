@@ -1,0 +1,83 @@
+server:
+  host: 0.0.0.0
+  port: 8080
+
+serial:
+  enabled: true
+  auto_detect: true
+  port: /dev/ttyUSB0
+  baud: 115200
+  candidates:
+    - /dev/ttyUSB0
+    - /dev/ttyACM0
+    - /dev/ttyAMA0
+    - /dev/ttyS4
+  reconnect_s: 2.0
+
+simulation:
+  enabled: false
+  drive: false
+
+rates:
+  broadcast_hz: 10
+  log_hz: 1
+
+units:
+  speed: kmh
+  temp: c
+  pressure: psi
+  volume: l
+
+thresholds:
+  coolant_warn_c: 100
+  coolant_crit_c: 106
+  volt_warn_v: 12.2
+  volt_crit_v: 11.8
+  fuel_warn_pct: 12
+  oil_warn_psi: 25
+  oil_crit_psi: 15
+  rpm_warn: 5800
+  speed_warn: 0
+
+trip:
+  fuel_capacity_l: 55
+  consumption_l100: 8.5
+  odometer_km: 0
+  idle_lh: 0.9
+
+car:
+  name: OpenDash
+  model: Projetor
+  engine: 2.0
+
+gps:
+  enabled: true
+  source: auto          # auto | arduino | usb | off
+  port: ""              # vazio = auto-detectar (USB no Orange Pi)
+  baud: 9600
+  candidates:
+    - /dev/ttyACM0
+    - /dev/ttyACM1
+    - /dev/ttyUSB1
+    - /dev/gps
+    - /dev/serial0
+  reconnect_s: 3.0
+  track_minutes: 180
+
+maps:
+  provider: osm         # osm | google
+  tile_url: https://tile.openstreetmap.org/{z}/{x}/{y}.png
+  google_key: ""
+  zoom: 16
+
+apps:
+  seed_defaults: true
+
+paths:
+  data_dir: /car-dash/data
+  db: /car-dash/data/cardash.db
+
+ui:
+  boot_animation: true
+  theme: auto
+  brightness: 100
