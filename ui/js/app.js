@@ -131,7 +131,8 @@
     $$(".page").forEach((p) => p.classList.toggle("is-active", p.dataset.page === name));
     $$(".tab").forEach((t) => t.classList.toggle("is-active", t.dataset.pageGo === name));
     if (name === "energy") { loadTrips(); loadChart(true); }
-    if (name === "settings") { loadSettings(); loadSystem(); loadNetwork(); loadUpdate(); }
+    if (name === "settings") { loadSettings(); loadSystem(); loadNetwork(); loadUpdate(); loadScreens(); }
+    if (name === "media") { loadWallpaper(); }
     if (name === "diag") { loadDtcs(); }
     if (name === "nav") initNav();
     if (name === "apps") loadApps();
@@ -845,6 +846,181 @@
   if ($("#updateCheck")) $("#updateCheck").addEventListener("click", updateCheck);
   if ($("#updateInstall")) $("#updateInstall").addEventListener("click", updateInstall);
 
+  // ---------------------------------------------------------- Telas (HDMI)
+  async function netPostSafe(path, body) {
+    const res = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body || {}),
+    });
+    let data = {};
+    try { data = await res.json(); } catch (e) { data = {}; }
+    if (!res.ok) return Object.assign({ ok: false, error: data.error || ("erro " + res.status) }, data);
+    return data;
+  }
+
+  function fillScreensSelect(sel, outputs, chosen) {
+    if (!sel) return;
+    const opts = ['<option value="">— automático —</option>'];
+    outputs.forEach((o) => {
+      opts.push(`<option value="${esc(o.name)}">${esc(o.name)} · ${esc(o.resolution)}</option>`);
+    });
+    sel.innerHTML = opts.join("");
+    sel.value = chosen || "";
+    if (sel.value !== (chosen || "")) sel.value = "";
+  }
+
+  function loadScreens() {
+    api("/api/screens").then(renderScreens).catch(() => {});
+  }
+
+  function renderScreens(s) {
+    const st = $("#screensStatus");
+    const list = $("#screensList");
+    if (!st || !list) return;
+    ctx.screens = s;
+    const apply = $("#screensApply");
+    if (!s || !s.available) {
+      st.textContent = (s && s.reason) || "indisponível";
+      st.className = "net-status warn";
+      list.innerHTML = `<div class="empty">${esc((s && s.reason) || "não foi possível detectar monitores")}</div>`;
+      if (apply) apply.disabled = true;
+      return;
+    }
+    if (apply) apply.disabled = false;
+    const outputs = (s.outputs || []).filter((o) => o.connected);
+    st.textContent = outputs.length ? outputs.length + " monitor(es) detectado(s)" : "nenhum monitor";
+    st.className = "net-status" + (outputs.length ? " ok" : "");
+    const a = s.assignment || {};
+    fillScreensSelect($("#screenMain"), outputs, a.main);
+    fillScreensSelect($("#screenBar"), outputs, a.bar);
+    const arrange = $("#screensArrange");
+    if (arrange) arrange.checked = !!a.arrange;
+    if (!outputs.length) {
+      list.innerHTML = '<div class="empty">nenhum monitor conectado</div>';
+      return;
+    }
+    list.innerHTML = outputs.map((o) => {
+      const role = o.name === a.main ? "painel" : o.name === a.bar ? "cluster" : "";
+      const pos = o.geometry ? " · " + o.geometry.x + "," + o.geometry.y : "";
+      return `<div class="scr-row">
+        <span class="net-ico">🖥</span>
+        <span class="info"><b>${esc(o.name)}</b><small>${esc(o.resolution)}${pos}</small></span>
+        ${o.primary ? '<span class="net-badge on">principal</span>' : ""}
+        ${role ? `<span class="net-badge on">${role}</span>` : ""}
+      </div>`;
+    }).join("");
+  }
+
+  async function screensApply() {
+    const b = $("#screensApply");
+    if (b) { b.disabled = true; b.textContent = "aplicando..."; }
+    try {
+      const r = await netPostSafe("/api/screens", {
+        main: ($("#screenMain") || {}).value || "",
+        bar: ($("#screenBar") || {}).value || "",
+        arrange: !!($("#screensArrange") && $("#screensArrange").checked),
+        enabled: true,
+      });
+      if (r.ok) {
+        const msgs = r.messages || [];
+        if (msgs.length) msgs.forEach((m, i) => setTimeout(() => toast(m), i * 400));
+        else toast("telas atualizadas");
+        renderScreens(r);
+      } else {
+        toast(r.error || "falha ao aplicar telas");
+      }
+    } catch (e) { toast("falha ao aplicar telas"); }
+    if (b) { b.disabled = false; b.textContent = "Aplicar e reiniciar"; }
+  }
+
+  if ($("#screensDetect")) $("#screensDetect").addEventListener("click", loadScreens);
+  if ($("#screensApply")) $("#screensApply").addEventListener("click", screensApply);
+
+  // ---------------------------------------------------------- Papel de parede
+  const WP_HINT = "A imagem vira o fundo da página Mídia. Formatos: PNG, JPG, WEBP, GIF, BMP (até 8 MB).";
+
+  function loadWallpaper() {
+    api("/api/media").then((m) => {
+      ctx.wallpaper = m.wallpaper || "";
+      applyWallpaper(ctx.wallpaper, m.fit);
+      renderWallpaperPreview(ctx.wallpaper);
+    }).catch(() => {});
+  }
+
+  function applyWallpaper(url, fit) {
+    const page = document.querySelector('.page[data-page="media"]');
+    if (!page) return;
+    if (url) {
+      page.style.setProperty("--wp", `url("${url}")`);
+      page.style.setProperty("--wp-fit", fit || "cover");
+    } else {
+      page.style.removeProperty("--wp");
+      page.style.removeProperty("--wp-fit");
+    }
+  }
+
+  function renderWallpaperPreview(url) {
+    const p = $("#wpPreview");
+    const input = $("#wpUrl");
+    if (input) input.value = (url && url.indexOf("http") === 0) ? url : "";
+    if (!p) return;
+    if (url) { p.style.backgroundImage = `url("${url}")`; p.classList.add("has-image"); }
+    else { p.style.backgroundImage = ""; p.classList.remove("has-image"); }
+  }
+
+  async function wallpaperUseUrl() {
+    const info = $("#wpInfo");
+    const url = (($("#wpUrl") || {}).value || "").trim();
+    if (info) info.textContent = "aplicando...";
+    const r = await netPostSafe("/api/media/wallpaper", { url });
+    if (r.ok) {
+      applyWallpaper(r.wallpaper, r.fit);
+      renderWallpaperPreview(r.wallpaper);
+      toast(r.wallpaper ? "papel de parede aplicado" : "papel de parede removido");
+      if (info) info.textContent = WP_HINT;
+    } else {
+      toast(r.error || "falha ao aplicar papel de parede");
+      if (info) info.textContent = r.error || "";
+    }
+  }
+
+  async function wallpaperUpload(file) {
+    const info = $("#wpInfo");
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) { toast("imagem muito grande (máx 8 MB)"); return; }
+    if (info) info.textContent = "enviando imagem...";
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const r = await netPostSafe("/api/media/wallpaper", { data: reader.result });
+      if (r.ok) {
+        const bust = r.wallpaper + (r.wallpaper.indexOf("http") === 0 ? "" : "?t=" + Date.now());
+        applyWallpaper(bust, r.fit);
+        renderWallpaperPreview(bust);
+        toast("papel de parede aplicado");
+        if (info) info.textContent = WP_HINT;
+      } else {
+        toast(r.error || "falha ao enviar imagem");
+        if (info) info.textContent = r.error || "";
+      }
+    };
+    reader.onerror = () => toast("falha ao ler a imagem");
+    reader.readAsDataURL(file);
+  }
+
+  async function wallpaperClear() {
+    const r = await netPostSafe("/api/media/wallpaper", { clear: true });
+    if (r.ok) { applyWallpaper(""); renderWallpaperPreview(""); toast("papel de parede removido"); }
+    else toast(r.error || "falha ao remover papel de parede");
+  }
+
+  if ($("#wpUse")) $("#wpUse").addEventListener("click", wallpaperUseUrl);
+  if ($("#wpClear")) $("#wpClear").addEventListener("click", wallpaperClear);
+  if ($("#wpFile")) $("#wpFile").addEventListener("change", (e) => {
+    wallpaperUpload(e.target.files && e.target.files[0]);
+    e.target.value = "";
+  });
+
   $("#btnDtcRead").addEventListener("click", () => send({ type: "cmd", cmd: "dtc_read" }));
   $("#btnDtcClear").addEventListener("click", () => {
     send({ type: "cmd", cmd: "dtc_clear" });
@@ -1392,6 +1568,7 @@
     renderClimate();
     loadApps();
     refreshAgentStatus();
+    loadWallpaper();
     try {
       const { settings } = await api("/api/settings");
       ctx.settings = settings;

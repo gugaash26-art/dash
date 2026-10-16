@@ -10,8 +10,9 @@ WorkingDirectory=__DIR__
 Environment=DISPLAY=:0
 Environment=XAUTHORITY=/home/__USER__/.Xauthority
 Environment=CARDASH_SCREEN=full
-Environment=CARDASH_WINDOW_SIZE=__TOUCH_SIZE__
-Environment=CARDASH_WINDOW_POS=__TOUCH_POS__
+Environment=CARDASH_TOUCH_SIZE=__TOUCH_SIZE__
+Environment=CARDASH_TOUCH_POS=__TOUCH_POS__
+EnvironmentFile=-__DIR__/data/screens.env
 ExecStart=__DIR__/kiosk/kiosk.sh
 Restart=always
 RestartSec=5

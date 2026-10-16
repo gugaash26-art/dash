@@ -32,6 +32,8 @@ tema escuro estilo Tesla, animações suaves e alertas em tempo real.
 
 **Mídia e Clima**
 - Player de interface (fontes: rádio/Bluetooth/USB/aux, progresso e volume)
+- **Papel de parede** da página Mídia: use uma **URL** ou **envie uma imagem** do
+  aparelho (PNG/JPG/WEBP/GIF/BMP, até 8 MB); a imagem fica salva e é restaurada sozinha
 - Climatização: velocidade do ventilador (0–4) e ar‑condicionado **enviam comandos
   reais ao Arduino**, que aciona os relés configurados
 
@@ -72,6 +74,12 @@ tema escuro estilo Tesla, animações suaves e alertas em tempo real.
 - Um botão em **Ajustes → Atualizações do sistema** verifica se você subiu commits
   novos no repositório, **baixa e instala** (`git pull` + dependências) e reinicia o painel
 - Verificação automática ao ligar e a cada algumas horas, com aviso no painel
+
+**Telas (monitores HDMI)**
+- Ao ligar um **HDMI**, o painel detecta os monitores (`xrandr`) em **Ajustes → Telas e
+  monitores** e deixa você **escolher o que vai em cada um**: painel principal e cluster em barra
+- Opcionalmente organiza sozinho (cluster à direita do painel) e grava a geometria em
+  `data/screens.env`, posicionando as janelas e reiniciando o kiosk
 
 **Ajustes**
 - Unidades (km/h↔mph, °C↔°F, L↔gal), tema claro/escuro/auto, brilho, animação de boot
@@ -269,8 +277,14 @@ Isso cria/ativa dois serviços systemd (`cardash-kiosk.service` e
 `./install.sh --kiosk` continua valendo. Também dá para abrir manualmente:
 
 ```bash
-CARDASH_SCREEN=bar CARDASH_WINDOW_SIZE=1920,480 CARDASH_WINDOW_POS=1024,0 ./kiosk/kiosk.sh
+CARDASH_SCREEN=bar CARDASH_BAR_SIZE=1920,480 CARDASH_BAR_POS=1024,0 ./kiosk/kiosk.sh
 ```
+
+**Escolher o monitor pela tela:** depois de instalar, abra **Ajustes → Telas e monitores
+(HDMI)**, toque em **Detectar** e escolha qual monitor recebe o **painel principal** e qual
+recebe o **cluster em barra**; marque *Organizar sozinho* se quiser o cluster à direita do
+painel. O servidor descobre a geometria com `xrandr`, grava `data/screens.env` e reinicia os
+serviços do kiosk. As janelas são posicionadas exatamente sobre cada monitor.
 
 > **Hardware:** duas saídas de vídeo dependem da placa — **RK3588 (Orange Pi 5)** tem
 > 2× HDMI; **H6 (Orange Pi 3)** costuma ter 1× HDMI (use um adaptador USB→HDMI ou uma
@@ -321,6 +335,15 @@ update:                                                  # atualização via Git
   check_hours: 6
   install_deps: true
   restart_command: ""                                    # vazio: systemctl restart cardash ou re-exec
+media:                                                   # papel de parede da página Mídia
+  wallpaper: ""                                          # URL externa ou /media/wallpaper (upload)
+  fit: cover                                             # cover | contain | fill
+screens:                                                 # escolha de monitores HDMI (seção 5)
+  enabled: false                                         # true após aplicar em Ajustes > Telas
+  main: HDMI-1                                           # saída xrandr do painel principal
+  bar: HDMI-2                                            # saída xrandr do cluster em barra
+  arrange: false                                         # organiza o cluster à direita do painel
+  display: ":0"                                          # servidor X usado para detectar monitores
 ```
 
 > **GPS.** Com `source: auto` o servidor usa o USB (se presente) e, senão, o GPS do
@@ -359,6 +382,11 @@ Variáveis de ambiente:
 | POST | `/api/bluetooth` | `{"action":"scan\|pair\|connect\|disconnect\|remove\|enable\|disable","mac":…}` |
 | GET | `/api/update` | versão atual, remoto e se há atualização |
 | POST | `/api/update` | `{"action":"check\|install\|restart","restart":true}` |
+| GET | `/api/media` | papel de parede atual da Mídia (`wallpaper`, `fit`) |
+| POST | `/api/media/wallpaper` | `{"url":"https://…"}`, `{"data":"data:image/…;base64,…"}` ou `{"clear":true}` |
+| GET | `/media/wallpaper` | serve a imagem de papel de parede enviada (upload) |
+| GET | `/api/screens` | monitores detectados (`xrandr`) + escolha atual painel/cluster |
+| POST | `/api/screens` | `{"main":"HDMI-1","bar":"HDMI-2","arrange":true,"enabled":true}` aplica e reinicia o kiosk |
 | GET | `/api/apps` | lista de apps + configuração de mapas |
 | POST | `/api/apps` | cria/atualiza app (`{name,url,icon,color,kind}`) |
 | DELETE | `/api/apps/{id}` | remove um app |
@@ -382,6 +410,8 @@ car-dash/
 │   ├── agent.py          assistente de voz (STT + IA + TTS + ações)
 │   ├── net.py            Wi-Fi (nmcli) e Bluetooth (bluetoothctl)
 │   ├── updater.py        atualização via Git (verificar/instalar/reiniciar)
+│   ├── screens.py        monitores HDMI (xrandr) + escolha painel/cluster
+│   ├── wallpaper.py      papel de parede da Mídia (URL ou upload)
 │   ├── sim.py            gerador de dados para bancada (inclui GPS)
 │   ├── alerts.py         regras de alerta
 │   ├── store.py          SQLite (amostras, viagens, DTC, ajustes, apps, rastro)
@@ -582,7 +612,7 @@ SQLite (`config.yaml` é o valor inicial).
 
 ---
 
-## 13. Wi‑Fi, Bluetooth e atualizações
+## 13. Wi‑Fi, Bluetooth, telas e atualizações
 
 ### Wi‑Fi e Bluetooth (tela Ajustes)
 
@@ -632,6 +662,29 @@ update:
 > Para repositório **privado**, configure a autenticação do Git no Orange Pi (um token no
 > remote: `https://usuario:TOKEN@github.com/usuario/repo.git`) ou use uma chave SSH — o
 > botão reaproveita as credenciais do próprio `git`.
+
+### Telas (monitores HDMI)
+
+Com dois monitores ligados (ex.: touch 1024×600 + barra 1920×480), abra **Ajustes → Telas e
+monitores (HDMI)**:
+
+- **Detectar** lista as saídas detectadas pelo `xrandr` (nome, resolução, posição, principal).
+- Escolha, nos seletores, a saída do **Painel principal** e a do **Cluster em barra**.
+- **Organizar sozinho** tenta colocar o cluster à direita do painel (`xrandr --right-of`).
+- **Aplicar e reiniciar** grava a geometria em `data/screens.env` (lida pelos serviços do
+  kiosk) e reinicia `cardash-kiosk.service` e `cardash-kiosk-bar.service`.
+
+Requisitos: ambiente **X11** com `xrandr` (`sudo apt-get install -y x11-xserver-utils`) e o
+kiosk instalado (`./install.sh --duo`). Sem `xrandr` o cartão apenas informa o que falta.
+
+### Papel de parede (Mídia)
+
+Na página **Mídia**, o cartão **Papel de parede** troca o fundo da página:
+
+- **Imagem por URL**: cole um endereço `http(s)` e toque em **Usar URL**.
+- **Enviar imagem**: escolha um arquivo do aparelho (PNG, JPG, WEBP, GIF ou BMP, até 8 MB) —
+  ele é salvo em `data/wallpapers/` e servido em `/media/wallpaper`.
+- **Remover** volta ao fundo padrão. A escolha fica salva no SQLite e é restaurada sozinha.
 
 ---
 

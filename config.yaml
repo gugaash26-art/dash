@@ -103,6 +103,17 @@ update:                   # atualizacao pelo GitHub (botao em Ajustes)
   install_deps: true      # roda pip install -r requirements.txt apos atualizar
   restart_command: ""     # vazio: tenta systemctl restart cardash e, senao, reinicia sozinho
 
+media:                    # pagina Multimidia
+  wallpaper: ""           # URL externa ou /media/wallpaper (imagem enviada)
+  fit: cover              # cover | contain | fill
+
+screens:                  # escolha de monitores (HDMI) pelo Ajustes > Telas
+  enabled: false          # true apos aplicar pelo painel
+  main: ""                # saida xrandr do painel principal (ex.: HDMI-1)
+  bar: ""                 # saida xrandr do cluster em barra (ex.: HDMI-2)
+  arrange: false          # organiza automaticamente (cluster a direita do painel)
+  display: ":0"           # servidor X usado para detectar monitores
+
 paths:
   data_dir: /car-dash/data
   db: /car-dash/data/cardash.db

@@ -73,7 +73,7 @@ sudo systemctl restart cardash.service
 if [ "$INSTALL_KIOSK" -eq 1 ]; then
   say "configurando autostart do kiosk para $USER_NAME"
   if [ "$SKIP_APT" -eq 0 ]; then
-    sudo apt-get install -y chromium || sudo apt-get install -y chromium-browser || true
+    sudo apt-get install -y chromium x11-xserver-utils || sudo apt-get install -y chromium-browser || true
   fi
   AUTFILE="/home/$USER_NAME/.config/autostart/cardash-kiosk.desktop"
   sudo -u "$USER_NAME" mkdir -p "$(dirname "$AUTFILE")"
@@ -92,13 +92,20 @@ fi
 if [ "$INSTALL_KIOSK_BAR" -eq 1 ]; then
   say "configurando duas telas (painel completo + cluster em barra)"
   if [ "$SKIP_APT" -eq 0 ]; then
-    sudo apt-get install -y chromium || sudo apt-get install -y chromium-browser || true
+    sudo apt-get install -y chromium x11-xserver-utils || sudo apt-get install -y chromium-browser || true
   fi
   TOUCH_SIZE="${CARDASH_TOUCH_SIZE:-1024,600}"
   BAR_SIZE="${CARDASH_BAR_SIZE:-1920,480}"
   TOUCH_POS="${CARDASH_TOUCH_POS:-0,0}"
   TOUCH_W="${TOUCH_SIZE%%,*}"
   BAR_POS="${CARDASH_BAR_POS:-${TOUCH_W},0}"
+
+  cat > "$HERE/data/screens.env" <<EOF
+CARDASH_TOUCH_SIZE=$TOUCH_SIZE
+CARDASH_TOUCH_POS=$TOUCH_POS
+CARDASH_BAR_SIZE=$BAR_SIZE
+CARDASH_BAR_POS=$BAR_POS
+EOF
 
   register_unit "$HERE/systemd/cardash-kiosk.service" cardash-kiosk.service \
     "$TOUCH_SIZE" "$TOUCH_POS" "$BAR_SIZE" "$BAR_POS"

@@ -90,6 +90,14 @@ DEFAULTS = {
         "install_deps": True,
         "restart_command": "",
     },
+    "media": {"wallpaper": "", "fit": "cover"},
+    "screens": {
+        "enabled": False,
+        "main": "",
+        "bar": "",
+        "arrange": False,
+        "display": ":0",
+    },
     "paths": {"data_dir": str(ROOT / "data"), "db": str(ROOT / "data" / "cardash.db")},
     "ui": {"boot_animation": True, "theme": "auto", "brightness": 100},
 }
@@ -131,6 +139,12 @@ EDITABLE = [
     ("agent.play_local", None),
     ("agent.spotify_client_id", None),
     ("agent.spotify_client_secret", None),
+    ("media.wallpaper", None),
+    ("media.fit", ["cover", "contain", "fill"]),
+    ("screens.enabled", None),
+    ("screens.main", None),
+    ("screens.bar", None),
+    ("screens.arrange", None),
 ]
 
 
@@ -209,4 +223,10 @@ def validate_setting(key: str, value):
                "agent.llm_key_env", "agent.llm_key", "agent.tts_voice",
                "agent.spotify_client_id", "agent.spotify_client_secret"):
         value = str(value)[:256]
+    if key == "media.wallpaper":
+        value = str(value)[:512]
+    if key == "screens.enabled" or key == "screens.arrange":
+        value = bool(value)
+    if key in ("screens.main", "screens.bar"):
+        value = str(value)[:64]
     return value

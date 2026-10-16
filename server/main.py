@@ -17,8 +17,10 @@ from .agent import Agent
 from .config import EDITABLE, cfg, validate_setting
 from .hub import Hub
 from .net import Net
+from .screens import Screens
 from .store import DEFAULT_APPS, Store
 from .updater import Updater
+from .wallpaper import Wallpaper
 from .ws import WSConn, accept_key
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -42,6 +44,7 @@ CLIENTS: set = set()
 STOP = threading.Event()
 START_TIME = time.time()
 MAX_BODY = 64 * 1024
+MAX_WALLPAPER = 12 * 1024 * 1024
 APP_KINDS = {"nav", "embed", "browser", "web"}
 
 
@@ -57,6 +60,8 @@ def broadcast(obj):
 agent = Agent(cfg, hub, on_event=broadcast)
 net = Net(cfg)
 updater = Updater(cfg, ROOT)
+screens = Screens(cfg)
+wallpaper = Wallpaper(cfg)
 
 
 def auto_update_check():
@@ -158,11 +163,19 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def _body(self):
+    def _send_bytes(self, data, ctype):
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _body(self, max_bytes=MAX_BODY):
         length = int(self.headers.get("Content-Length") or 0)
         if length <= 0:
             return {}
-        if length > MAX_BODY:
+        if length > max_bytes:
             return {}
         raw = self.rfile.read(length)
         try:
@@ -214,6 +227,46 @@ class Handler(BaseHTTPRequestHandler):
         for key, value in clean.items():
             config_mod._set(cfg, key, value)
         return {"ok": True, "settings": clean}, None
+
+    def _persist(self, clean):
+        store.set_settings(clean)
+        for key, value in clean.items():
+            config_mod._set(cfg, key, value)
+
+    def _wallpaper(self, payload):
+        payload = payload or {}
+        try:
+            if payload.get("clear"):
+                value = wallpaper.clear()
+            elif payload.get("data"):
+                value = wallpaper.save_data(payload.get("data"))
+            else:
+                value = wallpaper.save_url(payload.get("url"))
+        except ValueError as exc:
+            return None, str(exc)
+        self._persist({"media.wallpaper": value})
+        return {"ok": True, "wallpaper": value, "fit": wallpaper.get()["fit"]}, None
+
+    def _screens(self, payload):
+        payload = payload or {}
+        current = config_mod._get(cfg, "screens") or {}
+        main = str(payload.get("main", current.get("main") or ""))[:64]
+        bar = str(payload.get("bar", current.get("bar") or ""))[:64]
+        arrange = bool(payload.get("arrange", current.get("arrange")))
+        enabled = bool(payload.get("enabled", current.get("enabled")))
+        result, err = screens.apply(main=main, bar=bar, arrange=arrange, enabled=enabled)
+        if err:
+            enabled = bool(current.get("enabled"))
+        clean = {
+            "screens.main": main,
+            "screens.bar": bar,
+            "screens.arrange": arrange,
+            "screens.enabled": enabled,
+        }
+        self._persist(clean)
+        if err:
+            return None, err
+        return {"ok": True, **result}, None
 
     def _power(self, payload):
         if os.environ.get("CARDASH_ALLOW_POWER") != "1":
@@ -270,6 +323,15 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(net.bt_devices())
         if path == "/api/update":
             return self._json(updater.status())
+        if path == "/api/media":
+            return self._json(wallpaper.get())
+        if path == "/media/wallpaper":
+            data, ctype = wallpaper.read()
+            if not data:
+                return self._error(404, "sem papel de parede")
+            return self._send_bytes(data, ctype)
+        if path == "/api/screens":
+            return self._json(screens.status())
         if path == "/api/settings":
             return self._json(self._settings())
         if path == "/api/system":
@@ -295,6 +357,16 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = urlparse(self.path).path
+        if path == "/api/media/wallpaper":
+            result, err = self._wallpaper(self._body(MAX_WALLPAPER))
+            if err:
+                return self._error(400, err)
+            return self._json(result)
+        if path == "/api/screens":
+            result, err = self._screens(self._body())
+            if err:
+                return self._error(400, err)
+            return self._json(result)
         payload = self._body()
         if path == "/api/settings":
             result, err = self._save_settings(payload)
