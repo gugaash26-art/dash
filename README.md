@@ -204,6 +204,7 @@ Pré‑requisitos: Armbian/Debian com acesso à internet e um usuário com `sudo
 ```bash
 git clone <este-repositorio> car-dash      # ou copie a pasta
 cd car-dash
+./install.sh --check                       # diagnóstico: o que já existe e o que falta (não instala)
 ./install.sh                               # instala deps, venv, serviço systemd
 ./install.sh --kiosk                       # (opcional) autostart do navegador kiosk
 ./install.sh --app --cluster               # (opcional) aplicativo nativo: painel + painel de velocidade
@@ -214,6 +215,21 @@ O instalador:
 - cria o virtualenv `.venv` e instala `pyserial` e `PyYAML`;
 - adiciona seu usuário ao grupo `dialout` (acesso à serial);
 - registra o serviço **`cardash.service`** (inicia no boot) e o habilita.
+
+### Diagnóstico de dependências — `./install.sh --check`
+
+Antes (ou depois) de instalar, rode **`./install.sh --check`** para ver o que está pronto
+sem alterar nada. Ele confere, item a item, com as marcas **`OK`**, **`OPC`** (opcional
+ausente) e **`FALTA`** (essencial):
+
+- **essenciais**: `python3`, `curl`, o `.venv` com `PyYAML`/`pyserial`, um **kiosk**
+  (app nativo WebKitGTK **ou** navegador) e o servidor respondendo;
+- **opcionais** (não impedem rodar — apenas desativam um recurso): `git`, `systemd`/
+  `xset`/`unclutter`, `nmcli` (Wi‑Fi), `bluetoothctl`, `gnome-maps`, `waydroid`,
+  `aplay`/`arecord`, `whisper-cli`, `ffmpeg` e o grupo `dialout`.
+
+No fim ele mostra o resumo e sugere `./install.sh --app --kiosk`. Se algum **essencial**
+faltar, é só rodar o instalador.
 
 ### Instalação manual
 
