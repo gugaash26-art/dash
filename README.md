@@ -549,7 +549,7 @@ painel). A página **Apps** continua sendo a opção leve/instantânea.
 
 ## 11. Tutorial em vídeo
 
-Em `docs/tutorial/` há **três** vídeos, com narração neural em português e música:
+Em `docs/tutorial/` há **quatro** vídeos, com narração neural em português e música:
 
 ### Tutorial com avatar (novidades do sistema) — `opendash-tutorial-avatar.mp4`
 
@@ -639,6 +639,31 @@ vídeos, com um tipo de cena a mais: `kind: "term"`, que desenha um **painel de 
 com `term_title` e `lines` (linhas começando com `#` viram comentários em cinza; as demais
 ganham o prompt verde `$`). Para teste rápido, use `TUT_ONLY=4` para gerar só as primeiras
 cenas.
+
+### Vídeo de propaganda (o painel completo em uso) — `opendash-propaganda.mp4`
+
+Um vídeo de **1m52s** (12 cenas) com foco em **apresentar o produto**: mostra o **painel
+completo em uso**, com **animações 2D** — *zoom/pan* (Ken Burns) sobre as telas reais, títulos
+e chamadas que entram animados, listas que surgem item a item, o avatar narrando e transições
+em *fade* — além da cena **ao vivo** (o `ui-anim.mp4`) e da configuração de **duas telas**
+(multimídia + cluster de velocidade). É o vídeo ideal para divulgação.
+
+```bash
+mpv docs/tutorial/opendash-propaganda.mp4
+```
+
+Para regerar (requer `ffmpeg`, `ffprobe` e `edge-tts`, com internet para a voz):
+
+```bash
+python3 docs/tutorial/capture_avatar.py        # uma vez: gera os PNGs do avatar
+/car-dash/.venv/bin/python docs/tutorial/build_promo.py
+```
+
+O roteiro fica em `build_promo.py` (lista `SCENES`), com os tipos de cena `hero` (abertura),
+`grid` (lista de recursos), `feature` (tela real com Ken Burns + `callouts`), `demo` (usa
+`assets/ui-anim.mp4`) e `outro` (encerramento). Para teste rápido, use `TUT_ONLY=3` para gerar
+só as primeiras cenas; se o `edge-tts` falhar, a cena é gerada com silêncio para não quebrar o
+vídeo.
 
 ---
 
