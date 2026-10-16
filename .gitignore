@@ -8,4 +8,5 @@ data/*.db-*
 docs/tutorial/build/
 docs/tutorial/build_avatar/
 docs/tutorial/build_voices/
+docs/tutorial/build_install/
 .pyyaml/

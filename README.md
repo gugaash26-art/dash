@@ -505,7 +505,7 @@ painel). A página **Apps** continua sendo a opção leve/instantânea.
 
 ## 11. Tutorial em vídeo
 
-Em `docs/tutorial/` há **dois** vídeos, com narração neural em português e música:
+Em `docs/tutorial/` há **três** vídeos, com narração neural em português e música:
 
 ### Tutorial com avatar (novidades do sistema) — `opendash-tutorial-avatar.mp4`
 
@@ -569,6 +569,32 @@ música é gerada por síntese; o roteiro e o visual ficam em `build_tutorial.py
 desenham caixas e rótulos sobre a tela) e `"anim"` (usa `assets/ui-anim.mp4`, ou uma
 `clip` própria, como `assets/ui-boot.mp4` na cena de boot). Há também
 `compare_voices.py`, que compara as vozes pt-BR.
+
+### Tutorial de instalação passo a passo (Debian/Armbian) — `opendash-tutorial-instalacao.mp4`
+
+Um vídeo de **5m28s** (20 cenas) **do zero até o painel rodando**, com todos os comandos
+num painel de **terminal** e o avatar narrando. Cobre **Debian 12 e Armbian** numa Orange Pi
+Zero 3, em **12 passos**: baixar a imagem, gravar o cartão SD, primeiro boot e SSH, atualizar
+o sistema, instalar a base, baixar o OpenDash, rodar o `install.sh`, testar no navegador,
+kiosk em tela cheia e os extras (Arduino/GPS, assistente de voz e GNOME Maps nativo), além
+de dicas para 1.5 GB de RAM:
+
+```bash
+mpv docs/tutorial/opendash-tutorial-instalacao.mp4
+```
+
+Para regerar (requer `ffmpeg`, `ffprobe` e `edge-tts`, com internet para a voz):
+
+```bash
+python3 docs/tutorial/capture_avatar.py        # uma vez: gera os PNGs do avatar
+/car-dash/.venv/bin/python docs/tutorial/build_tutorial_install.py
+```
+
+O roteiro fica em `build_tutorial_install.py` (lista `SCENES`). É o mesmo motor dos outros
+vídeos, com um tipo de cena a mais: `kind: "term"`, que desenha um **painel de terminal**
+com `term_title` e `lines` (linhas começando com `#` viram comentários em cinza; as demais
+ganham o prompt verde `$`). Para teste rápido, use `TUT_ONLY=4` para gerar só as primeiras
+cenas.
 
 ---
 
