@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Avatar OpenDash</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: transparent; overflow: hidden; }
+  #stage { width: 100vw; height: 100vh; display: block; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<svg id="stage" viewBox="0 0 320 360" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="jacket" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#233042"/>
+      <stop offset="1" stop-color="#141b26"/>
+    </linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6cda6"/>
+      <stop offset="1" stop-color="#e9b489"/>
+    </linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b2320"/>
+      <stop offset="1" stop-color="#171310"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="38%" r="70%">
+      <stop offset="0" stop-color="#e82127" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#e82127" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <circle cx="160" cy="150" r="150" fill="url(#glow)"/>
+
+  <!-- ombros / torso -->
+  <g id="torso">
+    <path d="M40 360 Q44 262 104 236 L216 236 Q276 262 280 360 Z" fill="url(#jacket)"/>
+    <path d="M104 236 L160 300 L216 236 L216 254 L160 318 L104 254 Z" fill="#0d1117"/>
+    <path d="M92 236 Q160 274 228 236" fill="none" stroke="#e82127" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="160" cy="300" r="9" fill="#e82127"/>
+  </g>
+
+  <!-- pescoco -->
+  <path d="M138 190 h44 v52 q-22 16 -44 0 Z" fill="#dda87e"/>
+
+  <!-- cabeca -->
+  <g id="head">
+    <ellipse cx="160" cy="150" rx="74" ry="82" fill="url(#skin)"/>
+    <!-- orelhas -->
+    <ellipse cx="88" cy="156" rx="13" ry="19" fill="#e9b489"/>
+    <ellipse cx="232" cy="156" rx="13" ry="19" fill="#e9b489"/>
+    <!-- cabelo -->
+    <path d="M86 138 Q88 62 160 60 Q232 62 234 138 Q222 108 196 100 Q168 92 140 100 Q104 110 86 138 Z" fill="url(#hair)"/>
+    <path d="M86 138 Q92 118 112 108 Q104 132 108 148 Q94 142 86 138 Z" fill="url(#hair)"/>
+    <!-- sobrancelhas -->
+    <rect x="116" y="130" width="30" height="7" rx="3.5" fill="#2b2320" transform="rotate(-6 131 133)"/>
+    <rect x="174" y="130" width="30" height="7" rx="3.5" fill="#2b2320" transform="rotate(6 189 133)"/>
+    <!-- olhos -->
+    <g id="eyesOpen">
+      <ellipse cx="131" cy="154" rx="15" ry="11" fill="#ffffff"/>
+      <ellipse cx="189" cy="154" rx="15" ry="11" fill="#ffffff"/>
+      <circle cx="133" cy="155" r="6.5" fill="#28323f"/>
+      <circle cx="187" cy="155" r="6.5" fill="#28323f"/>
+      <circle cx="135" cy="152" r="2.2" fill="#ffffff"/>
+      <circle cx="189" cy="152" r="2.2" fill="#ffffff"/>
+    </g>
+    <g id="eyesClosed" class="hidden">
+      <path d="M116 154 Q131 164 146 154" fill="none" stroke="#28323f" stroke-width="4" stroke-linecap="round"/>
+      <path d="M174 154 Q189 164 204 154" fill="none" stroke="#28323f" stroke-width="4" stroke-linecap="round"/>
+    </g>
+    <!-- nariz -->
+    <path d="M160 158 q-6 14 4 18" fill="none" stroke="#d19a70" stroke-width="4" stroke-linecap="round"/>
+    <!-- bochechas -->
+    <ellipse cx="112" cy="182" rx="13" ry="8" fill="#ef9d8f" opacity="0.45"/>
+    <ellipse cx="208" cy="182" rx="13" ry="8" fill="#ef9d8f" opacity="0.45"/>
+    <!-- boca fechada (sorriso) -->
+    <g id="mouthClosed">
+      <path d="M138 196 Q160 210 182 196" fill="none" stroke="#b0554a" stroke-width="6" stroke-linecap="round"/>
+    </g>
+    <!-- boca aberta (falando) -->
+    <g id="mouthOpen" class="hidden">
+      <path d="M140 194 Q160 186 180 194 Q184 216 160 220 Q136 216 140 194 Z" fill="#7c2b28"/>
+      <path d="M150 214 Q160 224 170 214 Q160 218 150 214 Z" fill="#e2685f"/>
+      <path d="M142 196 Q152 192 160 194 Q152 198 142 199 Z" fill="#ffffff" opacity="0.9"/>
+    </g>
+    <!-- headset -->
+    <g id="headset">
+      <path d="M84 132 Q88 56 160 54 Q232 56 236 132" fill="none" stroke="#1c2530" stroke-width="12" stroke-linecap="round"/>
+      <rect x="222" y="128" width="26" height="48" rx="12" fill="#1c2530"/>
+      <rect x="226" y="136" width="18" height="32" rx="8" fill="#e82127"/>
+      <path d="M232 168 Q228 210 190 214" fill="none" stroke="#1c2530" stroke-width="7" stroke-linecap="round"/>
+      <circle cx="188" cy="214" r="9" fill="#1c2530"/>
+      <circle cx="188" cy="214" r="4" fill="#e82127"/>
+    </g>
+  </g>
+
+  <!-- braco acenando (opcional) -->
+  <g id="waveArm" class="hidden">
+    <path d="M244 300 Q286 268 300 210" fill="none" stroke="#233042" stroke-width="26" stroke-linecap="round"/>
+    <circle cx="302" cy="198" r="22" fill="url(#skin)"/>
+    <path d="M292 182 l6 -16 M304 180 l0 -18 M316 184 l6 -16" stroke="#e9b489" stroke-width="7" stroke-linecap="round"/>
+  </g>
+</svg>
+<script>
+  var q = new URLSearchParams(location.search);
+  function set(id, on) { document.getElementById(id).classList.toggle("hidden", !on); }
+  set("mouthOpen", q.get("m") === "1");
+  set("mouthClosed", q.get("m") !== "1");
+  set("eyesClosed", q.get("b") === "1");
+  set("eyesOpen", q.get("b") !== "1");
+  set("waveArm", q.get("w") === "1");
+  document.title = "ready";
+</script>
+</body>
+</html>

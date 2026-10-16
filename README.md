@@ -466,11 +466,41 @@ painel). A página **Apps** continua sendo a opção leve/instantânea.
 
 ## 11. Tutorial em vídeo
 
-Em `docs/tutorial/` há um vídeo de **6m47s** (24 cenas com realces visuais e *callouts*,
-narração neural em português e música de fundo) cobrindo hardware, ligação, gravação do
-Arduino, instalação no Orange Pi, configuração, kiosk, **telas reais da interface**
-(incluindo **Navegação** e **Apps**), a **animação de boot** e uma **demonstração final
-do sistema rodando em modo simulação**:
+Em `docs/tutorial/` há **dois** vídeos, com narração neural em português e música:
+
+### Tutorial com avatar (novidades do sistema) — `opendash-tutorial-avatar.mp4`
+
+Um vídeo de **5m20s** (20 cenas) **apresentado por um avatar** que fala no canto da tela
+(e abre e encerra acenando). Ele mostra o painel e, principalmente, as **novas funções**:
+o **assistente de voz** com IA, o **Wi-Fi** e o **Bluetooth** nas configurações, a
+**atualização pelo GitHub** e o **cluster em barra** para segunda tela.
+
+```bash
+mpv docs/tutorial/opendash-tutorial-avatar.mp4
+```
+
+Para regerar (precisa do avatar e das telas novas):
+
+```bash
+python3 docs/tutorial/capture_avatar.py      # gera os PNGs do avatar (fundo transparente)
+SHOT_URL=http://127.0.0.1:8099/ python3 docs/tutorial/capture_new_ui.py   # telas novas
+/car-dash/.venv/bin/python docs/tutorial/build_tutorial_avatar.py
+```
+
+O avatar é um **SVG** (`docs/tutorial/avatar.html`) renderizado por `capture_avatar.py`
+(WebKitGTK + Xvfb, com canal alfa) em quatro poses — parado, falando, piscando e acenando —
+que o roteiro sobrepõe com `overlay` e expressões `enable` para dar vida à boca e aos olhos.
+As telas novas (Wi-Fi/Bluetooth, atualizações, assistente e o cluster) são capturadas por
+`capture_new_ui.py`, que também injeta dados de demonstração para os cartões aparecerem
+preenchidos. O roteiro e o visual ficam em `build_tutorial_avatar.py` (lista `SCENES`,
+com `kind: "slide"`, `"ui"`, `"anim"` e `"presenter"`).
+
+### Tutorial de instalação — `opendash-tutorial.mp4`
+
+Um vídeo de **6m47s** (24 cenas com realces visuais e *callouts*) cobrindo hardware,
+ligação, gravação do Arduino, instalação no Orange Pi, configuração, kiosk, **telas reais
+da interface** (incluindo **Navegação** e **Apps**), a **animação de boot** e uma
+**demonstração final do sistema rodando em modo simulação**:
 
 ```bash
 mpv docs/tutorial/opendash-tutorial.mp4     # ou qualquer player
