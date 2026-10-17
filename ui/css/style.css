@@ -597,6 +597,31 @@ body.is-cluster .page[data-page="drive"] { padding: 6px 22px 12px; }
 body.is-cluster .cluster { gap: 22px; }
 body.is-cluster .topbar { padding-top: 10px; }
 
+/* ---- mapa de navegação no painel de velocidade (estilo cluster esportivo) ---- */
+/* Só aparece no modo cluster e quando há rota/destino ativo na Navegação
+   (classe is-nav + /api/nav). Mostra o mapa com o carro e a linha da rota. */
+.cluster-nav { display: none; }
+body.is-cluster.is-nav .cluster-nav {
+  display: block;
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 150px;
+  margin-top: 2px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--panel);
+  overflow: hidden;
+}
+.cluster-map { position: absolute; inset: 0; }
+.cluster-nav-info {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 500;
+  padding: 8px 12px;
+  font-size: 12px; color: #fff;
+  background: linear-gradient(transparent, rgba(0, 0, 0, .72));
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
 /* ---- suporte a qualquer tela: orientação e escala ---- */
 /* A escala é aplicada via zoom no #app (app.js, /api/display). Aqui só
    ajustamos layouts para telas verticais (portrait). */

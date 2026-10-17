@@ -320,6 +320,7 @@
       dp.oilp = ease(dp.oilp, Number(d.oilp) || 0, k);
 
       renderCluster(d, dp);
+      if (CLUSTER) renderClusterNav(d);
       bindings.forEach((b) => {
         const v = pick(b.path, d);
         if (v === null || v === undefined) return;
@@ -1329,6 +1330,9 @@
 
   function navInfo(text) { $("#navRouteInfo").textContent = text; }
 
+  // publica destino/rota no servidor para o painel de velocidade (2ª tela) exibir
+  function pushNav(body) { netPostSafe("/api/nav", body).catch(() => {}); }
+
   async function navSearch() {
     const q = $("#navSearch").value.trim();
     if (!q) return null;
@@ -1354,6 +1358,7 @@
       nav.map.fitBounds([ll, nav.marker ? nav.marker.getLatLng() : ll], { padding: [60, 60], maxZoom: 15 });
     }
     navInfo(dest.name);
+    pushNav({ dest: { lat: dest.lat, lon: dest.lon, name: dest.name }, route: [] });
     return dest;
   }
 
@@ -1378,8 +1383,80 @@
       const km = route.distance / 1000;
       const min = Math.round(route.duration / 60);
       navInfo(`${km.toFixed(1)} km · ${min} min · via ${(route.legs[0].summary) || "rota"}`);
+      pushNav({ dest: { lat: nav.dest.lat, lon: nav.dest.lon, name: nav.dest.name }, route: latlngs });
     } catch (e) {
       navInfo("não foi possível calcular a rota (precisa de internet)");
+    }
+  }
+
+  // --------------------------------- mapa embutido no painel de velocidade
+  // No modo cluster (?screen=cluster), quando ha rota/destino ativo na
+  // Navegacao, mostramos o mapa com o carro e a linha da rota (estilo cluster
+  // de carro esportivo). O estado vem do servidor, entao vale mesmo com o
+  // painel principal e o cluster em telas/paginas diferentes.
+  const cn = { map: null, routeLine: null, marker: null, destMarker: null,
+               ready: false, updated: 0, active: false, follow: true };
+
+  function initClusterMap() {
+    if (typeof L === "undefined" || cn.map) return;
+    const el = $("#clusterMap");
+    if (!el) return;
+    try {
+      cn.map = L.map(el, { zoomControl: false, attributionControl: false })
+        .setView([-23.5613, -46.6565], 14);
+      cn.map.on("dragstart", () => { cn.follow = false; });
+      tileLayer(ctx.mapsCfg).addTo(cn.map);
+    } catch (e) { cn.map = null; }
+    setTimeout(() => { if (cn.map) cn.map.invalidateSize(); }, 80);
+  }
+
+  function cnSetActive(on) {
+    if (on === cn.active) return;
+    cn.active = on;
+    const box = $("#clusterNav");
+    if (box) box.hidden = !on;
+    document.body.classList.toggle("is-nav", on);
+    if (on) {
+      initClusterMap();
+      if (cn.map) setTimeout(() => cn.map.invalidateSize(), 120);
+    }
+  }
+
+  function cnLoadRoute() {
+    if (!cn.map) return;
+    api("/api/nav").then((n) => {
+      if (!n) return;
+      if (n.dest) {
+        const ll = [n.dest.lat, n.dest.lon];
+        if (cn.destMarker) cn.destMarker.setLatLng(ll);
+        else cn.destMarker = L.marker(ll).addTo(cn.map);
+      }
+      const pts = (n.route || []).map((p) => [p[0], p[1]]);
+      if (pts.length) {
+        if (cn.routeLine) cn.routeLine.setLatLngs(pts);
+        else cn.routeLine = L.polyline(pts, { color: "#e82127", weight: 6, opacity: 0.9 }).addTo(cn.map);
+        cn.ready = true;
+        if (!cn.marker) cn.map.fitBounds(cn.routeLine.getBounds(), { padding: [40, 40] });
+      }
+      const info = $("#clusterNavInfo");
+      if (info) info.textContent = (n.dest && n.dest.name) || "destino";
+    }).catch(() => {});
+  }
+
+  function renderClusterNav(d) {
+    if (!CLUSTER) return;
+    const n = d && d.nav;
+    const on = !!(n && n.active);
+    cnSetActive(on);
+    if (!on) return;
+    if (n.updated && n.updated !== cn.updated) { cn.updated = n.updated; cnLoadRoute(); }
+    const g = (d && d.gps) || {};
+    if (g.has && g.lat != null && g.lon != null && cn.map) {
+      const pos = [Number(g.lat), Number(g.lon)];
+      if (!cn.marker) cn.marker = L.marker(pos, { icon: carIcon(g.heading) }).addTo(cn.map);
+      else { cn.marker.setLatLng(pos); cn.marker.setIcon(carIcon(g.heading)); }
+      if (!cn.ready) cn.map.setView(pos, 16);
+      else if (cn.follow) cn.map.panTo(pos, { animate: true, duration: 0.5 });
     }
   }
 
@@ -1779,6 +1856,16 @@
   });
   $("#navSearch").addEventListener("keydown", (e) => { if (e.key === "Enter") navSearch(); });
   $("#btnNavRoute").addEventListener("click", navRoute);
+  const btnNavClear = $("#btnNavClear");
+  if (btnNavClear) btnNavClear.addEventListener("click", () => {
+    nav.dest = null;
+    if (nav.map) {
+      if (nav.routeLine) { nav.map.removeLayer(nav.routeLine); nav.routeLine = null; }
+      if (nav.destMarker) { nav.map.removeLayer(nav.destMarker); nav.destMarker = null; }
+    }
+    navInfo("busca e rota via OpenStreetMap (requer internet)");
+    pushNav({ clear: true });
+  });
   const btnNativeOpen = $("#btnNativeOpen");
   if (btnNativeOpen) btnNativeOpen.addEventListener("click", () => nativeOpen("gnome-maps"));
   const btnNativeClose = $("#btnNativeClose");

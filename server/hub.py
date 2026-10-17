@@ -159,6 +159,7 @@ class Hub:
         self.gps_reader = None
         self._last_track = 0.0
         self.state = self._blank()
+        self.nav = {"dest": None, "route": [], "active": False, "updated": 0}
 
     def start(self):
         self._start_gps()
@@ -216,6 +217,7 @@ class Hub:
             "units": self.cfg["units"],
             "mode": {"sim": self.force_sim, "port": None, "gps": None,
                      "gps_src": "none"},
+            "nav": {"active": False, "dest": None, "route_n": 0, "updated": 0},
         }
 
     @staticmethod
@@ -286,6 +288,7 @@ class Hub:
                 "gps_src": gps.get("src", "none"),
             }
             st["climate"] = {"fan": st["fan"], "ac": st["ac"]}
+            st["nav"] = self._nav_summary()
             self.state = st
             self._maybe_track(gps, ts)
 
@@ -454,6 +457,53 @@ class Hub:
         with self.lock:
             return json.loads(json.dumps(self.state))
 
+    def _nav_summary(self):
+        n = self.nav
+        dest = n.get("dest")
+        return {
+            "active": bool(n.get("active")),
+            "dest": dict(dest) if dest else None,
+            "route_n": len(n.get("route") or []),
+            "updated": n.get("updated", 0),
+        }
+
+    def nav_state(self):
+        with self.lock:
+            return json.loads(json.dumps(self.nav))
+
+    def set_nav(self, obj):
+        """Recebe o destino/rota traçados na Navegação (painel principal)."""
+        with self.lock:
+            now = int(time.time() * 1000)
+            if obj.get("clear"):
+                self.nav = {"dest": None, "route": [], "active": False, "updated": now}
+            else:
+                dest = obj.get("dest")
+                if dest is not None:
+                    try:
+                        self.nav["dest"] = {
+                            "lat": float(dest["lat"]),
+                            "lon": float(dest["lon"]),
+                            "name": str(dest.get("name") or "")[:200],
+                        }
+                    except (KeyError, TypeError, ValueError):
+                        self.nav["dest"] = None
+                route = obj.get("route")
+                if route is not None:
+                    pts = []
+                    for p in route:
+                        try:
+                            pts.append([float(p[0]), float(p[1])])
+                        except (IndexError, TypeError, ValueError):
+                            continue
+                    self.nav["route"] = pts
+                self.nav["active"] = bool(self.nav["dest"])
+                self.nav["updated"] = now
+            if self.state is not None:
+                self.state["nav"] = self._nav_summary()
+            return {"ok": True, "active": bool(self.nav["active"]),
+                    "route_n": len(self.nav["route"]), "updated": self.nav["updated"]}
+
     def command(self, obj: dict):
         if not isinstance(obj, dict):
             return {"ok": False, "error": "payload"}
@@ -508,6 +558,8 @@ class Hub:
                 return {"ok": True, "mode": "sim" if self.force_sim else "auto"}
             if cmd == "dtc_list":
                 return {"ok": True, "dtc": self.store.dtcs()}
+            if cmd == "nav":
+                return self.set_nav(obj)
         return {"ok": False, "error": "comando desconhecido"}
 
     def _forward(self, obj: dict) -> bool:

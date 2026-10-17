@@ -339,6 +339,13 @@ mini‑medidores e odômetro — e **esconde as abas/menus** e o widget de mídi
 numa HDMI dedicada (a multimídia com menus fica na outra). Os menus **só** aparecem no
 painel completo (`/`).
 
+Quando há uma **rota/destino ativo** na página **Navegação**, o painel de velocidade passa
+a mostrar também um **mini‑mapa** abaixo do velocímetro, com o **carro** e a **linha da
+rota** até o destino — no estilo do cluster de carros esportivos. O estado da navegação é
+compartilhado pelo servidor (`/api/nav`), então funciona mesmo com o painel principal e o
+painel de velocidade em **telas (janelas) diferentes**. Para encerrar, use o botão
+**Limpar** na página Navegação; o mapa some no painel de velocidade.
+
 O **cluster em barra** mostra, lado a lado: setas e indicadores, **velocímetro** com marcha,
 **rotação** + acelerador, autonomia/odômetro/viagem, resumo (consumo, combustível, água),
 mini‑medidores (água, óleo, bateria, carga) e o **tanque** vertical. Ele lê o mesmo
@@ -494,6 +501,8 @@ Variáveis de ambiente:
 | GET | `/api/display` | adaptação de tela: escala, polegadas, orientação, DPI e escala calculada |
 | GET | `/api/camera` | status da câmera de ré (backend, dispositivo, se está ativa) |
 | POST | `/api/camera` | `{"action":"start\|stop\|toggle\|status"}` liga/desliga a câmera |
+| GET | `/api/nav` | navegação ativa: `dest` (destino) e `route` (pontos da rota) — usado pelo painel de velocidade |
+| POST | `/api/nav` | `{"dest":{"lat","lon","name"},"route":[[lat,lon],…]}` define a rota; `{"clear":true}` encerra |
 | GET | `/camera/stream` | stream **MJPEG** ao vivo (multipart/x-mixed-replace) |
 | GET | `/camera/frame.jpg` | último quadro JPEG capturado |
 | GET | `/api/native` | apps nativos disponíveis (GNOME Maps, Spotube, YouTube/Red) + se o lançamento está habilitado |

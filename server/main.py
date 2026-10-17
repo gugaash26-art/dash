@@ -414,6 +414,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(screens.status())
         if path == "/api/display":
             return self._json(display.status())
+        if path == "/api/nav":
+            return self._json(hub.nav_state())
         if path == "/api/camera":
             return self._json(camera.status())
         if path == "/camera/stream":
@@ -463,6 +465,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._native_close(self._body())
         if path == "/api/camera":
             return self._camera_action(self._body())
+        if path == "/api/nav":
+            return self._json(hub.set_nav(self._body()))
         payload = self._body()
         if path == "/api/settings":
             result, err = self._save_settings(payload)
