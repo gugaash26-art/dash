@@ -45,23 +45,22 @@
     const cx = 160, cy = 160, r = 122;
     const defs = el("defs", {});
     makeGradient(defs, "gaugeGrad", [
-      ["0%", "#35d6e6"],
-      ["45%", "#4aa8ff"],
-      ["72%", "#ffb020"],
-      ["100%", "#e82127"],
+      ["0%", "#7a7f87"],
+      ["60%", "#cfd3d9"],
+      ["100%", "#ffffff"],
     ]);
     svg.appendChild(defs);
 
-    svg.appendChild(el("circle", { cx, cy, r: r - 26, fill: "rgba(255,255,255,0.02)", stroke: "rgba(255,255,255,0.05)", "stroke-width": 1 }));
+    svg.appendChild(el("circle", { cx, cy, r: r - 26, fill: "none", stroke: "rgba(255,255,255,0.04)", "stroke-width": 1 }));
 
     svg.appendChild(el("path", {
       d: arcPath(cx, cy, r, START, START + SWEEP),
-      fill: "none", stroke: "rgba(255,255,255,0.075)", "stroke-width": 12, "stroke-linecap": "round",
+      fill: "none", stroke: "rgba(255,255,255,0.06)", "stroke-width": 10, "stroke-linecap": "round",
     }));
 
     const progress = el("path", {
       d: arcPath(cx, cy, r, START, START + SWEEP),
-      fill: "none", stroke: "url(#gaugeGrad)", "stroke-width": 12, "stroke-linecap": "round",
+      fill: "none", stroke: "url(#gaugeGrad)", "stroke-width": 10, "stroke-linecap": "round",
       "stroke-dasharray": arcLen(r, SWEEP), "stroke-dashoffset": arcLen(r, SWEEP),
     });
     svg.appendChild(progress);
@@ -73,7 +72,7 @@
       const [x1, y1] = polar(cx, cy, r - 27, a);
       ticks.appendChild(el("line", {
         x1: x0, y1: y0, x2: x1, y2: y1,
-        stroke: i >= 8 ? "rgba(232,33,39,0.55)" : "rgba(255,255,255,0.22)",
+        stroke: i >= 8 ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.16)",
         "stroke-width": i % 5 === 0 ? 3 : 2, "stroke-linecap": "round",
       }));
     }

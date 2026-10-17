@@ -1,11 +1,7 @@
 /* OpenDash · tela de barra (cluster horizontal, ex.: 1920x480) */
 
 .bar-app {
-  background:
-    radial-gradient(900px 420px at 50% -20%, rgba(232, 33, 39, 0.10), transparent 65%),
-    radial-gradient(700px 400px at 0% 120%, rgba(74, 168, 255, 0.08), transparent 60%),
-    radial-gradient(700px 400px at 100% 120%, rgba(46, 230, 168, 0.06), transparent 60%),
-    linear-gradient(180deg, var(--bg-2), var(--bg) 60%);
+  background: var(--bg);
 }
 
 .bar-topbar { padding: 6px 18px 4px; gap: 12px; }
