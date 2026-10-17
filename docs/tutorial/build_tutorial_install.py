@@ -69,6 +69,7 @@ SECTION_COLORS = {
     "TESTE": "0x2f81f7",
     "KIOSK": "0x8957e5",
     "EXTRAS": "0xd29922",
+    "PLATAFORMA": "0xdb6d28",
     "DICAS": "0xe82127",
     "DEMONSTRAÇÃO": "0x2ea043",
     "ENCERRAMENTO": "0xe82127",
@@ -79,7 +80,7 @@ SCENES = [
     {
         "kind": "presenter", "avatar": "wave", "kicker": "ABERTURA",
         "title": "Instalar o OpenDash",
-        "sub": "Debian 12 · Armbian · Orange Pi Zero 3",
+        "sub": "Debian 12 · Armbian · Orange Pi ou Raspberry Pi",
         "body": ["Do zero ao painel funcionando",
                  "todos os comandos, passo a passo"],
         "narration": (
@@ -336,6 +337,35 @@ SCENES = [
             "então não dá para usar duas telas; e como ela não tem microfone, use um fone ou "
             "microfone USB para o assistente."),
     },
+    # -------------------------------------------------- extra: plataforma/recursos
+    {
+        "kicker": "PLATAFORMA", "title": "Raspberry Pi também",
+        "body": ["Roda em Orange Pi ou Raspberry Pi",
+                 "Armbian, Raspberry Pi OS ou Debian",
+                 "A instalação detecta a placa sozinha",
+                 "Habilita UART e câmera no boot"],
+        "narration": (
+            "Antes de fechar, uma novidade: além do Orange Pi, o OpenDash também roda na Raspberry Pi. "
+            "A instalação detecta a placa automaticamente, habilita a porta serial e a câmera no boot "
+            "e configura tudo tanto no Armbian quanto no Raspberry Pi OS ou Debian. "
+            "Se quiser, dá para pular esse ajuste com a opção no r p i."),
+    },
+    {
+        "kind": "term", "kicker": "EXTRAS", "title": "Extra · câmera, escala e placa",
+        "term_title": "orange pi zero 3 — terminal",
+        "caption": ["Extras · uma linha de comando para cada recurso"],
+        "lines": [
+            "./install.sh --camera",
+            "./install.sh --screen=1280x720",
+            "# Raspberry Pi: ./install.sh  (detecta a placa)",
+            "# pule os ajustes de RPi: --no-rpi",
+        ],
+        "narration": (
+            "Três recursos novos em uma linha de comando. Para a câmera de ré, rode install ponto sh "
+            "com a opção camera, que instala o que falta e configura o dispositivo. Para fixar uma "
+            "resolução, use a opção screen. E, na Raspberry Pi, é só rodar install ponto sh que a "
+            "placa é detectada sozinha; com a opção no r p i você pula esses ajustes."),
+    },
     # ---------------------------------------------------------- demonstração
     {
         "kind": "anim", "kicker": "DEMONSTRAÇÃO", "title": "OpenDash ao vivo",
@@ -355,9 +385,9 @@ SCENES = [
                  "Dúvidas: abra uma issue no repositório",
                  "Bom passeio!"],
         "narration": (
-            "E pronto! Com esses doze passos o OpenDash está rodando na sua Orange Pi Zero 3, com "
-            "Debian ou Armbian. Tudo está documentado no README do projeto. Obrigado por assistir e "
-            "bom passeio!"),
+            "E pronto! Com esses passos o OpenDash está rodando na sua Orange Pi ou Raspberry Pi, com "
+            "Debian, Armbian ou Raspberry Pi OS. Tudo está documentado no README do projeto. "
+            "Obrigado por assistir e bom passeio!"),
     },
 ]
 

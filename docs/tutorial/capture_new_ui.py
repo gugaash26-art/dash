@@ -113,6 +113,12 @@ MEDIA_DEMO = ("(function(){"
               "})();")
 
 SHOTS = [
+    {"out": "page_settings_display.png", "url": BASE,
+     "steps": [(TAB % ("settings", "settings"), 1600),
+               (SCROLL % "displayInfo", 1200)]},
+    {"out": "page_settings_camera.png", "url": BASE,
+     "steps": [(TAB % ("settings", "settings"), 1600),
+               (SCROLL % "camStatus", 1200)]},
     {"out": "page_settings_net.png", "url": BASE,
      "steps": [(TAB % ("settings", "settings"), 1600),
                (SCROLL % "wifiEnabled", 1200),

@@ -82,11 +82,12 @@ SCENES = [
         "items": ["Painel e instrumentos", "Navegação com GPS",
                   "Mídia e papel de parede", "Ar-condicionado (clima)",
                   "Diagnóstico do motor", "Aplicativos e mapas",
-                  "Assistente de voz", "Ajustes e personalização"],
+                  "Câmera de ré ao engatar", "Assistente de voz",
+                  "Qualquer tela e resolução", "Ajustes e personalização"],
         "color": BLUE,
         "narration": (
             "Um só sistema reúne tudo o que você precisa na estrada: instrumentos, navegação, "
-            "mídia, climatização, diagnóstico, aplicativos e até um assistente de voz."),
+            "mídia, climatização, diagnóstico, aplicativos, câmera de ré e até um assistente de voz."),
     },
     # -------------------------------------------------------------- feature: painel
     {
@@ -184,6 +185,34 @@ SCENES = [
             "Nos Ajustes, você configura o Wi-Fi e o Bluetooth, escolhe as telas, define as "
             "unidades, muda o tema e atualiza o sistema direto pelo GitHub."),
     },
+    # ------------------------------------------------------- feature: tela e escala
+    {
+        "kind": "feature", "image": "page_settings_display.png", "kicker": "QUALQUER TELA",
+        "title": "Do tamanho que precisar",
+        "caption": "Detecta a resolução e ajusta a escala da interface automaticamente",
+        "callouts": [
+            {"x": 640, "y": 158, "w": 366, "h": 362, "at": 1.0, "color": BLUE, "label": "Escala automática"},
+            {"x": 640, "y": 520, "w": 366, "h": 62, "at": 1.7, "color": GREEN, "label": "Resolução detectada"},
+        ],
+        "color": BLUE,
+        "narration": (
+            "E ele se adapta: o OpenDash detecta a resolução do seu monitor e ajusta a escala da "
+            "interface sozinho. Funciona em telas pequenas ou grandes, do jeito certo."),
+    },
+    # --------------------------------------------------------- feature: camera de re
+    {
+        "kind": "feature", "image": "page_reverse.png", "kicker": "CÂMERA DE RÉ",
+        "title": "Manobra sem susto",
+        "caption": "Ao engatar a ré, a câmera aparece na hora, com linhas guia",
+        "callouts": [
+            {"x": 150, "y": 268, "w": 300, "h": 74, "at": 1.0, "color": GREEN, "label": "Linhas guia"},
+            {"x": 830, "y": 268, "w": 300, "h": 74, "at": 1.6, "color": CYAN, "label": "Entra em ré"},
+        ],
+        "color": GREEN,
+        "narration": (
+            "Engatou a marcha à ré? A câmera entra na tela automática, com linhas guia para "
+            "facilitar a manobra. Apoio de câmera de fábrica, sem custo extra."),
+    },
     # ------------------------------------------------------------------- ao vivo
     {
         "kind": "demo", "kicker": "AO VIVO",
@@ -213,11 +242,11 @@ SCENES = [
         "kind": "outro", "avatar": "wave", "kicker": "ENCERRAMENTO", "big": True,
         "title": "OpenDash",
         "sub": "código aberto · grátis · Debian e Armbian",
-        "items": ["Instale em minutos", "Rode no Orange Pi", "Contribua no GitHub"],
+        "items": ["Instale em minutos", "Orange Pi e Raspberry Pi", "Contribua no GitHub"],
         "color": RED,
         "narration": (
-            "OpenDash: código aberto, grátis, feito para rodar em placas como a Orange Pi com Debian "
-            "ou Armbian. Instale em minutos e bom passeio!"),
+            "OpenDash: código aberto, grátis, feito para rodar em placas como a Orange Pi ou a "
+            "Raspberry Pi com Debian ou Armbian. Instale em minutos e bom passeio!"),
     },
 ]
 

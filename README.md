@@ -615,10 +615,11 @@ Em `docs/tutorial/` há **quatro** vídeos, com narração neural em português 
 
 ### Tutorial com avatar (novidades do sistema) — `opendash-tutorial-avatar.mp4`
 
-Um vídeo de **5m20s** (20 cenas) **apresentado por um avatar** que fala no canto da tela
+Um vídeo de **6m10s** (22 cenas) **apresentado por um avatar** que fala no canto da tela
 (e abre e encerra acenando). Ele mostra o painel e, principalmente, as **novas funções**:
 o **assistente de voz** com IA, o **Wi-Fi** e o **Bluetooth** nas configurações, a
-**atualização pelo GitHub** e o **cluster em barra** para segunda tela.
+**atualização pelo GitHub**, o **cluster em barra** para segunda tela, a **câmera de ré**
+automática e a **escala de tela** que se adapta a qualquer monitor.
 
 ```bash
 mpv docs/tutorial/opendash-tutorial-avatar.mp4
@@ -629,22 +630,27 @@ Para regerar (precisa do avatar e das telas novas):
 ```bash
 python3 docs/tutorial/capture_avatar.py      # gera os PNGs do avatar (fundo transparente)
 SHOT_URL=http://127.0.0.1:8099/ python3 docs/tutorial/capture_new_ui.py   # telas novas
+# overlay de camera de re (liga a re no servidor antes; ver o proprio script):
+SHOT_URL=http://127.0.0.1:8099/ python3 docs/tutorial/capture_reverse.py
 /car-dash/.venv/bin/python docs/tutorial/build_tutorial_avatar.py
 ```
 
 O avatar é um **SVG** (`docs/tutorial/avatar.html`) renderizado por `capture_avatar.py`
 (WebKitGTK + Xvfb, com canal alfa) em quatro poses — parado, falando, piscando e acenando —
 que o roteiro sobrepõe com `overlay` e expressões `enable` para dar vida à boca e aos olhos.
-As telas novas (Wi-Fi/Bluetooth, atualizações, assistente e o cluster) são capturadas por
-`capture_new_ui.py`, que também injeta dados de demonstração para os cartões aparecerem
-preenchidos. O roteiro e o visual ficam em `build_tutorial_avatar.py` (lista `SCENES`,
-com `kind: "slide"`, `"ui"`, `"anim"` e `"presenter"`).
+As telas novas (Wi-Fi/Bluetooth, atualizações, assistente, cluster, câmera de ré e escala)
+são capturadas por `capture_new_ui.py`, que também injeta dados de demonstração para os
+cartões aparecerem preenchidos. O overlay da **câmera de ré** (`page_reverse.png`) é
+capturado à parte por `capture_reverse.py`, porque o app só o mantém aberto quando a ré
+está **ligada no servidor**. O roteiro e o visual ficam em `build_tutorial_avatar.py`
+(lista `SCENES`, com `kind: "slide"`, `"ui"`, `"anim"` e `"presenter"`).
 
 ### Tutorial de instalação — `opendash-tutorial.mp4`
 
-Um vídeo de **6m47s** (24 cenas com realces visuais e *callouts*) cobrindo hardware,
-ligação, gravação do Arduino, instalação no Orange Pi, configuração, kiosk, **telas reais
-da interface** (incluindo **Navegação** e **Apps**), a **animação de boot** e uma
+Um vídeo de **7m40s** (27 cenas com realces visuais e *callouts*) cobrindo hardware,
+ligação, gravação do Arduino, instalação no Orange Pi (ou **Raspberry Pi**), configuração,
+kiosk, **telas reais da interface** (incluindo **Navegação**, **Apps**, **câmera de ré** e
+**escala de tela**), a **animação de boot** e uma
 **demonstração final do sistema rodando em modo simulação**:
 
 ```bash
@@ -666,6 +672,8 @@ Para recapturar:
 SHOT_URL=http://127.0.0.1:8080/ SHOT_MODE=shots xvfb-run -a -s "-screen 0 1024x600x24" \
   python3 docs/tutorial/capture_ui.py        # screenshots em assets/ (ajuste SHOT_OUT)
 SHOT_MODE=video python3 ... capture_ui.py    # sequência de frames para a animação
+SHOT_URL=http://127.0.0.1:8099/ python3 docs/tutorial/capture_new_ui.py     # telas novas
+SHOT_URL=http://127.0.0.1:8099/ python3 docs/tutorial/capture_reverse.py    # overlay da câmera de ré
 ```
 
 A narração usa a voz neural **pt-BR-ThalitaMultilingualNeural** via `edge-tts` e a
@@ -678,12 +686,13 @@ desenham caixas e rótulos sobre a tela) e `"anim"` (usa `assets/ui-anim.mp4`, o
 
 ### Tutorial de instalação passo a passo (Debian/Armbian) — `opendash-tutorial-instalacao.mp4`
 
-Um vídeo de **5m28s** (20 cenas) **do zero até o painel rodando**, com todos os comandos
-num painel de **terminal** e o avatar narrando. Cobre **Debian 12 e Armbian** numa Orange Pi
-Zero 3, em **12 passos**: baixar a imagem, gravar o cartão SD, primeiro boot e SSH, atualizar
-o sistema, instalar a base, baixar o OpenDash, rodar o `install.sh`, testar no navegador,
-kiosk em tela cheia e os extras (Arduino/GPS, assistente de voz e GNOME Maps nativo), além
-de dicas para 1.5 GB de RAM:
+Um vídeo de **6m13s** (22 cenas) **do zero até o painel rodando**, com todos os comandos
+num painel de **terminal** e o avatar narrando. Cobre **Debian 12, Armbian e Raspberry Pi OS**
+numa Orange Pi Zero 3 ou Raspberry Pi, em **12 passos**: baixar a imagem, gravar o cartão SD,
+primeiro boot e SSH, atualizar o sistema, instalar a base, baixar o OpenDash, rodar o
+`install.sh`, testar no navegador, kiosk em tela cheia e os extras (Arduino/GPS, assistente
+de voz e GNOME Maps nativo), além de uma cena sobre **Raspberry Pi** e outra com os extras de
+uma linha de comando (**câmera de ré**, escala de tela) e dicas para 1.5 GB de RAM:
 
 ```bash
 mpv docs/tutorial/opendash-tutorial-instalacao.mp4
@@ -704,11 +713,12 @@ cenas.
 
 ### Vídeo de propaganda (o painel completo em uso) — `opendash-propaganda.mp4`
 
-Um vídeo de **1m52s** (12 cenas) com foco em **apresentar o produto**: mostra o **painel
+Um vídeo de **2m14s** (14 cenas) com foco em **apresentar o produto**: mostra o **painel
 completo em uso**, com **animações 2D** — *zoom/pan* (Ken Burns) sobre as telas reais, títulos
 e chamadas que entram animados, listas que surgem item a item, o avatar narrando e transições
-em *fade* — além da cena **ao vivo** (o `ui-anim.mp4`) e da configuração de **duas telas**
-(multimídia + cluster de velocidade). É o vídeo ideal para divulgação.
+em *fade* — além da cena **ao vivo** (o `ui-anim.mp4`), da configuração de **duas telas**
+(multimídia + cluster de velocidade), da **câmera de ré** e da **escala de tela**. É o vídeo
+ideal para divulgação.
 
 ```bash
 mpv docs/tutorial/opendash-propaganda.mp4

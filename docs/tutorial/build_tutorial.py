@@ -47,6 +47,7 @@ SECTION_COLORS = {
     "VISÃO GERAL": "0x2f81f7",
     "HARDWARE": "0xd29922",
     "MONTAGEM": "0xdb6d28",
+    "PLATAFORMA": "0xdb6d28",
     "ARDUINO": "0x1f9e82",
     "INSTALAÇÃO": "0x2f81f7",
     "CONFIGURAÇÃO": "0x8957e5",
@@ -54,6 +55,8 @@ SECTION_COLORS = {
     "INTERFACE": "0x2ea043",
     "GPS": "0x2f81f7",
     "APPS": "0x8957e5",
+    "TELA E ESCALA": "0x2f81f7",
+    "CÂMERA DE RÉ": "0x1f9e82",
     "DEMONSTRAÇÃO": "0xe82127",
     "SUPORTE": "0xd29922",
     "FIM": "0xe82127",
@@ -102,6 +105,17 @@ SCENES = [
             "um Arduino Mega, um módulo MCP vinte e cinco quinze para o CAN bus e um conversor "
             "de doze para cinco volts com fusível. Muito importante: alimente tudo pelo conversor, "
             "com fusível, e nunca ligue direto na tomada do carro."),
+    },
+    {
+        "kicker": "PLATAFORMA", "title": "Raspberry Pi também",
+        "body": ["Roda em Orange Pi ou Raspberry Pi",
+                 "Armbian, Raspberry Pi OS ou Debian",
+                 "Instalação detecta a placa sozinha",
+                 "Habilita UART e câmera no boot"],
+        "narration": (
+            "Uma novidade: além do Orange Pi, o OpenDash também roda na Raspberry Pi. "
+            "Na instalação, ele detecta a placa automaticamente, habilita a porta serial e a câmera "
+            "no boot e configura tudo do jeito certo, tanto no Armbian quanto no Raspberry Pi OS ou Debian."),
     },
     {
         "kicker": "MONTAGEM", "title": "Ligação do CAN",
@@ -278,6 +292,33 @@ SCENES = [
         "narration": (
             "E em Ajustes você define as unidades, o tema claro ou escuro, o brilho da tela, "
             "o modo simulação e a porta serial do Arduino."),
+    },
+    {
+        "kind": "ui", "kicker": "TELA E ESCALA", "title": "Qualquer tela",
+        "image": "page_settings_display.png",
+        "caption": ["Detecta a resolução e ajusta a escala da interface sozinho"],
+        "callouts": [
+            {"x": 512, "y": 128, "w": 500, "h": 382, "label": "escala e resolução", "color": "0x2f81f7"},
+        ],
+        "narration": (
+            "E o OpenDash se adapta a qualquer tela. Em Ajustes, o cartão Tela e escala detecta a "
+            "resolução do monitor e calcula a escala ideal da interface automaticamente. "
+            "Você pode informar as polegadas da tela, a orientação e, se quiser, ajustar a escala na mão. "
+            "Assim o painel fica do tamanho certo em telas pequenas ou grandes."),
+    },
+    {
+        "kind": "ui", "kicker": "CÂMERA DE RÉ", "title": "Câmera de ré",
+        "image": "page_reverse.png",
+        "caption": ["Ao engatar a ré, a câmera aparece em tela cheia com linhas guia"],
+        "callouts": [
+            {"x": 110, "y": 215, "w": 380, "h": 120, "label": "linhas guia", "color": "0x1f9e82"},
+            {"x": 545, "y": 215, "w": 380, "h": 120, "label": "câmera ao vivo", "color": "0x1f9bd1"},
+        ],
+        "narration": (
+            "Outra novidade é a câmera de ré. Quando você engata a marcha à ré, o OpenDash mostra a "
+            "câmera em tela cheia, com linhas guia para ajudar na manobra. "
+            "Como o Arduino informa a marcha, a troca é automática. "
+            "Nas configurações você escolhe o disparo, o dispositivo e o tamanho da imagem."),
     },
     # ---- animacao final ----
     {

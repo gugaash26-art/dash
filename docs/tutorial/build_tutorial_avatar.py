@@ -69,6 +69,8 @@ SECTION_COLORS = {
     "CONECTIVIDADE": "0x2ea043",
     "ATUALIZAÇÕES": "0x8957e5",
     "CLUSTER": "0xd29922",
+    "TELA": "0x2f81f7",
+    "CÂMERA": "0x1f9e82",
     "DEMONSTRAÇÃO": "0xe82127",
     "ENCERRAMENTO": "0xe82127",
 }
@@ -84,7 +86,8 @@ SCENES = [
             "Olá! Eu sou o assistente do OpenDash. Neste vídeo eu vou te apresentar o painel "
             "automotivo e, principalmente, as novas funções que acabaram de chegar: "
             "o assistente de voz com inteligência artificial, o Wi-Fi, o Bluetooth, a "
-            "atualização pelo GitHub com um toque e o novo cluster em barra. Vamos lá!"),
+            "atualização pelo GitHub com um toque, o novo cluster em barra, "
+            "a câmera de ré automática e a escala de tela que se adapta a qualquer monitor. Vamos lá!"),
     },
     {
         "kicker": "AGENDA", "title": "O que você vai ver",
@@ -92,11 +95,13 @@ SCENES = [
                  "Assistente de voz com IA (novo)",
                  "Wi-Fi e Bluetooth na tela (novo)",
                  "Atualização pelo GitHub (novo)",
-                 "Cluster em barra para segunda tela (novo)"],
+                 "Cluster em barra para segunda tela (novo)",
+                 "Câmera de ré automática (novo)",
+                 "Escala de tela adaptável (novo)"],
         "narration": (
             "O roteiro é simples: primeiro um passeio rápido pelo painel e suas páginas; "
-            "depois, com calma, as quatro novidades deste sistema, mostrando telas reais. "
-            "No fim, uma demonstração ao vivo."),
+            "depois, com calma, as novidades deste sistema, mostrando telas reais, os recursos "
+            "novos de tela e câmera de ré, e no fim uma demonstração ao vivo."),
     },
     {
         "kind": "anim", "clip": BOOT, "kicker": "SISTEMA",
@@ -274,6 +279,35 @@ SCENES = [
             "indicadores, velocímetro com a marcha, conta-giros em barra, acelerador, autonomia, "
             "consumo e as temperaturas. É só conectar a segunda tela e escolher esse modo."),
     },
+    # -------------------------------------------------- NOVO: câmera de ré
+    {
+        "kind": "ui", "kicker": "CÂMERA", "title": "Novidade: câmera de ré",
+        "image": "page_reverse.png",
+        "caption": ["Ao engatar a ré, a câmera entra em tela cheia com linhas guia"],
+        "callouts": [
+            {"x": 110, "y": 215, "w": 380, "h": 120, "label": "linhas guia", "color": "0x1f9e82"},
+            {"x": 545, "y": 215, "w": 380, "h": 120, "label": "câmera ao vivo", "color": "0x1f9bd1"},
+        ],
+        "narration": (
+            "Quinta novidade: a câmera de ré. Como o Arduino informa a marcha, assim que você "
+            "engata a ré o OpenDash abre a câmera em tela cheia, com linhas guia para a manobra. "
+            "Nas configurações você escolhe o disparo, o dispositivo e o tamanho da imagem. "
+            "Tudo automático, sem apertar nada."),
+    },
+    # -------------------------------------------------- NOVO: tela e escala
+    {
+        "kind": "ui", "kicker": "TELA", "title": "Novidade: qualquer tela",
+        "image": "page_settings_display.png",
+        "caption": ["Detecta a resolução e ajusta a escala da interface sozinho"],
+        "callouts": [
+            {"x": 512, "y": 128, "w": 500, "h": 382, "label": "escala e resolução", "color": "0x2f81f7"},
+        ],
+        "narration": (
+            "Sexta novidade: a escala de tela. O OpenDash detecta a resolução do seu monitor e ajusta "
+            "a interface sozinho. Você pode informar as polegadas, a orientação e, se quiser, ajustar "
+            "a escala na mão. Assim ele fica perfeito tanto numa tela de sete polegadas quanto numa "
+            "grande. E ainda roda em Orange Pi ou Raspberry Pi."),
+    },
     # ---------------------------------------------------------- demonstração
     {
         "kind": "anim", "kicker": "DEMONSTRAÇÃO", "title": "OpenDash ao vivo",
@@ -292,7 +326,8 @@ SCENES = [
                  "Bom passeio!"],
         "narration": (
             "E é isso! Agora o painel tem assistente de voz, Wi-Fi, Bluetooth, atualização pelo "
-            "GitHub e o cluster em barra. Tudo está documentado no arquivo README do projeto. "
+            "GitHub, cluster em barra, câmera de ré e escala de tela que se adapta a qualquer monitor. "
+            "Tudo está documentado no arquivo README do projeto. "
             "Obrigado por assistir e bom passeio!"),
     },
 ]
