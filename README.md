@@ -120,7 +120,7 @@ tema escuro estilo Tesla, animações suaves e alertas em tempo real.
 
 | Item | Sugestão |
 |---|---|
-| Computador de bordo | Orange Pi Zero 3 / 3 / 5 ou PC (Debian/Armbian) |
+| Computador de bordo | Orange Pi Zero 3 / 3 / 5, **Raspberry Pi 4/5** ou PC (Debian/Raspberry Pi OS/Armbian) |
 | Tela | HDMI touch (1024×600 ou 800×480) — o painel se adapta a **qualquer resolução/polegadas** |
 | Câmera | opcional: webcam USB ou câmera CSI (Raspberry Pi) para a **câmera de ré** |
 | Microcontrolador | Arduino Mega 2560 (**recomendado** — pinos suficientes) |
@@ -233,6 +233,10 @@ O instalador:
 - cria o virtualenv `.venv` e instala `pyserial` e `PyYAML`;
 - adiciona seu usuário ao grupo `dialout` (acesso à serial);
 - registra o serviço **`cardash.service`** (inicia no boot) e o habilita.
+
+> **Raspberry Pi.** O instalador detecta a placa e aplica os ajustes de boot
+> (UART, câmera CSI, HDMI). Veja o guia dedicado em
+> [`docs/raspberry-pi.md`](docs/raspberry-pi.md); use `--no-rpi` para pular esses ajustes.
 
 ### Diagnóstico de dependências — `./install.sh --check`
 

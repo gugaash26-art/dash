@@ -12,6 +12,19 @@ CHECK_ONLY=0
 INSTALL_MEDIA=0
 INSTALL_CAMERA=0
 INSTALL_SCREEN=""
+SETUP_RPI=1
+
+# Plataforma: Raspberry Pi, Orange Pi ou PC. Detectada pelo device-tree.
+PLATFORM="linux"
+if [ -r /proc/device-tree/model ]; then
+  case "$(tr -d '\0' < /proc/device-tree/model 2>/dev/null)" in
+    *Raspberry*Pi*) PLATFORM="raspberrypi" ;;
+    *Orange*Pi*|*Allwinner*|*sun50i*) PLATFORM="orangepi" ;;
+  esac
+elif [ -r /etc/rpi-issue ]; then
+  PLATFORM="raspberrypi"
+fi
+
 for arg in "$@"; do
   case "$arg" in
     --kiosk) INSTALL_KIOSK=1 ;;
@@ -22,11 +35,12 @@ for arg in "$@"; do
     --app) USE_APP=1 ;;
     --media-apps) INSTALL_MEDIA=1 ;;
     --camera) INSTALL_CAMERA=1 ;;
+    --no-rpi) SETUP_RPI=0 ;;
     --no-apt) SKIP_APT=1 ;;
     --check) CHECK_ONLY=1 ;;
     --screen=*) INSTALL_SCREEN="${arg#*=}" ;;
     -h|--help)
-      echo "uso: ./install.sh [--check] [--kiosk] [--duo] [--cluster] [--kiosk-bar] [--kiosk-cluster] [--app] [--media-apps] [--camera] [--no-apt] [--screen=WxH]"
+      echo "uso: ./install.sh [--check] [--kiosk] [--duo] [--cluster] [--kiosk-bar] [--kiosk-cluster] [--app] [--media-apps] [--camera] [--no-apt] [--no-rpi] [--screen=WxH]"
       echo "  --check           só diagnóstico: verifica dependências e recursos (não instala)"
       echo "  --kiosk           autostart do painel completo (uma tela, com menus)"
       echo "  --duo             duas telas: painel completo + cluster em barra"
@@ -36,6 +50,7 @@ for arg in "$@"; do
       echo "  --app             usa o aplicativo nativo (WebKitGTK) em vez do navegador"
       echo "  --media-apps      instala Spotube (música) e Red/YouTube: apt install ./*.deb + snap install red-app"
       echo "  --camera          instala dependências da câmera de ré (ffmpeg + v4l-utils; libcamera no Raspberry Pi)"
+      echo "  --no-rpi          não aplica os ajustes automáticos do Raspberry Pi (UART/câmera/HDMI)"
       echo "  --screen=WxH      força a resolução do painel (padrão: detecta pela tela conectada)"
       echo "                    (combine com --kiosk/--duo/--cluster; ex.: ./install.sh --app --cluster)"
       exit 0 ;;
@@ -116,6 +131,34 @@ camera_deps() {
   esac
 }
 
+# Adiciona uma linha ao config.txt do boot, se ainda não existir.
+boot_add() { # arquivo linha
+  grep -qF "$2" "$1" 2>/dev/null || echo "$2" | sudo tee -a "$1" >/dev/null
+}
+
+# Ajustes automáticos do Raspberry Pi: UART para o GPS/Arduino, câmera e HDMI.
+rpi_config() {
+  local bootcfg=""
+  [ -f /boot/firmware/config.txt ] && bootcfg=/boot/firmware/config.txt
+  [ -n "$bootcfg" ] || { [ -f /boot/config.txt ] && bootcfg=/boot/config.txt; }
+
+  say "Raspberry Pi: habilitando serial (UART), câmera e HDMI"
+  if have raspi-config; then
+    sudo raspi-config nonint do_serial_hw 0   || true   # habilita a UART de hardware
+    sudo raspi-config nonint do_serial_cons 1 || true   # remove o console serial da UART
+    sudo raspi-config nonint do_camera 0      || true   # câmera CSI (quando aplicável)
+  fi
+  if [ -n "$bootcfg" ]; then
+    [ -f "${bootcfg}.opendash.bak" ] || sudo cp "$bootcfg" "${bootcfg}.opendash.bak" 2>/dev/null || true
+    boot_add "$bootcfg" "enable_uart=1"
+    boot_add "$bootcfg" "camera_auto_detect=1"
+    boot_add "$bootcfg" "hdmi_force_hotplug=1"
+    say "Raspberry Pi: ajustes gravados em $bootcfg (backup .opendash.bak). Reinicie para aplicar."
+  else
+    say "Raspberry Pi: config.txt não encontrado (use raspi-config ou edite /boot/firmware/config.txt)"
+  fi
+}
+
 say() { printf "\033[1;31m[OpenDash]\033[0m %s\n" "$1"; }
 
 # ----------------------------------------------------------------- diagnóstico
@@ -136,6 +179,12 @@ diagnose() {
     m_opt "ambiente: PRoot/Termux (desenvolvimento) — apt/systemd reais podem faltar"
   fi
   printf "  arquitetura: %s  |  SO: %s %s\n\n" "$(uname -m)" "$(uname -s)" "$(uname -r)"
+
+  case "$PLATFORM" in
+    raspberrypi) m_ok "plataforma: Raspberry Pi ($(tr -d '\0' < /proc/device-tree/model 2>/dev/null))" ;;
+    orangepi)    m_ok "plataforma: Orange Pi (ARM)";;
+    *)           printf "  [\033[33m%-5s\033[0m] plataforma: PC/Linux genérico\n" OPC;;
+  esac
 
   # --- essenciais (núcleo servidor) ---
   if have python3; then m_ok "python3 ($(python3 -V 2>&1 | awk '{print $2}'))"
@@ -307,6 +356,10 @@ chmod +x "$HERE/kiosk/kiosk.sh" 2>/dev/null || true
 if [ "$SKIP_APT" -eq 0 ]; then
   say "adicionando $USER_NAME ao grupo dialout (acesso serial)"
   sudo usermod -aG dialout "$USER_NAME" || true
+fi
+
+if [ "$PLATFORM" = "raspberrypi" ] && [ "$SETUP_RPI" -eq 1 ] && [ "$SKIP_APT" -eq 0 ]; then
+  rpi_config
 fi
 
 say "registrando servico systemd (cardash.service)"
