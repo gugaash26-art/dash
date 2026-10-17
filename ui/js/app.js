@@ -23,6 +23,7 @@
     units: { speed: "kmh", temp: "c", volume: "l" },
     settings: null,
     page: "drive",
+    display: null,
     ws: null,
     wsRetry: 0,
     lastMsg: 0,
@@ -135,7 +136,7 @@
     $$(".page").forEach((p) => p.classList.toggle("is-active", p.dataset.page === name));
     $$(".tab").forEach((t) => t.classList.toggle("is-active", t.dataset.pageGo === name));
     if (name === "energy") { loadTrips(); loadChart(true); }
-    if (name === "settings") { loadSettings(); loadSystem(); loadNetwork(); loadUpdate(); loadScreens(); }
+    if (name === "settings") { loadSettings(); loadSystem(); loadNetwork(); loadUpdate(); loadScreens(); loadDisplay(); }
     if (name === "media") { loadWallpaper(); }
     if (name === "diag") { loadDtcs(); }
     if (name === "nav") { initNav(); loadNative(); }
@@ -526,6 +527,40 @@
     }).catch(() => {});
   }
 
+  // ---------------------------------------------------- tela, escala, orientação
+  function applyDisplay(d) {
+    if (!d) return;
+    ctx.display = d;
+    let s = Number(d.computed_scale);
+    if (!isFinite(s) || s <= 0) s = 1;
+    s = Math.max(0.5, Math.min(3, s));
+    const appEl = $("#app") || document.body;
+    if (Math.abs(s - 1) < 0.002) {
+      appEl.style.removeProperty("zoom");
+      document.documentElement.style.removeProperty("--ui-scale");
+    } else {
+      appEl.style.zoom = s;
+      document.documentElement.style.setProperty("--ui-scale", String(s));
+    }
+    const o = d.orientation || "auto";
+    const portrait = o === "portrait" || (o === "auto" && window.innerHeight > window.innerWidth);
+    document.body.classList.toggle("is-portrait", portrait);
+    const w = d.width || window.innerWidth;
+    const h = d.height || window.innerHeight;
+    const info = $("#displayInfo");
+    if (info) {
+      const bits = [`detectado ${w}×${h}`];
+      if (d.dpi) bits.push(`${d.dpi} dpi (${d.inches}")`);
+      bits.push(`escala ${Math.round(s * 100)}%`);
+      if (portrait) bits.push("retrato");
+      info.textContent = bits.join(" · ");
+    }
+  }
+
+  function loadDisplay() {
+    api("/api/display").then(applyDisplay).catch(() => {});
+  }
+
   function loadSystem() {
     api("/api/system").then((s) => {
       const rows = [
@@ -556,6 +591,7 @@
       saveTimer = setTimeout(() => { info.textContent = ""; }, 2200);
       if (key === "ui.theme") applyTheme(value);
       if (key === "ui.brightness") applyBrightness(Number(value));
+      if (key.indexOf("display.") === 0) loadDisplay();
     }).catch(() => {});
   }
 
@@ -1662,6 +1698,8 @@
     loadNative();
     refreshAgentStatus();
     loadWallpaper();
+    loadDisplay();
+    window.addEventListener("resize", () => { if (ctx.display) applyDisplay(ctx.display); });
     try {
       const { settings } = await api("/api/settings");
       ctx.settings = settings;

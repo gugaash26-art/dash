@@ -37,6 +37,11 @@ tema escuro estilo Tesla, animações suaves e alertas em tempo real.
 - Climatização: velocidade do ventilador (0–4) e ar‑condicionado **enviam comandos
   reais ao Arduino**, que aciona os relés configurados
 
+**Tela e imagem**
+- Adapta‑se a **qualquer monitor** (qualquer resolução, tamanho ou polegadas):
+  detecção via `xrandr`, escala automática por polegadas (Ajustes › Tela e escala)
+  e orientação retrato/paisagem
+
 **Diagnóstico**
 - Leitura e limpeza de códigos DTC (modo 03/04), descrição em português
 - Grade de sensores em tempo real, status do link serial/OBD
@@ -113,8 +118,8 @@ tema escuro estilo Tesla, animações suaves e alertas em tempo real.
 
 | Item | Sugestão |
 |---|---|
-| Computador de bordo | Orange Pi Zero 3 / 3 / 5 / PC (Debian/Armbian) |
-| Tela | HDMI touch (1024×600 ou 800×480) |
+| Computador de bordo | Orange Pi Zero 3 / 3 / 5 ou PC (Debian/Armbian) |
+| Tela | HDMI touch (1024×600 ou 800×480) — o painel se adapta a **qualquer resolução/polegadas** |
 | Microcontrolador | Arduino Mega 2560 (**recomendado** — pinos suficientes) |
 | CAN bus | Módulo MCP2515 (TJA1050) 5 V com cristal 8 ou 16 MHz |
 | Sensores | Pressão de óleo 0,5–4,5 V, nível de combustível (boia), temperatura de óleo |
@@ -416,6 +421,12 @@ screens:                                                 # escolha de monitores 
   bar: HDMI-2                                            # saída xrandr do cluster em barra
   arrange: false                                         # organiza o cluster à direita do painel
   display: ":0"                                          # servidor X usado para detectar monitores
+display:                                                 # adaptação a qualquer monitor (seção 13)
+  scale: auto                                            # auto | 0.5 .. 3.0 (escala fixa da interface)
+  inches: 0.0                                            # diagonal da tela (0 = DPI padrão, 160)
+  orientation: auto                                      # auto | landscape | portrait
+  width: 0                                               # largura real em px (0 = detectar via xrandr)
+  height: 0                                              # altura real em px (0 = detectar)
 ```
 
 > **GPS.** Com `source: auto` o servidor usa o USB (se presente) e, senão, o GPS do
@@ -459,6 +470,7 @@ Variáveis de ambiente:
 | GET | `/media/wallpaper` | serve a imagem de papel de parede enviada (upload) |
 | GET | `/api/screens` | monitores detectados (`xrandr`) + escolha atual painel/cluster |
 | POST | `/api/screens` | `{"main":"HDMI-1","bar":"HDMI-2","arrange":true,"enabled":true}` aplica e reinicia o kiosk |
+| GET | `/api/display` | adaptação de tela: escala, polegadas, orientação, DPI e escala calculada |
 | GET | `/api/native` | apps nativos disponíveis (GNOME Maps, Spotube, YouTube/Red) + se o lançamento está habilitado |
 | POST | `/api/native/launch` | `{"app":"gnome-maps","lat":…,"lon":…}`, `{"app":"spotube"}` ou `{"app":"red-app"}` abre o app nativo |
 | POST | `/api/native/close` | `{"app":"gnome-maps"}` fecha o app nativo |
@@ -824,6 +836,21 @@ monitores (HDMI)**:
 Requisitos: ambiente **X11** com `xrandr` (`sudo apt-get install -y x11-xserver-utils`) e o
 kiosk instalado (`./install.sh --cluster` ou `--duo`). Sem `xrandr` o cartão apenas informa o
 que falta.
+
+### Tela e escala (qualquer monitor)
+
+A interface se adapta a **qualquer resolução, tamanho ou polegadas**. Em
+**Ajustes → Tela e escala**:
+
+- **Escala**: `Auto` usa a detecção; ou fixe um fator (0.5× a 3×) para telas muito
+  pequenas/grandes.
+- **Polegadas**: informe a diagonal da tela (ex.: `7`, `10.1`); o servidor calcula o DPI
+  e a escala ideal (`computed_scale`).
+- **Orientação**: `Auto`, `paisagem` ou `retrato` (no retrato, os cartões passam a uma coluna).
+- **Largura × Altura**: força a resolução lógica, se a detecção automática não servir.
+
+O servidor expõe `/api/display` com DPI, tela detectada (`xrandr`) e a escala calculada.
+Para fixar a resolução no boot/kiosk, use `./install.sh --screen=1024x600`.
 
 ### Papel de parede (Mídia)
 

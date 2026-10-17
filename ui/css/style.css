@@ -596,3 +596,14 @@ body.is-cluster .media-mini { display: none; }
 body.is-cluster .page[data-page="drive"] { padding: 6px 22px 12px; }
 body.is-cluster .cluster { gap: 22px; }
 body.is-cluster .topbar { padding-top: 10px; }
+
+/* ---- suporte a qualquer tela: orientação e escala ---- */
+/* A escala é aplicada via zoom no #app (app.js, /api/display). Aqui só
+   ajustamos layouts para telas verticais (portrait). */
+body.is-portrait .grid-2 { grid-template-columns: 1fr; }
+body.is-portrait .agent-settings { grid-template-columns: 1fr; }
+@media (orientation: portrait) {
+  .tabbar .tab { padding: 4px 4px; }
+  .tabbar .tab span { font-size: 9px; letter-spacing: .2px; }
+}
+

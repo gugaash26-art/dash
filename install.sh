@@ -10,7 +10,7 @@ USE_APP=0
 SKIP_APT=0
 CHECK_ONLY=0
 INSTALL_MEDIA=0
-
+INSTALL_SCREEN=""
 for arg in "$@"; do
   case "$arg" in
     --kiosk) INSTALL_KIOSK=1 ;;
@@ -22,8 +22,9 @@ for arg in "$@"; do
     --media-apps) INSTALL_MEDIA=1 ;;
     --no-apt) SKIP_APT=1 ;;
     --check) CHECK_ONLY=1 ;;
+    --screen=*) INSTALL_SCREEN="${arg#*=}" ;;
     -h|--help)
-      echo "uso: ./install.sh [--check] [--kiosk] [--duo] [--cluster] [--kiosk-bar] [--kiosk-cluster] [--app] [--media-apps] [--no-apt]"
+      echo "uso: ./install.sh [--check] [--kiosk] [--duo] [--cluster] [--kiosk-bar] [--kiosk-cluster] [--app] [--media-apps] [--no-apt] [--screen=WxH]"
       echo "  --check           só diagnóstico: verifica dependências e recursos (não instala)"
       echo "  --kiosk           autostart do painel completo (uma tela, com menus)"
       echo "  --duo             duas telas: painel completo + cluster em barra"
@@ -32,10 +33,21 @@ for arg in "$@"; do
       echo "  --kiosk-cluster   somente o painel de velocidade, velocímetro redondo (segunda tela)"
       echo "  --app             usa o aplicativo nativo (WebKitGTK) em vez do navegador"
       echo "  --media-apps      instala Spotube (música) e Red/YouTube: apt install ./*.deb + snap install red-app"
+      echo "  --screen=WxH      força a resolução do painel (padrão: detecta pela tela conectada)"
       echo "                    (combine com --kiosk/--duo/--cluster; ex.: ./install.sh --app --cluster)"
       exit 0 ;;
   esac
 done
+
+# Resolução da tela conectada (qualquer monitor). Devolve WxH ou nada.
+detect_screen() {
+  command -v xrandr >/dev/null 2>&1 || return 1
+  xrandr --query 2>/dev/null | awk '
+    / connected/ {
+      for (i = 1; i <= NF; i++)
+        if ($i ~ /^[0-9]+x[0-9]+\+/) { split($i, a, "+"); print a[1]; exit }
+    }'
+}
 
 app_deps() {
   sudo apt-get install -y python3-gi gir1.2-gtk-3.0 gir1.2-webkit2-4.1 \
@@ -99,8 +111,7 @@ m_req()  { m_tag 31 FALTA "$@"; MISS_REQ=$((MISS_REQ+1)); }
 have()   { command -v "$1" >/dev/null 2>&1; }
 
 diagnose() {
-  local port native_ok=0 browser_ok=0 browser="" sdeb=""
-
+  local port native_ok=0 browser_ok=0 browser="" sdeb="" screen=""
   printf '\n\033[1;31m[OpenDash]\033[0m diagnóstico (--check): nada será alterado\n\n'
 
   if [ -n "${TERMUX_VERSION:-}" ] \
@@ -157,6 +168,16 @@ diagnose() {
     if have "$h"; then m_ok "kiosk helper: $h"
     else m_opt "$h ausente (opcional: sem protetor de tela/cursor) — sudo apt install x11-xserver-utils unclutter"; fi
   done
+  # qualquer monitor/resolução/polegadas: a interface se adapta e pode escalar
+  if [ -n "$INSTALL_SCREEN" ]; then
+    m_ok "resolução forçada via --screen=$INSTALL_SCREEN"
+  fi
+  screen="$(detect_screen || true)"
+  if [ -n "$screen" ]; then
+    m_ok "tela detectada: $screen (escala automática por polegadas em Ajustes > Tela e escala)"
+  else
+    m_opt "não detectei a tela agora (sem DISPLAY/xrandr) — a interface se adapta a qualquer resolução"
+  fi
 
   # --- integrações (desativam recursos se faltar) ---
   if have nmcli; then m_ok "Wi-Fi: nmcli"; else m_opt "Wi-Fi: nmcli ausente (Ajustes desativa a aba)"; fi
@@ -186,6 +207,7 @@ diagnose() {
     m_opt "YouTube/Red: sem snapd — sudo snap install red-app (ou flatpak com.ktechpit.red)"
   fi
   if have waydroid; then m_ok "Waydroid (apps Android)"; else m_opt "Waydroid ausente (veja install_waydroid.sh)"; fi
+
   if have aplay; then m_ok "áudio (aplay)"; else m_opt "aplay ausente (sem avisos sonoros)"; fi
   if have arecord; then m_ok "microfone (arecord)"; else m_opt "arecord ausente (assistente de voz sem entrada)"; fi
   if have whisper-cli; then m_ok "voz→texto: whisper-cli"; else m_opt "whisper-cli ausente (assistente usa transcrição na nuvem)"; fi
@@ -304,7 +326,12 @@ if [ "$INSTALL_KIOSK_BAR" -eq 1 ] || [ "$INSTALL_KIOSK_CLUSTER" -eq 1 ]; then
     if [ "$USE_APP" -eq 1 ]; then app_deps
     else sudo apt-get install -y chromium x11-xserver-utils || sudo apt-get install -y chromium-browser || true; fi
   fi
-  TOUCH_SIZE="${CARDASH_TOUCH_SIZE:-1024,600}"
+  TOUCH_SIZE="${CARDASH_TOUCH_SIZE:-${INSTALL_SCREEN//x/,}}"
+  if [ -z "$TOUCH_SIZE" ]; then
+    TOUCH_SIZE="$(detect_screen || true)"
+    TOUCH_SIZE="${TOUCH_SIZE//x/,}"
+  fi
+  TOUCH_SIZE="${TOUCH_SIZE:-1024,600}"
   BAR_SIZE="${CARDASH_BAR_SIZE:-1920,480}"
   TOUCH_POS="${CARDASH_TOUCH_POS:-0,0}"
   TOUCH_W="${TOUCH_SIZE%%,*}"

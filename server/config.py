@@ -134,6 +134,13 @@ DEFAULTS = {
         "arrange": False,
         "display": ":0",
     },
+    "display": {
+        "scale": "auto",
+        "inches": 0.0,
+        "orientation": "auto",
+        "width": 0,
+        "height": 0,
+    },
     "paths": {"data_dir": str(ROOT / "data"), "db": str(ROOT / "data" / "cardash.db")},
     "ui": {"boot_animation": True, "theme": "auto", "brightness": 100},
 }
@@ -184,6 +191,11 @@ EDITABLE = [
     ("screens.main", None),
     ("screens.bar", None),
     ("screens.arrange", None),
+    ("display.scale", None),
+    ("display.inches", None),
+    ("display.orientation", ["auto", "landscape", "portrait"]),
+    ("display.width", None),
+    ("display.height", None),
 ]
 
 
@@ -272,4 +284,15 @@ def validate_setting(key: str, value):
         value = bool(value)
     if key in ("screens.main", "screens.bar"):
         value = str(value)[:64]
+    if key == "display.scale":
+        if value in (None, "", "auto"):
+            value = "auto"
+        else:
+            value = max(0.5, min(3.0, float(value)))
+    if key == "display.inches":
+        value = max(0.0, min(120.0, float(value)))
+    if key == "display.orientation":
+        value = str(value)
+    if key in ("display.width", "display.height"):
+        value = max(0, min(16000, int(value)))
     return value

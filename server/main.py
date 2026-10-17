@@ -15,6 +15,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 from . import config as config_mod
 from .agent import Agent
 from .config import EDITABLE, cfg, validate_setting
+from .display import Display
 from .hub import Hub
 from .native import Native
 from .net import Net
@@ -66,6 +67,7 @@ updater = Updater(cfg, ROOT)
 screens = Screens(cfg)
 wallpaper = Wallpaper(cfg)
 native = Native(cfg)
+display = Display(cfg)
 
 
 def auto_update_check():
@@ -356,6 +358,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._send_bytes(data, ctype)
         if path == "/api/screens":
             return self._json(screens.status())
+        if path == "/api/display":
+            return self._json(display.status())
         if path == "/api/native":
             return self._json(native.status())
         if path == "/api/settings":
