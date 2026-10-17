@@ -9,6 +9,7 @@ INSTALL_KIOSK_CLUSTER=0
 USE_APP=0
 SKIP_APT=0
 CHECK_ONLY=0
+INSTALL_MEDIA=0
 
 for arg in "$@"; do
   case "$arg" in
@@ -18,10 +19,11 @@ for arg in "$@"; do
     --duo) INSTALL_KIOSK=1; INSTALL_KIOSK_BAR=1 ;;
     --cluster) INSTALL_KIOSK=1; INSTALL_KIOSK_CLUSTER=1 ;;
     --app) USE_APP=1 ;;
+    --media-apps) INSTALL_MEDIA=1 ;;
     --no-apt) SKIP_APT=1 ;;
     --check) CHECK_ONLY=1 ;;
     -h|--help)
-      echo "uso: ./install.sh [--check] [--kiosk] [--duo] [--cluster] [--kiosk-bar] [--kiosk-cluster] [--app] [--no-apt]"
+      echo "uso: ./install.sh [--check] [--kiosk] [--duo] [--cluster] [--kiosk-bar] [--kiosk-cluster] [--app] [--media-apps] [--no-apt]"
       echo "  --check           só diagnóstico: verifica dependências e recursos (não instala)"
       echo "  --kiosk           autostart do painel completo (uma tela, com menus)"
       echo "  --duo             duas telas: painel completo + cluster em barra"
@@ -29,6 +31,7 @@ for arg in "$@"; do
       echo "  --kiosk-bar       somente o cluster em barra (segunda tela)"
       echo "  --kiosk-cluster   somente o painel de velocidade, velocímetro redondo (segunda tela)"
       echo "  --app             usa o aplicativo nativo (WebKitGTK) em vez do navegador"
+      echo "  --media-apps      instala Spotube (música) e Red/YouTube: apt install ./*.deb + snap install red-app"
       echo "                    (combine com --kiosk/--duo/--cluster; ex.: ./install.sh --app --cluster)"
       exit 0 ;;
   esac
@@ -37,6 +40,52 @@ done
 app_deps() {
   sudo apt-get install -y python3-gi gir1.2-gtk-3.0 gir1.2-webkit2-4.1 \
     || sudo apt-get install -y python3-gi gir1.2-gtk-3.0 gir1.2-webkit2-4.0 || true
+}
+
+# Apps de mídia da grade: Spotube (música) e Red (YouTube).
+# Comandos oficiais:
+#   sudo apt install ./Spotube-linux-x86_64.deb
+#   sudo snap install red-app
+# O .deb precisa ser da arquitetura da placa (Orange Pi = aarch64).
+media_apps() {
+  local arch deb="" name
+  arch="$(uname -m)"
+  say "instalando apps de mídia (Spotube + YouTube/Red) — arquitetura $arch"
+
+  case "$arch" in
+    aarch64|arm64) name="Spotube-linux-aarch64.deb" ;;
+    *)             name="Spotube-linux-x86_64.deb" ;;
+  esac
+
+  deb=""
+  for cand in "$HERE/$name" "$PWD/$name" "$HERE/Spotube-linux-$arch.deb" "$PWD/Spotube-linux-$arch.deb"; do
+    if [ -f "$cand" ]; then deb="$cand"; break; fi
+  done
+
+  if [ -n "$deb" ]; then
+    say "Spotube: sudo apt install $deb"
+    sudo apt install -y "$deb" || sudo apt-get install -y "$deb" || \
+      say "Spotube: não instalado (pacote incompatível com $arch?)"
+  else
+    say "Spotube: $name não está em $HERE nem no diretório atual"
+    say "  baixe em https://github.com/team-spotube/spotube/releases e rode:"
+    say "  sudo apt install ./$name"
+  fi
+
+  if have snap; then
+    say "Red/YouTube: sudo snap install red-app"
+    sudo snap install red-app || say "Red/YouTube: falha ao instalar"
+  elif [ "$SKIP_APT" -eq 0 ]; then
+    say "snap ausente; instalando snapd"
+    sudo apt-get install -y snapd || true
+    if have snap; then
+      sudo snap install red-app || say "Red/YouTube: falha ao instalar"
+    else
+      say "Red/YouTube: snap indisponível aqui — rode depois: sudo snap install red-app"
+    fi
+  else
+    say "Red/YouTube: rode depois: sudo snap install red-app"
+  fi
 }
 
 say() { printf "\033[1;31m[OpenDash]\033[0m %s\n" "$1"; }
@@ -50,7 +99,7 @@ m_req()  { m_tag 31 FALTA "$@"; MISS_REQ=$((MISS_REQ+1)); }
 have()   { command -v "$1" >/dev/null 2>&1; }
 
 diagnose() {
-  local port native_ok=0 browser_ok=0 browser=""
+  local port native_ok=0 browser_ok=0 browser="" sdeb=""
 
   printf '\n\033[1;31m[OpenDash]\033[0m diagnóstico (--check): nada será alterado\n\n'
 
@@ -114,12 +163,43 @@ diagnose() {
   if have bluetoothctl; then m_ok "Bluetooth: bluetoothctl"; else m_opt "Bluetooth: bluetoothctl ausente"; fi
   if have gnome-maps || have flatpak; then m_ok "mapa nativo: gnome-maps/flatpak"
   else m_opt "mapa nativo ausente (sudo apt install gnome-maps) — a Navegação web continua"; fi
+
+  # --- apps de mídia (Spotube e Red/YouTube) ---
+  if have spotube || [ -x /usr/bin/spotube ] || [ -x /usr/lib/spotube/spotube ]; then
+    m_ok "música: Spotube"
+  elif have flatpak && flatpak info com.github.KRTirtho.Spotube >/dev/null 2>&1; then
+    m_ok "música: Spotube (flatpak)"
+  else
+    sdeb="Spotube-linux-x86_64.deb"
+    if [ "$(uname -m)" = "aarch64" ] || [ "$(uname -m)" = "arm64" ]; then
+      sdeb="Spotube-linux-aarch64.deb"
+    fi
+    m_opt "Spotube ausente — baixe $sdeb e: sudo apt install ./$sdeb"
+  fi
+  if have red-app || [ -x /snap/bin/red-app ]; then
+    m_ok "vídeo: YouTube (Red)"
+  elif have flatpak && flatpak info com.ktechpit.red >/dev/null 2>&1; then
+    m_ok "vídeo: YouTube (Red, flatpak)"
+  elif have snap; then
+    m_opt "YouTube/Red ausente (sudo snap install red-app)"
+  else
+    m_opt "YouTube/Red: sem snapd — sudo snap install red-app (ou flatpak com.ktechpit.red)"
+  fi
   if have waydroid; then m_ok "Waydroid (apps Android)"; else m_opt "Waydroid ausente (veja install_waydroid.sh)"; fi
   if have aplay; then m_ok "áudio (aplay)"; else m_opt "aplay ausente (sem avisos sonoros)"; fi
   if have arecord; then m_ok "microfone (arecord)"; else m_opt "arecord ausente (assistente de voz sem entrada)"; fi
   if have whisper-cli; then m_ok "voz→texto: whisper-cli"; else m_opt "whisper-cli ausente (assistente usa transcrição na nuvem)"; fi
   if have ffmpeg; then m_ok "ffmpeg (gera os vídeos de tutorial/propaganda)"
   else m_opt "ffmpeg ausente (só para regerar os vídeos)"; fi
+
+  # --- chave da IA (assistente de voz) ---
+  if [ -x "$HERE/.venv/bin/python" ]; then
+    if "$HERE/.venv/bin/python" -c "from server import config as c; import os; a=c.cfg.get('agent') or {}; raise SystemExit(0 if (os.environ.get(a.get('llm_key_env') or '') or a.get('llm_key')) else 1)" >/dev/null 2>&1; then
+      m_ok "chave da IA configurada (data/agent.env, GROQ_API_KEY ou Ajustes)"
+    else
+      m_opt "chave da IA ausente — crie data/agent.env com GROQ_API_KEY=... (assistente sem IA)"
+    fi
+  fi
 
   # --- serial (Arduino/GPS) ---
   if id -nG "$USER_NAME" 2>/dev/null | tr ' ' '\n' | grep -qx dialout; then
@@ -258,6 +338,8 @@ if [ "$USE_APP" -eq 1 ]; then
   rm -f "$TMP_DESK"
   say "atalho: /usr/share/applications/opendash.desktop (menu de aplicativos)"
 fi
+
+if [ "$INSTALL_MEDIA" -eq 1 ]; then media_apps; fi
 
 IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
 say "pronto! abra o painel em http://${IP:-localhost}:8080"

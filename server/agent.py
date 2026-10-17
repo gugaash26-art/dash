@@ -33,13 +33,14 @@ TOOLS = [
         "name": "abrir_app",
         "description": "Abre um aplicativo cadastrado (YouTube, Spotify, Mapas, Navegador) ou a página de navegação.",
         "parameters": {"type": "object", "properties": {
-            "nome": {"type": "string", "description": "nome do app, ex.: YouTube"},
+            "nome": {"type": "string", "description": "nome do app, ex.: YouTube, Spotube, Mapas"},
         }, "required": ["nome"]}}},
     {"type": "function", "function": {
         "name": "tocar_musica",
-        "description": "Busca e toca uma música/vídeo. Use provider youtube ou spotify com a consulta (artista, música).",
+        "description": "Busca e toca uma música/vídeo. Use provider youtube (busca no painel), "
+                       "spotube (abre o app Spotube) ou spotify (busca no Spotify).",
         "parameters": {"type": "object", "properties": {
-            "provider": {"type": "string", "enum": ["youtube", "spotify"]},
+            "provider": {"type": "string", "enum": ["youtube", "spotube", "spotify"]},
             "consulta": {"type": "string"},
         }, "required": ["provider", "consulta"]}}},
     {"type": "function", "function": {

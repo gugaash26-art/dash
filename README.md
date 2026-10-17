@@ -50,11 +50,13 @@ tema escuro estilo Tesla, animações suaves e alertas em tempo real.
   com detecção automática da fonte
 
 **Apps (lançador)**
-- Grade de aplicativos com YouTube, Spotify, Mapas e navegador embutido (páginas web)
+- Grade de aplicativos com **YouTube**, **Spotube**, Mapas e navegador embutido —
+  **Spotube** e **YouTube** são apps **nativos** do sistema, o resto são páginas web
 - Overlay em tela cheia com recarregar e “abrir em nova aba”
 - **Cadastro de apps** (lojinha): adicione qualquer serviço informando nome e URL
-- **Apps nativos** do sistema (ex.: **GNOME Maps**) abrem direto no painel, via
-  URI `geo:`/`maps:` (para apps **Android nativos** reais, veja o **Waydroid** na seção 10)
+- **Apps nativos** do sistema (ex.: **GNOME Maps**, **Spotube**, **YouTube via Red**) abrem
+  direto no painel (o mapa recebe URI `geo:`/`maps:`; para apps **Android nativos** reais,
+  veja o **Waydroid** na seção 10)
 
 **Assistente de voz (IA)**
 - **Push‑to‑talk**: segure o botão na página **Mídia**, fale e solte — o assistente
@@ -86,6 +88,12 @@ tema escuro estilo Tesla, animações suaves e alertas em tempo real.
 - Abre o **GNOME Maps instalado no sistema** direto da página **Navegação**, levando o
   destino/coordenadas para o app (URI `geo:`/`maps:`); instala com `tools/install_gnome_maps.sh`
 - Lançamento habilitado por `CARDASH_ALLOW_NATIVE=1` (segurança); a rota é iniciada no app
+
+**Mídia nativa (Spotube e YouTube/Red)**
+- Os tiles **Spotube** e **YouTube** da aba **Apps** abrem os apps reais do sistema (não
+  são páginas web) e avisam com o comando de instalação se faltarem
+- Instala com `./install.sh --media-apps`
+  (`sudo apt install ./Spotube-linux-x86_64.deb` + `sudo snap install red-app`)
 
 **Ajustes**
 - Unidades (km/h↔mph, °C↔°F, L↔gal), tema claro/escuro/auto, brilho, animação de boot
@@ -208,6 +216,7 @@ cd car-dash
 ./install.sh                               # instala deps, venv, serviço systemd
 ./install.sh --kiosk                       # (opcional) autostart do navegador kiosk
 ./install.sh --app --cluster               # (opcional) aplicativo nativo: painel + painel de velocidade
+./install.sh --media-apps                  # (opcional) Spotube (.deb) + YouTube/Red (snap)
 ```
 
 O instalador:
@@ -226,7 +235,7 @@ ausente) e **`FALTA`** (essencial):
   (app nativo WebKitGTK **ou** navegador) e o servidor respondendo;
 - **opcionais** (não impedem rodar — apenas desativam um recurso): `git`, `systemd`/
   `xset`/`unclutter`, `nmcli` (Wi‑Fi), `bluetoothctl`, `gnome-maps`, `waydroid`,
-  `aplay`/`arecord`, `whisper-cli`, `ffmpeg` e o grupo `dialout`.
+  `Spotube`, `YouTube (Red)`, `aplay`/`arecord`, `whisper-cli`, `ffmpeg` e o grupo `dialout`.
 
 No fim ele mostra o resumo e sugere `./install.sh --app --kiosk`. Se algum **essencial**
 faltar, é só rodar o instalador.
@@ -298,7 +307,7 @@ Para abrir uma janela sem moldura, em tela cheia, escondendo o cursor (padrão),
 | Diagrama de RPM > 85 % | zona vermelha |
 | Aba **Diagnóstico** | ler/apagar códigos e ver sensores ao vivo |
 | Aba **Navegação** | mapa com GPS, rastro, busca de destino e rota |
-| Aba **Apps** | abrir YouTube/Spotify/Mapas/navegador e cadastrar novos apps |
+| Aba **Apps** | abrir YouTube/Spotube/Mapas/navegador e cadastrar novos apps |
 
 ### Duas telas (painel com menus + painel de velocidade)
 
@@ -450,8 +459,8 @@ Variáveis de ambiente:
 | GET | `/media/wallpaper` | serve a imagem de papel de parede enviada (upload) |
 | GET | `/api/screens` | monitores detectados (`xrandr`) + escolha atual painel/cluster |
 | POST | `/api/screens` | `{"main":"HDMI-1","bar":"HDMI-2","arrange":true,"enabled":true}` aplica e reinicia o kiosk |
-| GET | `/api/native` | apps nativos disponíveis (GNOME Maps) + se o lançamento está habilitado |
-| POST | `/api/native/launch` | `{"app":"gnome-maps","lat":…,"lon":…}` ou `{"query":"…"}` abre o app nativo |
+| GET | `/api/native` | apps nativos disponíveis (GNOME Maps, Spotube, YouTube/Red) + se o lançamento está habilitado |
+| POST | `/api/native/launch` | `{"app":"gnome-maps","lat":…,"lon":…}`, `{"app":"spotube"}` ou `{"app":"red-app"}` abre o app nativo |
 | POST | `/api/native/close` | `{"app":"gnome-maps"}` fecha o app nativo |
 | GET | `/api/apps` | lista de apps + configuração de mapas |
 | POST | `/api/apps` | cria/atualiza app (`{name,url,icon,color,kind}`) |
@@ -478,7 +487,7 @@ car-dash/
 │   ├── updater.py        atualização via Git (verificar/instalar/reiniciar)
 │   ├── screens.py        monitores HDMI (xrandr) + escolha painel/cluster
 │   ├── wallpaper.py      papel de parede da Mídia (URL ou upload)
-│   ├── native.py         apps nativos (GNOME Maps) — abrir/fechar
+│   ├── native.py         apps nativos (GNOME Maps, Spotube, YouTube/Red) — abrir/fechar
 │   ├── sim.py            gerador de dados para bancada (inclui GPS)
 │   ├── alerts.py         regras de alerta
 │   ├── store.py          SQLite (amostras, viagens, DTC, ajustes, apps, rastro)
@@ -693,8 +702,9 @@ O que ele sabe fazer (via *function calling*):
 
 | Você diz | O assistente faz |
 |---|---|
-| “abre o YouTube”, “abre o Spotify” | abre o app cadastrado (ou a página **Apps**) |
-| “toca Imagine no Spotify”, “põe um vídeo de jazz” | busca e abre a mídia (Spotify usa a API; YouTube por embed) |
+| “abre o YouTube”, “abre o Spotube” | abre o app **nativo** (Red/Spotube), ou a página **Apps** |
+| “toca Imagine no Spotube”, “põe um vídeo de jazz” | Spotube abre o app; YouTube toca o vídeo por embed |
+| “toca Imagine no Spotify” | funciona se `agent.spotify_client_id/secret` estiverem preenchidos |
 | “pausa”, “toca”, “próxima faixa” | controla o player |
 | “traça rota para a avenida Paulista” | vai para **Navegação** e calcula a rota |
 | “liga o ar, ventilador 3” | envia o clima ao Arduino (relés) |
@@ -860,6 +870,36 @@ cartão explica o que falta (nada quebra).
 
 > **Observação**: o GNOME Maps abre no **destino/busca**, mas **não aceita uma rota pronta por
 > linha de comando** — a navegação (trajeto) é iniciada dentro do próprio app.
+
+### Spotube e YouTube (apps de mídia nativos)
+
+Os tiles **Spotube** (música) e **YouTube** da aba **Apps** abrem os aplicativos **reais do
+sistema** em vez de uma página incorporada — o Spotify sai da grade e o YouTube deixa de ser
+um `<iframe>`. Sem instalar, o tile aparece apagado e o toque mostra o comando que falta.
+
+Instalação (no Orange Pi):
+
+```bash
+# música: Spotube (o comando oficial usa ./Spotube-linux-x86_64.deb em PC x86_64)
+sudo apt install ./Spotube-linux-aarch64.deb
+
+# vídeo: Red — cliente de YouTube (snap)
+sudo snap install red-app
+
+# ou os dois de uma vez:
+./install.sh --media-apps
+```
+
+- **Atenção à arquitetura**: o Orange Pi é `aarch64`, então o pacote é
+  `Spotube-linux-aarch64.deb` (o `x86_64` só instala em PC/VM de 64 bits). Baixe em
+  <https://github.com/team-spotube/spotube/releases>.
+- Sem `snapd` no sistema? Flatpak também serve:
+  `flatpak install com.github.KRTirtho.Spotube` e `flatpak install com.ktechpit.red`.
+- `./install.sh --check` passa a listar os dois (faltando é só `OPC`, nada quebra).
+- Dicas do **Red**: `red-app --tv` abre direto no **modo TV** (tela cheia, ideal para o
+  painel) e `red-app <link>` abre um vídeo — útil para chamar de um atalho ou script.
+- O lançamento é protegido pelo mesmo `CARDASH_ALLOW_NATIVE=1` do GNOME Maps.
+- O assistente entende “abrir o Spotube”, “abrir o YouTube” e “tocar … no Spotube”.
 
 ---
 

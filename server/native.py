@@ -8,6 +8,7 @@ from urllib.parse import quote
 
 # Aplicativos de desktop (GNOME) que o painel pode abrir no Orange Pi.
 # Somente estes apps (allowlist) podem ser lancados; nada de comando arbitrario.
+# `hint` e a linha de instalacao mostrada quando o app nao existe.
 APPS = {
     "gnome-maps": {
         "name": "GNOME Maps",
@@ -17,13 +18,32 @@ APPS = {
         "icon": "map",
         "color": "#5b9e4a",
     },
+    "spotube": {
+        "name": "Spotube",
+        "bin": "spotube",
+        "paths": ("/usr/bin/spotube", "/usr/lib/spotube/spotube",
+                  "/opt/spotube/spotube"),
+        "flatpak": "com.github.KRTirtho.Spotube",
+        "hint": "sudo apt install ./Spotube-linux-x86_64.deb",
+        "icon": "music",
+        "color": "#1db954",
+    },
+    "red-app": {
+        "name": "YouTube",
+        "bin": "red-app",
+        "snap": "red-app",
+        "flatpak": "com.ktechpit.red",
+        "hint": "sudo snap install red-app",
+        "icon": "play",
+        "color": "#ff0033",
+    },
 }
 
 COORD_RE = re.compile(r"^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$")
 
 
 class Native:
-    """Abre/feche aplicativos GUI nativos (GNOME Maps) no display do carro.
+    """Abre/feche aplicativos GUI nativos (GNOME Maps, Spotube, Red/YouTube).
 
     A acao so acontece se `CARDASH_ALLOW_NATIVE=1` (igual a energia) e
     `native.enabled` no config.yaml. Sem o app instalado, informa como instalar.
@@ -46,10 +66,29 @@ class Native:
                     break
         return env
 
+    def _snap_bin(self, spec):
+        """`snap run <nome>` quando o snap existe mas nao esta no PATH."""
+        if not spec.get("snap") or not shutil.which("snap"):
+            return None
+        try:
+            res = subprocess.run(["snap", "list", spec["snap"]],
+                                 capture_output=True, text=True, timeout=8)
+        except (OSError, subprocess.SubprocessError):
+            return None
+        if res.returncode == 0:
+            return ["snap", "run", spec["snap"]]
+        return None
+
     def _bin(self, spec):
         path = shutil.which(spec["bin"])
         if path:
             return [path]
+        for cand in spec.get("paths") or ():
+            if os.path.isfile(cand) and os.access(cand, os.X_OK):
+                return [cand]
+        snap = self._snap_bin(spec)
+        if snap:
+            return snap
         if spec.get("flatpak") and shutil.which("flatpak"):
             try:
                 res = subprocess.run(
@@ -77,6 +116,16 @@ class Native:
                 return spec["flatpak"] in res.stdout
             except (OSError, subprocess.SubprocessError):
                 return False
+        if spec.get("snap") and shutil.which("snap"):
+            try:
+                res = subprocess.run(["snap", "services"],
+                                     capture_output=True, text=True, timeout=8)
+                if res.returncode == 0:
+                    return any(line.split()[:1] == [f"{spec['snap']}.{spec['snap']}.service"]
+                               or line.startswith(f"{spec['snap']}.{spec['snap']}")
+                               for line in res.stdout.splitlines())
+            except (OSError, subprocess.SubprocessError):
+                return False
         return False
 
     # --------------------------------------------------------------- consulta
@@ -94,6 +143,8 @@ class Native:
                 "running": self._running(spec) if cmd else False,
                 "apt": spec.get("apt"),
                 "flatpak": spec.get("flatpak"),
+                "snap": spec.get("snap"),
+                "hint": self._hint(spec),
             })
         return {
             "enabled": bool(conf.get("enabled", True)),
@@ -101,6 +152,18 @@ class Native:
             "display": self._display_env().get("DISPLAY"),
             "apps": apps,
         }
+
+    @staticmethod
+    def _hint(spec):
+        if spec.get("hint"):
+            return spec["hint"]
+        if spec.get("apt"):
+            return f"sudo apt install {spec['apt']}"
+        if spec.get("flatpak"):
+            return f"flatpak install {spec['flatpak']}"
+        if spec.get("snap"):
+            return f"sudo snap install {spec['snap']}"
+        return "instale o app"
 
     # ------------------------------------------------------------------ acoes
     def _uri(self, key, lat=None, lon=None, query=None):
@@ -130,8 +193,7 @@ class Native:
             return None, "recurso desabilitado (defina CARDASH_ALLOW_NATIVE=1)"
         cmd = self._bin(spec)
         if not cmd:
-            hint = f"sudo apt install {spec.get('apt')}" if spec.get("apt") else "instale o app"
-            return None, f"{spec['name']} nao instalado ({hint})"
+            return None, f"{spec['name']} nao instalado ({self._hint(spec)})"
         uri = self._uri(key, lat, lon, query)
         if uri:
             cmd = cmd + [uri]
@@ -161,6 +223,11 @@ class Native:
         if spec.get("flatpak") and shutil.which("flatpak"):
             try:
                 subprocess.run(["flatpak", "kill", spec["flatpak"]], timeout=6)
+            except (OSError, subprocess.SubprocessError):
+                pass
+        if spec.get("snap") and shutil.which("snap"):
+            try:
+                subprocess.run(["pkill", "-f", f"snap run {spec['snap']}"], timeout=4)
             except (OSError, subprocess.SubprocessError):
                 pass
         return {"ok": True, "app": key}, None

@@ -1272,29 +1272,36 @@
     else if (st && !st.enabled) parts.push("desativado nas configurações");
     el.textContent = parts.join(" · ");
     el.classList.toggle("ok", !!(st && st.allowed && st.enabled && maps && maps.installed));
+    if (nativeState.apps.length && $("#appsGrid")) loadApps();
   }
 
   function loadNative() {
     api("/api/native").then(renderNative).catch(() => renderNative(null));
   }
 
-  function nativeOpen(app) {
-    const body = { app: app || "gnome-maps" };
+  function nativeSpec(key) {
+    return (nativeState.apps || []).find((a) => a.key === key) || null;
+  }
+
+  function nativeOpen(app, altName) {
+    const key = app || "gnome-maps";
+    const name = altName || (nativeSpec(key) && nativeSpec(key).name) || key;
+    const body = { app: key };
     if (nav.dest) {
       body.lat = nav.dest.lat;
       body.lon = nav.dest.lon;
     } else {
       const q = ($("#navSearch") && $("#navSearch").value.trim()) || "";
-      if (q) body.query = q;
+      if (q && key === "gnome-maps") body.query = q;
     }
-    nativeInfo("abrindo no GNOME Maps…");
+    nativeInfo(`abrindo ${name}…`);
     netPostSafe("/api/native/launch", body).then((r) => {
       if (r.ok) {
         nativeInfo(`aberto${r.uri ? " em " + r.uri : ""}`);
-        toast("GNOME Maps: " + (r.uri || r.name));
+        toast(name + ": " + (r.uri || r.name));
       } else {
         nativeInfo(r.error || "falha ao abrir");
-        toast(r.error || "não foi possível abrir o GNOME Maps");
+        toast(r.error || `não foi possível abrir ${name}`);
       }
       loadNative();
     }).catch(() => { nativeInfo("falha ao abrir"); });
@@ -1341,13 +1348,17 @@
   function renderApps(list) {
     const grid = $("#appsGrid");
     const tiles = list.map((a) => {
-      const sub = a.kind === "nav" ? "mapa e GPS"
-        : a.kind === "browser" ? "navegador embutido"
-        : a.kind === "native" ? "app nativo do sistema"
-        : hostOf(a.url);
+      const nat = a.kind === "native" ? nativeSpec(a.url) : null;
+      let sub;
+      if (a.kind === "nav") sub = "mapa e GPS";
+      else if (a.kind === "browser") sub = "navegador embutido";
+      else if (a.kind === "native") sub = (nat && nat.installed === false)
+        ? "não instalado"
+        : "app nativo do sistema";
+      else sub = hostOf(a.url);
       const del = BUILTIN.has(a.id) ? "" :
         `<button class="app-del" data-del="${esc(a.id)}" title="remover">✕</button>`;
-      return `<div class="app-tile" data-app="${esc(a.id)}">
+      return `<div class="app-tile${nat && nat.installed === false ? " is-off" : ""}" data-app="${esc(a.id)}">
         <div class="app-icon" style="background:${esc(a.color || "#4aa8ff")}">${appIcon(a.icon)}</div>
         <b>${esc(a.name)}</b><small>${esc(sub)}</small>${del}
       </div>`;
@@ -1370,8 +1381,9 @@
     if (!a) return;
     if (a.kind === "nav" || a.url === "nav") { setPage("nav"); return; }
     if (a.kind === "native") {
-      setPage("nav");
-      nativeOpen(a.url || "gnome-maps");
+      const key = a.url || "gnome-maps";
+      if (key === "gnome-maps") setPage("nav");
+      nativeOpen(key, a.name);
       return;
     }
     if (a.kind === "web") {
@@ -1467,6 +1479,12 @@
   }
 
   function agentMedia(act) {
+    if (act.provider === "spotube") {
+      const spotube = agentFindApp("spotube") || agentFindApp("Spotube");
+      if (spotube) { openApp(spotube); setPage("apps"); }
+      else toast("Spotube não está na grade de aplicativos");
+      return;
+    }
     setPage("media");
     if (act.provider === "youtube") {
       const q = encodeURIComponent(act.query || "");
@@ -1641,6 +1659,7 @@
     connect();
     renderClimate();
     loadApps();
+    loadNative();
     refreshAgentStatus();
     loadWallpaper();
     try {

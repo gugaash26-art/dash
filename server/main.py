@@ -32,6 +32,7 @@ store = Store(cfg["paths"]["db"])
 if (cfg.get("apps") or {}).get("seed_defaults", True):
     store.seed_apps(DEFAULT_APPS)
     store.ensure_apps([a for a in DEFAULT_APPS if a["id"] in BUILTIN_APP_IDS])
+    store.migrate_legacy_apps(DEFAULT_APPS)
 
 for key, value in store.get_settings().items():
     try:

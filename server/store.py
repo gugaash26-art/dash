@@ -45,11 +45,11 @@ DEFAULT_APPS = [
     {"id": "nav", "name": "Navegação", "url": "nav", "icon": "nav",
      "color": "#4aa8ff", "kind": "nav", "sort": 0},
     {"id": "youtube", "name": "YouTube",
-     "url": "https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ",
-     "icon": "play", "color": "#ff0033", "kind": "embed", "sort": 1},
-    {"id": "spotify", "name": "Spotify",
-     "url": "https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M",
-     "icon": "music", "color": "#1db954", "kind": "embed", "sort": 2},
+     "url": "red-app", "icon": "play", "color": "#ff0033",
+     "kind": "native", "sort": 1},
+    {"id": "spotube", "name": "Spotube",
+     "url": "spotube", "icon": "music", "color": "#1db954",
+     "kind": "native", "sort": 2},
     {"id": "maps", "name": "Mapas",
      "url": "https://maps.google.com/maps?q=-23.5613,-46.6565&z=15&output=embed",
      "icon": "map", "color": "#34a853", "kind": "embed", "sort": 3},
@@ -62,6 +62,11 @@ DEFAULT_APPS = [
 
 # Apps de sistema que sempre existem (nao podem ser removidos pelo painel).
 BUILTIN_APP_IDS = {"nav", "gnome-maps"}
+
+# Enderecos de fabrica antigos (antes do Spotube + Red/YouTube). A migracao
+# so troca a linha se ela ainda estiver exatamente assim (sem edicao do usuario).
+LEGACY_SPOTIFY_URL = "https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M"
+LEGACY_YOUTUBE_URL = "https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ"
 
 
 class Store:
@@ -243,6 +248,60 @@ class Store:
                         int(a.get("sort", 0)), now_ms,
                     ),
                 )
+
+    def migrate_legacy_apps(self, defaults: list) -> int:
+        """Troca os apps de fabrica antigos pelos atuais (Spotube e Red/YouTube).
+
+        Paineis antigos foram semeados com Spotify/YouTube em embed. Aqui a linha
+        vira app nativo, mas somente se ainda estiver no padrao de fabrica: se o
+        usuario mudou url/kind, ela nao e tocada.
+        """
+        alvo = {a["id"]: a for a in defaults}
+        trocas = 0
+        with self._lock, self._db:
+            now_ms = int(time.time() * 1000)
+
+            # spotify -> spotube (id novo; o antigo sai da grade)
+            row = self._db.execute(
+                "SELECT * FROM apps WHERE id='spotify'"
+            ).fetchone()
+            novo = alvo.get("spotube")
+            if row and row["url"] == LEGACY_SPOTIFY_URL and novo:
+                livre = not self._db.execute(
+                    "SELECT 1 FROM apps WHERE id='spotube'"
+                ).fetchone()
+                if livre:
+                    self._db.execute("DELETE FROM apps WHERE id='spotify'")
+                    self._db.execute(
+                        "INSERT OR IGNORE INTO apps(id, name, url, icon, color, "
+                        "kind, sort, created_ts) VALUES(?,?,?,?,?,?,?,?)",
+                        (
+                            novo["id"], novo["name"], novo["url"],
+                            novo.get("icon", "globe"),
+                            novo.get("color", "#4aa8ff"),
+                            novo.get("kind", "web"),
+                            int(novo.get("sort", 0)), now_ms,
+                        ),
+                    )
+                    trocas += 1
+
+            # youtube embed -> youtube nativo (mesmo id, mesma posicao)
+            row = self._db.execute(
+                "SELECT * FROM apps WHERE id='youtube'"
+            ).fetchone()
+            novo = alvo.get("youtube")
+            if row and row["url"] == LEGACY_YOUTUBE_URL and novo and novo["url"] != row["url"]:
+                self._db.execute(
+                    "UPDATE apps SET name=?, url=?, icon=?, color=?, kind=?, sort=? "
+                    "WHERE id='youtube'",
+                    (
+                        novo["name"], novo["url"], novo.get("icon", "globe"),
+                        novo.get("color", "#4aa8ff"), novo.get("kind", "web"),
+                        int(novo.get("sort", 0)),
+                    ),
+                )
+                trocas += 1
+        return trocas
 
     def log_track(self, ts: int, lat: float, lon: float,
                   speed: float, heading: float):

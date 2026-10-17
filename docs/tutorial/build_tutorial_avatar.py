@@ -147,10 +147,10 @@ SCENES = [
     {
         "kind": "ui", "kicker": "APPS", "title": "Lançador de aplicativos",
         "image": "page_apps.png",
-        "caption": ["YouTube, Spotify, Mapas e Navegador — e você cadastra os seus"],
+        "caption": ["YouTube, Spotube, Mapas e Navegador — e você cadastra os seus"],
         "narration": (
-            "Na página Apps ficam os aplicativos, que são páginas web incorporadas: YouTube, "
-            "Spotify, Mapas e um navegador. Com o botão Adicionar app, você cadastra qualquer "
+            "Na página Apps ficam os aplicativos: YouTube e Spotube são nativos do sistema, "
+            "Mapas e o Navegador são páginas. Com o botão Adicionar app, você cadastra qualquer "
             "serviço pelo endereço da web."),
     },
     {

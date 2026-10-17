@@ -161,13 +161,13 @@ SCENES = [
     {
         "kind": "feature", "image": "page_apps.png", "kicker": "APLICATIVOS",
         "title": "Seus apps na tela",
-        "caption": "Abra YouTube, Spotify, mapas e apps Android (Waydroid)",
+        "caption": "Abra YouTube, Spotube, mapas e apps Android (Waydroid)",
         "callouts": [
             {"x": 300, "y": 250, "w": 640, "h": 320, "at": 1.0, "color": PURPLE, "label": "Apps"},
         ],
         "color": PURPLE,
         "narration": (
-            "Na página de Aplicativos, você abre YouTube, Spotify, mapas e até aplicativos Android "
+            "Na página de Aplicativos, você abre YouTube, Spotube, mapas e até aplicativos Android "
             "diretamente no painel."),
     },
     # ------------------------------------------------------------- feature: ajustes

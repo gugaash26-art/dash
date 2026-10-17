@@ -244,15 +244,15 @@ SCENES = [
     {
         "kind": "ui", "kicker": "APPS", "title": "Lançador de aplicativos",
         "image": "page_apps.png",
-        "caption": ["YouTube, Spotify, Mapas e Navegador — e você cadastra os seus"],
+        "caption": ["YouTube, Spotube, Mapas e Navegador — e você cadastra os seus"],
         "callouts": [
             {"x": 846, "y": 58, "w": 170, "h": 42, "label": "cadastre seu app", "color": "0x8957e5"},
-            {"x": 16, "y": 105, "w": 828, "h": 156, "label": "aplicativos incorporados", "color": "0x8957e5"},
+            {"x": 16, "y": 105, "w": 828, "h": 156, "label": "aplicativos", "color": "0x8957e5"},
         ],
         "narration": (
-            "Na página Apps fica o lançador de aplicativos. Os apps de verdade são páginas web incorporadas: "
-            "YouTube, Spotify, Mapas e um navegador embutido. Como não é possível instalar aplicativos nativos, "
-            "você usa o botão Adicionar app para cadastrar qualquer serviço pelo endereço da web. "
+            "Na página Apps fica o lançador de aplicativos. YouTube e Spotube são aplicativos "
+            "nativos do sistema; Mapas e o Navegador são páginas incorporadas. Você cadastra "
+            "qualquer outro serviço pelo botão Adicionar app. "
             "Ao tocar em um app, ele abre em tela cheia, com botão para recarregar e abrir em outra aba."),
     },
     {
