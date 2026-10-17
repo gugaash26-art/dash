@@ -14,6 +14,8 @@ Environment=CARDASH_LOG=0
 Environment=CARDASH_ALLOW_NATIVE=1
 Environment=DISPLAY=:0
 EnvironmentFile=-__DIR__/data/screens.env
+# Segredos (ex.: GROQ_API_KEY) ficam fora do git, num arquivo .env ignorado.
+EnvironmentFile=-__DIR__/data/agent.env
 ExecStart=__DIR__/.venv/bin/python __DIR__/run.py
 Restart=always
 RestartSec=3

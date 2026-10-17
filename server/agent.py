@@ -209,7 +209,8 @@ class Agent:
         if tools:
             payload["tools"] = tools
             payload["tool_choice"] = "auto"
-        headers = {"Content-Type": "application/json"}
+        headers = {"Content-Type": "application/json",
+                   "User-Agent": "OpenDash/1.0 (+https://github.com/gugaash26-art/dash)"}
         if key:
             headers["Authorization"] = "Bearer " + key
         req = urllib.request.Request(base + "/chat/completions",

@@ -10,6 +10,37 @@ except ImportError:
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = Path(os.environ.get("CARDASH_CONFIG", ROOT / "config.yaml"))
 
+
+def _load_env_file(path: Path):
+    """Carrega um arquivo .env simples (KEY=valor) para o ambiente.
+
+    Nao sobrescreve variaveis ja definidas. Ignora linhas vazias/comentarios.
+    Usado para a chave da IA (GROQ_API_KEY) e outras credenciais, mantendo os
+    segredos fora do git e fora do /api/settings.
+    """
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, _, val = line.partition("=")
+                key = key.strip()
+                val = val.strip().strip('"').strip("'")
+                if key and key not in os.environ:
+                    os.environ[key] = val
+    except OSError:
+        pass
+
+
+_env_files = [ROOT / ".env", ROOT / "data" / "agent.env"]
+_extra = os.environ.get("CARDASH_ENV_FILE")
+if _extra:
+    _env_files.insert(0, Path(_extra))
+for _p in _env_files:
+    _load_env_file(_p)
+
+
 DEFAULTS = {
     "server": {"host": "0.0.0.0", "port": 8080},
     "serial": {
@@ -70,7 +101,7 @@ DEFAULTS = {
         "record_seconds": 6,
         "llm_provider": "groq",
         "llm_base_url": "https://api.groq.com/openai/v1",
-        "llm_model": "llama-3.3-70b-versatile",
+        "llm_model": "openai/gpt-oss-120b",
         "llm_key_env": "GROQ_API_KEY",
         "llm_key": "",
         "tts": "edge",

@@ -3,6 +3,8 @@ __pycache__/
 *.pyc
 data/*.db
 data/*.db-*
+data/*.env
+.env
 *.log
 .DS_Store
 docs/tutorial/build/

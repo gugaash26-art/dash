@@ -69,8 +69,9 @@ fi
 say "pronto!"
 echo
 echo "  Configure a chave da IA Groq (gratuita em https://console.groq.com/keys):"
-echo "    export GROQ_API_KEY=\"gsk_...\""
-echo "  ou cole a chave em Ajustes > Assistente de voz (IA) no painel."
+echo "    echo 'GROQ_API_KEY=gsk_...' > $HERE/data/agent.env && chmod 600 $HERE/data/agent.env"
+echo "  (arquivo ignorado pelo git; tambem aceita 'export GROQ_API_KEY=...'"
+echo "   ou colar a chave em Ajustes > Assistente de voz (IA) no painel.)"
 echo
 echo "  Ajuste em config.yaml > agent:"
 echo "    whisper_model: $MODEL_FILE"

@@ -705,8 +705,9 @@ O que ele sabe fazer (via *function calling*):
 
 - **Voz→texto**: **whisper.cpp** (`whisper-cli`), 100% offline após baixar o modelo.
 - **IA**: qualquer endpoint **OpenAI‑compatível**. O padrão é o **Groq** (chave gratuita
-  em `https://console.groq.com/keys`) com `llama-3.3-70b-versatile`. Sem internet, o
-  resto do painel continua funcionando normalmente.
+  em `https://console.groq.com/keys`) com `openai/gpt-oss-120b` (veja os modelos
+  disponíveis em `https://console.groq.com/docs/models`). Sem internet, o resto do painel
+  continua funcionando normalmente.
 - **Fala**: **edge‑tts** (voz `pt-BR-ThalitaMultilingualNeural`), tocada no navegador
   do painel; opcionalmente também no alto‑falante do Orange Pi (`play_local: true`).
 
@@ -720,6 +721,19 @@ arecord -l                              # veja o nome do microfone e ajuste mic_
 sudo systemctl restart cardash         # se usar o serviço
 ```
 
+**Chave da IA sem expor no git.** Em vez de `export`, guarde a chave num arquivo
+`data/agent.env` (ignorado pelo git), lido automaticamente pelo servidor e pelo serviço
+systemd (`EnvironmentFile`):
+
+```bash
+echo 'GROQ_API_KEY=gsk_sua_chave' > data/agent.env && chmod 600 data/agent.env
+sudo systemctl restart cardash
+```
+
+Assim a chave **não** vai para o repositório nem para o `/api/settings` (o campo do painel
+fica vazio, mas o status mostra `llm_ready: true`). Também é possível defini-la por
+`CARDASH_ENV_FILE=/caminho/arquivo.env`.
+
 O script aceita `--model base|small|medium` (maior = mais preciso e mais pesado) e
 `--no-apt`. O microfone é um **USB/P2** comum; sem microfone, o assistente ainda
 responde ao que você **digitar** na caixa de texto.
@@ -727,8 +741,9 @@ responde ao que você **digitar** na caixa de texto.
 ### Ajustes (tela Ajustes)
 
 Liga/desliga o assistente, escolhe microfone e idioma, define a **URL/modelo/chave** da
-IA, a voz do TTS, “falar as respostas” e “tocar no Orange Pi”. As chaves ficam no
-SQLite (`config.yaml` é o valor inicial).
+IA, a voz do TTS, “falar as respostas” e “tocar no Orange Pi”. A chave pode vir do
+ambiente (`data/agent.env` / `GROQ_API_KEY`) — recomendado — ou ser colada aqui, ficando
+no SQLite (o `config.yaml` é o valor inicial).
 
 ---
 

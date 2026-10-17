@@ -83,9 +83,9 @@ agent:                    # assistente de voz (IA) da pagina Multimidia
   record_seconds: 6       # duracao maxima do push-to-talk
   llm_provider: groq      # groq | openai-compativel (base_url)
   llm_base_url: https://api.groq.com/openai/v1
-  llm_model: llama-3.3-70b-versatile
+  llm_model: openai/gpt-oss-120b   # veja os modelos em https://console.groq.com/docs/models
   llm_key_env: GROQ_API_KEY
-  llm_key: ""             # alternativa a variavel de ambiente
+  llm_key: ""             # alternativa a variavel de ambiente (Ajustes > Assistente de voz)
   tts: edge               # fala: edge (edge-tts)
   tts_voice: pt-BR-ThalitaMultilingualNeural
   speak: true             # o painel fala a resposta
