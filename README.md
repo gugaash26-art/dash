@@ -41,6 +41,8 @@ tema escuro estilo Tesla, animações suaves e alertas em tempo real.
 - Adapta‑se a **qualquer monitor** (qualquer resolução, tamanho ou polegadas):
   detecção via `xrandr`, escala automática por polegadas (Ajustes › Tela e escala)
   e orientação retrato/paisagem
+- **Câmera de ré**: webcam USB (V4L2/ffmpeg) ou a câmera CSI do Raspberry Pi
+  (libcamera/rpicam); abre em tela cheia ao engatar a ré, com linhas guia
 
 **Diagnóstico**
 - Leitura e limpeza de códigos DTC (modo 03/04), descrição em português
@@ -120,6 +122,7 @@ tema escuro estilo Tesla, animações suaves e alertas em tempo real.
 |---|---|
 | Computador de bordo | Orange Pi Zero 3 / 3 / 5 ou PC (Debian/Armbian) |
 | Tela | HDMI touch (1024×600 ou 800×480) — o painel se adapta a **qualquer resolução/polegadas** |
+| Câmera | opcional: webcam USB ou câmera CSI (Raspberry Pi) para a **câmera de ré** |
 | Microcontrolador | Arduino Mega 2560 (**recomendado** — pinos suficientes) |
 | CAN bus | Módulo MCP2515 (TJA1050) 5 V com cristal 8 ou 16 MHz |
 | Sensores | Pressão de óleo 0,5–4,5 V, nível de combustível (boia), temperatura de óleo |
@@ -222,6 +225,7 @@ cd car-dash
 ./install.sh --kiosk                       # (opcional) autostart do navegador kiosk
 ./install.sh --app --cluster               # (opcional) aplicativo nativo: painel + painel de velocidade
 ./install.sh --media-apps                  # (opcional) Spotube (.deb) + YouTube/Red (snap)
+./install.sh --camera                      # (opcional) deps da câmera de ré (ffmpeg + v4l-utils)
 ```
 
 O instalador:
@@ -240,7 +244,8 @@ ausente) e **`FALTA`** (essencial):
   (app nativo WebKitGTK **ou** navegador) e o servidor respondendo;
 - **opcionais** (não impedem rodar — apenas desativam um recurso): `git`, `systemd`/
   `xset`/`unclutter`, `nmcli` (Wi‑Fi), `bluetoothctl`, `gnome-maps`, `waydroid`,
-  `Spotube`, `YouTube (Red)`, `aplay`/`arecord`, `whisper-cli`, `ffmpeg` e o grupo `dialout`.
+  `Spotube`, `YouTube (Red)`, `aplay`/`arecord`, `whisper-cli`, `ffmpeg`, a
+  **câmera de ré** (`/dev/video*` ou libcamera) e o grupo `dialout`.
 
 No fim ele mostra o resumo e sugere `./install.sh --app --kiosk`. Se algum **essencial**
 faltar, é só rodar o instalador.
@@ -427,6 +432,18 @@ display:                                                 # adaptação a qualque
   orientation: auto                                      # auto | landscape | portrait
   width: 0                                               # largura real em px (0 = detectar via xrandr)
   height: 0                                              # altura real em px (0 = detectar)
+camera:                                                  # câmera de ré
+  enabled: true
+  trigger: gear                                          # gear | manual | always | off
+  device: auto                                           # auto | /dev/videoN
+  backend: auto                                          # auto | v4l2 (USB) | rpicam (CSI/libcamera)
+  width: 0                                               # 0 = usa o padrão da câmera
+  height: 0
+  fps: 25
+  guidelines: true                                       # linhas guia na tela cheia
+  flip_h: false
+  flip_v: false
+  extra_args: ""                                         # argumentos extras para o ffmpeg/rpicam
 ```
 
 > **GPS.** Com `source: auto` o servidor usa o USB (se presente) e, senão, o GPS do
@@ -471,6 +488,10 @@ Variáveis de ambiente:
 | GET | `/api/screens` | monitores detectados (`xrandr`) + escolha atual painel/cluster |
 | POST | `/api/screens` | `{"main":"HDMI-1","bar":"HDMI-2","arrange":true,"enabled":true}` aplica e reinicia o kiosk |
 | GET | `/api/display` | adaptação de tela: escala, polegadas, orientação, DPI e escala calculada |
+| GET | `/api/camera` | status da câmera de ré (backend, dispositivo, se está ativa) |
+| POST | `/api/camera` | `{"action":"start\|stop\|toggle\|status"}` liga/desliga a câmera |
+| GET | `/camera/stream` | stream **MJPEG** ao vivo (multipart/x-mixed-replace) |
+| GET | `/camera/frame.jpg` | último quadro JPEG capturado |
 | GET | `/api/native` | apps nativos disponíveis (GNOME Maps, Spotube, YouTube/Red) + se o lançamento está habilitado |
 | POST | `/api/native/launch` | `{"app":"gnome-maps","lat":…,"lon":…}`, `{"app":"spotube"}` ou `{"app":"red-app"}` abre o app nativo |
 | POST | `/api/native/close` | `{"app":"gnome-maps"}` fecha o app nativo |
@@ -851,6 +872,23 @@ A interface se adapta a **qualquer resolução, tamanho ou polegadas**. Em
 
 O servidor expõe `/api/display` com DPI, tela detectada (`xrandr`) e a escala calculada.
 Para fixar a resolução no boot/kiosk, use `./install.sh --screen=1024x600`.
+
+### Câmera de ré
+
+Uma **webcam USB** (V4L2, capturada com `ffmpeg`) ou a **câmera CSI do Raspberry Pi**
+(`libcamera`/`rpicam-vid`). Ao engatar a **marcha à ré** o painel abre a imagem em
+**tela cheia** com linhas guia.
+
+- **Ajustes → Câmera de ré**: ligar/desligar, disparo (`ao engatar a ré`, `manual`,
+  `sempre`, `desligado`), dispositivo, backend, resolução, FPS, linhas guia e espelhamento.
+- Um botão de câmera aparece no topo do painel (dispara/para o stream) e permite abrir
+  a câmera quando o disparo é `manual`.
+- Pelo Arduino, o sinal de ré entra em `PIN_REVERSE` (`config.h`) e vira o campo `rev` no
+  JSON; no modo simulação use `POST /api/command {"cmd":"reverse","on":true}`.
+
+Dependências: `./install.sh --camera` (instala `ffmpeg` + `v4l-utils`; e `rpicam-apps`/
+`libcamera-apps` no Raspberry Pi). Rotas: `/api/camera`, `/camera/stream` (MJPEG) e
+`/camera/frame.jpg`.
 
 ### Papel de parede (Mídia)
 

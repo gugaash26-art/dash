@@ -14,6 +14,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 from . import config as config_mod
 from .agent import Agent
+from .camera import Camera
 from .config import EDITABLE, cfg, validate_setting
 from .display import Display
 from .hub import Hub
@@ -68,6 +69,7 @@ screens = Screens(cfg)
 wallpaper = Wallpaper(cfg)
 native = Native(cfg)
 display = Display(cfg)
+camera = Camera(cfg, hub)
 
 
 def auto_update_check():
@@ -136,6 +138,10 @@ def ticker():
             log(f"tick error: {exc}")
             STOP.wait(period)
             continue
+        try:
+            camera.sync(reverse=bool(snap.get("reverse")))
+        except Exception as exc:
+            log(f"camera sync error: {exc}")
         for conn in list(CLIENTS):
             try:
                 conn.send_text(payload)
@@ -294,6 +300,54 @@ class Handler(BaseHTTPRequestHandler):
             return self._error(400, err)
         return self._json(result)
 
+    def _camera_action(self, payload):
+        payload = payload or {}
+        action = str(payload.get("action") or "status")
+        if action == "start":
+            camera.set_manual(True)
+        elif action == "stop":
+            if (config_mod._get(cfg, "camera.trigger") or "gear") == "manual":
+                camera.set_manual(False)
+            else:
+                camera.stop()
+        elif action == "toggle":
+            if camera.active:
+                if (config_mod._get(cfg, "camera.trigger") or "gear") == "manual":
+                    camera.set_manual(False)
+                else:
+                    camera.stop()
+            else:
+                camera.set_manual(True)
+        elif action != "status":
+            return self._error(400, "action invalida")
+        return self._json(camera.status())
+
+    def _camera_frame(self):
+        frame, _ts = camera.latest()
+        if not frame:
+            return self._error(503, "sem quadro da câmera")
+        self.send_response(200)
+        self.send_header("Content-Type", "image/jpeg")
+        self.send_header("Content-Length", str(len(frame)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(frame)
+
+    def _camera_stream(self):
+        self.close_connection = True
+        boundary = "opendashframe"
+        self.send_response(200)
+        self.send_header("Content-Type",
+                         f"multipart/x-mixed-replace; boundary={boundary}")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Connection", "close")
+        self.end_headers()
+        try:
+            for chunk in camera.mjpeg(timeout_s=3600):
+                self.wfile.write(chunk)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+
     def _power(self, payload):
         if os.environ.get("CARDASH_ALLOW_POWER") != "1":
             return None, "power desabilitado (defina CARDASH_ALLOW_POWER=1)"
@@ -360,6 +414,12 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(screens.status())
         if path == "/api/display":
             return self._json(display.status())
+        if path == "/api/camera":
+            return self._json(camera.status())
+        if path == "/camera/stream":
+            return self._camera_stream()
+        if path == "/camera/frame.jpg":
+            return self._camera_frame()
         if path == "/api/native":
             return self._json(native.status())
         if path == "/api/settings":
@@ -401,6 +461,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._native_launch(self._body())
         if path == "/api/native/close":
             return self._native_close(self._body())
+        if path == "/api/camera":
+            return self._camera_action(self._body())
         payload = self._body()
         if path == "/api/settings":
             result, err = self._save_settings(payload)
@@ -516,6 +578,7 @@ def main():
         log(f"encerrando (sinal {signum})")
         STOP.set()
         hub.shutdown()
+        camera.shutdown()
         threading.Thread(target=server.shutdown, daemon=True).start()
 
     signal.signal(signal.SIGTERM, shutdown)
@@ -530,6 +593,7 @@ def main():
     finally:
         STOP.set()
         hub.shutdown()
+        camera.shutdown()
         server.server_close()
         log("servidor parado")
 

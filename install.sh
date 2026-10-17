@@ -10,6 +10,7 @@ USE_APP=0
 SKIP_APT=0
 CHECK_ONLY=0
 INSTALL_MEDIA=0
+INSTALL_CAMERA=0
 INSTALL_SCREEN=""
 for arg in "$@"; do
   case "$arg" in
@@ -20,11 +21,12 @@ for arg in "$@"; do
     --cluster) INSTALL_KIOSK=1; INSTALL_KIOSK_CLUSTER=1 ;;
     --app) USE_APP=1 ;;
     --media-apps) INSTALL_MEDIA=1 ;;
+    --camera) INSTALL_CAMERA=1 ;;
     --no-apt) SKIP_APT=1 ;;
     --check) CHECK_ONLY=1 ;;
     --screen=*) INSTALL_SCREEN="${arg#*=}" ;;
     -h|--help)
-      echo "uso: ./install.sh [--check] [--kiosk] [--duo] [--cluster] [--kiosk-bar] [--kiosk-cluster] [--app] [--media-apps] [--no-apt] [--screen=WxH]"
+      echo "uso: ./install.sh [--check] [--kiosk] [--duo] [--cluster] [--kiosk-bar] [--kiosk-cluster] [--app] [--media-apps] [--camera] [--no-apt] [--screen=WxH]"
       echo "  --check           só diagnóstico: verifica dependências e recursos (não instala)"
       echo "  --kiosk           autostart do painel completo (uma tela, com menus)"
       echo "  --duo             duas telas: painel completo + cluster em barra"
@@ -33,6 +35,7 @@ for arg in "$@"; do
       echo "  --kiosk-cluster   somente o painel de velocidade, velocímetro redondo (segunda tela)"
       echo "  --app             usa o aplicativo nativo (WebKitGTK) em vez do navegador"
       echo "  --media-apps      instala Spotube (música) e Red/YouTube: apt install ./*.deb + snap install red-app"
+      echo "  --camera          instala dependências da câmera de ré (ffmpeg + v4l-utils; libcamera no Raspberry Pi)"
       echo "  --screen=WxH      força a resolução do painel (padrão: detecta pela tela conectada)"
       echo "                    (combine com --kiosk/--duo/--cluster; ex.: ./install.sh --app --cluster)"
       exit 0 ;;
@@ -98,6 +101,19 @@ media_apps() {
   else
     say "Red/YouTube: rode depois: sudo snap install red-app"
   fi
+}
+
+# Câmera de ré: USB usa V4L2 + ffmpeg; Raspberry Pi usa libcamera (rpicam-vid).
+camera_deps() {
+  say "instalando dependências da câmera de ré (ffmpeg + v4l-utils)"
+  sudo apt-get install -y ffmpeg v4l-utils || say "câmera: falha ao instalar ffmpeg/v4l-utils"
+  case "$(uname -m)" in
+    aarch64|armv7l)
+      if ! have rpicam-vid && ! have libcamera-vid; then
+        sudo apt-get install -y rpicam-apps || sudo apt-get install -y libcamera-apps || \
+          say "câmera: libcamera/rpicam não instalado (só necessário para câmera CSI do Raspberry Pi)"
+      fi ;;
+  esac
 }
 
 say() { printf "\033[1;31m[OpenDash]\033[0m %s\n" "$1"; }
@@ -208,6 +224,18 @@ diagnose() {
   fi
   if have waydroid; then m_ok "Waydroid (apps Android)"; else m_opt "Waydroid ausente (veja install_waydroid.sh)"; fi
 
+  # --- câmera de ré ---
+  cam_dev=""
+  for d in /dev/video*; do [ -r "$d" ] && { cam_dev="$d"; break; }; done
+  if [ -n "$cam_dev" ] || have rpicam-vid || have libcamera-vid; then
+    if [ -n "$cam_dev" ] && ! have ffmpeg; then
+      m_opt "câmera de ré: $cam_dev presente, mas falta ffmpeg (sudo apt install ffmpeg, ou ./install.sh --camera)"
+    else
+      m_ok "câmera de ré: hardware detectado${cam_dev:+ ($cam_dev)}"
+    fi
+  else
+    m_opt "câmera de ré: sem hardware acessível (USB /dev/video* ou CSI libcamera) — recurso fica desativado"
+  fi
   if have aplay; then m_ok "áudio (aplay)"; else m_opt "aplay ausente (sem avisos sonoros)"; fi
   if have arecord; then m_ok "microfone (arecord)"; else m_opt "arecord ausente (assistente de voz sem entrada)"; fi
   if have whisper-cli; then m_ok "voz→texto: whisper-cli"; else m_opt "whisper-cli ausente (assistente usa transcrição na nuvem)"; fi
@@ -367,6 +395,7 @@ if [ "$USE_APP" -eq 1 ]; then
 fi
 
 if [ "$INSTALL_MEDIA" -eq 1 ]; then media_apps; fi
+if [ "$INSTALL_CAMERA" -eq 1 ]; then camera_deps; fi
 
 IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
 say "pronto! abra o painel em http://${IP:-localhost}:8080"

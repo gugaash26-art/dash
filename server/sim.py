@@ -25,6 +25,7 @@ class Simulator:
         self.target = 0.0
         self.next_target = 6.0
         self.brk = 0
+        self.rev = 0
         self.dtc = []
         self.mil = 0
         self.injected = 0
@@ -37,6 +38,11 @@ class Simulator:
         self.sats = 0.0
         self.hdop = 0.9
         self.next_turn = 20.0
+
+    def set_reverse(self, on):
+        """Liga/desliga a marcha à ré simulada (para testar a câmera de ré)."""
+        self.rev = 1 if on else 0
+        return self.rev
 
     def inject_dtc(self, code="P0301"):
         if code in self.dtc:
@@ -143,6 +149,7 @@ class Simulator:
             "rt": int(self.rt),
             "hz": 0,
             "brk": int(self.brk),
+            "rev": int(self.rev),
             "sbl": 0,
             "door": 0,
             "ign": self.ign,

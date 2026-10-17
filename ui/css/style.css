@@ -607,3 +607,24 @@ body.is-portrait .agent-settings { grid-template-columns: 1fr; }
   .tabbar .tab span { font-size: 9px; letter-spacing: .2px; }
 }
 
+/* ---- câmera de ré: overlay em tela cheia ---- */
+.pill-cam { padding: 8px 12px; }
+.pill-cam.is-on { color: var(--green); border-color: var(--green); }
+.reverse-cam { position: fixed; inset: 0; z-index: 70; background: #000; overflow: hidden; }
+.reverse-cam[hidden] { display: none; }
+.reverse-cam #reverseImg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.rev-guides { position: absolute; inset: 0; pointer-events: none; }
+.reverse-cam.no-guides .rev-guides { display: none; }
+.rev-guides span { position: absolute; background: rgba(46, 230, 168, .8); box-shadow: 0 0 6px rgba(46, 230, 168, .5); border-radius: 2px; }
+.rev-guides .g-l { left: 12%; top: 38%; width: 24%; height: 3px; transform: rotate(-9deg); transform-origin: right center; }
+.rev-guides .g-r { right: 12%; top: 38%; width: 24%; height: 3px; transform: rotate(9deg); transform-origin: left center; }
+.rev-guides .g-b { left: 50%; bottom: 12%; width: 18%; height: 3px; transform: translateX(-50%); }
+.rev-top { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: linear-gradient(rgba(0, 0, 0, .55), transparent); }
+.rev-tag { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; letter-spacing: 2px; color: #fff; text-transform: uppercase; }
+.rev-tag .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); animation: revblink 1s steps(2, start) infinite; }
+.rev-btn { background: rgba(255, 255, 255, .14); color: #fff; border: 1px solid rgba(255, 255, 255, .25); border-radius: 999px; padding: 8px 16px; font-size: 13px; }
+.rev-empty { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; color: var(--muted); font-size: 14px; padding: 24px; }
+.reverse-cam.is-empty .rev-empty { display: flex; }
+.reverse-cam.is-empty #reverseImg { display: none; }
+body.is-reverse .topbar, body.is-reverse .tabbar, body.is-reverse .media-mini { display: none; }
+@keyframes revblink { 50% { opacity: .25; } }

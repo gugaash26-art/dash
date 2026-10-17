@@ -207,7 +207,7 @@ class Hub:
             "dtc": [],
             "lt": 0, "rt": 0, "hl": 0, "hb": 0, "hz": 0, "brk": 0,
             "sbl": 0, "door": 0, "ign": 0, "fan": 0, "ac": 0,
-            "gear": "P", "range": 0.0, "odo": self.odo_base,
+            "gear": "P", "rev": 0, "reverse": False, "range": 0.0, "odo": self.odo_base,
             "trip": {"km": 0.0, "s": 0.0, "avg": 0.0, "max": 0.0,
                      "fuel_l": 0.0, "cons": 0.0},
             "gps": self._blank_gps(),
@@ -266,7 +266,10 @@ class Hub:
 
             self._trip_update(st, dt, ign)
             st["odo"] = round(self.odo_base + self.session_km, 1)
-            st["gear"] = self._gear(st, ign)
+            rev = self._reverse(raw)
+            st["gear"] = "R" if rev else self._gear(st, ign)
+            st["rev"] = 1 if rev else 0
+            st["reverse"] = rev
             st["range"] = self._range(st)
             st["trip"] = dict(self.trip) if self.trip else self._blank_trip()
             gps = self._merge_gps(raw, conn)
@@ -422,6 +425,22 @@ class Hub:
             return "S"
         return "D"
 
+    @staticmethod
+    def _reverse(raw):
+        """Marcha à ré: campo 'rev' do Arduino ou alavanca 'gear' = R."""
+        if not isinstance(raw, dict):
+            return False
+        lever = str(raw.get("gear") or raw.get("shifter") or "").strip().upper()
+        val = raw.get("rev", 0)
+        if isinstance(val, str):
+            rev = val.strip().lower() in ("1", "true", "r", "on", "yes")
+        else:
+            try:
+                rev = bool(int(val))
+            except (TypeError, ValueError):
+                rev = bool(val)
+        return rev or lever == "R"
+
     def _range(self, st):
         fuel = float(st.get("fuel") or 0)
         cons = float(self.trip_cons or 8.5)
@@ -470,6 +489,16 @@ class Hub:
                 if self.force_sim or self.link is None:
                     return {"ok": True, "result": self.sim.inject_dtc(obj.get("code"))}
                 return {"ok": False, "error": "modo serial"}
+            if cmd == "reverse":
+                on = bool(obj.get("on", obj.get("rev", 1)))
+                if hasattr(self.sim, "set_reverse"):
+                    self.sim.set_reverse(on)
+                if self.state is not None:
+                    self.state["reverse"] = on
+                    self.state["rev"] = 1 if on else 0
+                    if on:
+                        self.state["gear"] = "R"
+                return {"ok": True, "reverse": on}
             if cmd == "set_mode":
                 mode = obj.get("mode")
                 if mode not in ("sim", "auto"):

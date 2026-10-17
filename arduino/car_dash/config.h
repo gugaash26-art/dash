@@ -18,6 +18,7 @@
 #define PIN_DOOR           8
 #define PIN_HAZARD         9
 #define PIN_IGNITION      22
+#define PIN_REVERSE       46   // sinal da marcha à ré (câmera de ré). Ativo conforme INPUT_ACTIVE_LOW.
 
 #define INPUT_ACTIVE_LOW   1
 #define DEBOUNCE_MS       25

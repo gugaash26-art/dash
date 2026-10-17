@@ -24,6 +24,7 @@
     settings: null,
     page: "drive",
     display: null,
+    cam: null,
     ws: null,
     wsRetry: 0,
     lastMsg: 0,
@@ -136,7 +137,7 @@
     $$(".page").forEach((p) => p.classList.toggle("is-active", p.dataset.page === name));
     $$(".tab").forEach((t) => t.classList.toggle("is-active", t.dataset.pageGo === name));
     if (name === "energy") { loadTrips(); loadChart(true); }
-    if (name === "settings") { loadSettings(); loadSystem(); loadNetwork(); loadUpdate(); loadScreens(); loadDisplay(); }
+    if (name === "settings") { loadSettings(); loadSystem(); loadNetwork(); loadUpdate(); loadScreens(); loadDisplay(); loadCamera(); }
     if (name === "media") { loadWallpaper(); }
     if (name === "diag") { loadDtcs(); }
     if (name === "nav") { initNav(); loadNative(); }
@@ -346,6 +347,7 @@
     const gEl = $("#gear");
     if (gEl.textContent !== gear) gEl.textContent = gear;
     gEl.classList.toggle("rev", gear === "R");
+    if (d.reverse !== undefined) maybeReverse(!!d.reverse);
 
     const fuel = Number(d.fuel) || 0;
     const fill = $("#fuelFill");
@@ -561,6 +563,100 @@
     api("/api/display").then(applyDisplay).catch(() => {});
   }
 
+  // ------------------------------------------------------------- câmera de ré
+  function renderCamera(st) {
+    ctx.cam = st;
+    const pill = $("#camPill");
+    if (pill) {
+      pill.hidden = !st.enabled;
+      pill.classList.toggle("is-on", !!st.active);
+      pill.title = st.active ? "câmera de ré (ativa) — toque para alternar" : "câmera de ré";
+    }
+    const overlay = $("#reverseCam");
+    if (overlay) {
+      overlay.classList.toggle("no-guides", st.guidelines === false);
+    }
+    const info = $("#camStatus");
+    if (info) {
+      if (!st.enabled) info.textContent = "desligada";
+      else if (!st.available) info.textContent = "indisponível" + (st.reason ? " (" + st.reason + ")" : "");
+      else info.textContent = (st.active ? "ativa" : "pronta") +
+        " · " + (st.backend === "rpicam" ? "libcamera" : "V4L2") +
+        (st.device ? " " + st.device : "");
+    }
+    if (overlay && !overlay.hidden && !st.enabled) hideReverse();
+    return st;
+  }
+
+  function loadCamera() {
+    return api("/api/camera").then(renderCamera).catch(() => {});
+  }
+
+  function showReverse(empty) {
+    const overlay = $("#reverseCam");
+    if (!overlay) return;
+    const img = $("#reverseImg");
+    overlay.classList.toggle("is-empty", !!empty);
+    if (!empty && img && !img.getAttribute("src")) {
+      img.onerror = () => overlay.classList.add("is-empty");
+      img.onload = () => overlay.classList.remove("is-empty");
+      img.src = "/camera/stream?t=" + Date.now();
+    }
+    overlay.hidden = false;
+    document.body.classList.add("is-reverse");
+  }
+
+  function hideReverse() {
+    const overlay = $("#reverseCam");
+    if (!overlay) return;
+    overlay.hidden = true;
+    overlay.classList.remove("is-empty");
+    document.body.classList.remove("is-reverse");
+    const img = $("#reverseImg");
+    if (img) { img.onerror = null; img.onload = null; img.removeAttribute("src"); }
+  }
+
+  let reverseHidden = false; // usuário fechou manualmente enquanto em ré
+  function maybeReverse(on) {
+    const cam = ctx.cam;
+    if (!cam || !cam.enabled || cam.trigger !== "gear") return;
+    if (on) {
+      if (!reverseHidden) showReverse(!cam.available && !cam.active);
+    } else {
+      reverseHidden = false;
+      hideReverse();
+    }
+  }
+
+  async function cameraAction(action) {
+    try {
+      const st = await api("/api/camera", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      renderCamera(st);
+      if (st.active) showReverse(!st.available);
+      else hideReverse();
+      return st;
+    } catch (e) { return null; }
+  }
+
+  const camPill = $("#camPill");
+  if (camPill) camPill.addEventListener("click", () => {
+    if (ctx.cam && ctx.cam.active) { cameraAction("stop"); }
+    else { cameraAction("start"); }
+  });
+  const revExit = $("#revExit");
+  if (revExit) revExit.addEventListener("click", () => {
+    reverseHidden = true;
+    const cam = ctx.cam;
+    if (cam && (cam.trigger === "manual" || cam.trigger === "always")) cameraAction("stop");
+    else hideReverse();
+  });
+  const camTest = $("#camTest");
+  if (camTest) camTest.addEventListener("click", () => cameraAction("toggle"));
+
   function loadSystem() {
     api("/api/system").then((s) => {
       const rows = [
@@ -592,6 +688,7 @@
       if (key === "ui.theme") applyTheme(value);
       if (key === "ui.brightness") applyBrightness(Number(value));
       if (key.indexOf("display.") === 0) loadDisplay();
+      if (key.indexOf("camera.") === 0) loadCamera();
     }).catch(() => {});
   }
 
@@ -1699,6 +1796,7 @@
     refreshAgentStatus();
     loadWallpaper();
     loadDisplay();
+    loadCamera();
     window.addEventListener("resize", () => { if (ctx.display) applyDisplay(ctx.display); });
     try {
       const { settings } = await api("/api/settings");

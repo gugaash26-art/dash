@@ -126,6 +126,19 @@ display:                  # adaptacao a qualquer monitor (resolucao/tamanho/pole
   width: 0                # largura real em px (0 = detectar via xrandr)
   height: 0               # altura real em px (0 = detectar)
 
+camera:                   # camera de re (webcam USB V4L2 ou CSI do Raspberry Pi)
+  enabled: true           # liga/desliga o recurso
+  trigger: gear           # gear (ao engatar a re) | manual | always | off
+  device: auto            # auto | /dev/videoN
+  backend: auto           # auto | v4l2 (USB) | rpicam (CSI/libcamera)
+  width: 0                # 0 = usa o padrao da camera
+  height: 0
+  fps: 25
+  guidelines: true        # linhas guia na tela cheia
+  flip_h: false           # espelhar horizontalmente (camera frontal)
+  flip_v: false
+  extra_args: ""          # argumentos extras para ffmpeg/rpicam-vid
+
 paths:
   data_dir: /car-dash/data
   db: /car-dash/data/cardash.db

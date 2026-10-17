@@ -33,6 +33,9 @@
       <button class="pill pill-link" id="linkPill" data-page-go="diag">
         <i class="dot"></i><span id="linkText">conectando</span>
       </button>
+      <button class="pill pill-cam" id="camPill" title="câmera de ré" hidden>
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
       <div class="pill pill-env"><span data-bind="iat" data-fmt="temp">--</span></div>
       <div class="pill pill-clock"><b id="clock">--:--</b><small id="date">--/--</small></div>
     </div>
@@ -453,6 +456,42 @@
         </div>
 
         <div class="card">
+          <div class="card-title">Câmera de ré</div>
+          <label class="switch"><input type="checkbox" data-setting="camera.enabled"><span></span>Câmera de ré habilitada</label>
+          <label class="field">Disparo
+            <select data-setting="camera.trigger">
+              <option value="gear">ao engatar a ré (marcha R)</option>
+              <option value="manual">manual (botão na tela)</option>
+              <option value="always">sempre ligada</option>
+              <option value="off">desligada</option>
+            </select>
+          </label>
+          <label class="field">Dispositivo <input type="text" data-setting="camera.device" placeholder="auto (/dev/video0, rpicam)"></label>
+          <label class="field">Backend
+            <select data-setting="camera.backend">
+              <option value="auto">automático</option>
+              <option value="v4l2">USB (V4L2 + ffmpeg)</option>
+              <option value="rpicam">Raspberry Pi (libcamera)</option>
+            </select>
+          </label>
+          <div class="modal-2col">
+            <label class="field">Largura <input type="number" data-setting="camera.width" min="0" max="8000" step="1" placeholder="0 = padrão"></label>
+            <label class="field">Altura <input type="number" data-setting="camera.height" min="0" max="8000" step="1" placeholder="0 = padrão"></label>
+          </div>
+          <label class="field">FPS <input type="number" data-setting="camera.fps" min="1" max="60" step="1"></label>
+          <label class="switch"><input type="checkbox" data-setting="camera.guidelines"><span></span>Linhas guia na tela</label>
+          <div class="btn-row">
+            <label class="switch"><input type="checkbox" data-setting="camera.flip_h"><span></span>Espelhar (H)</label>
+            <label class="switch"><input type="checkbox" data-setting="camera.flip_v"><span></span>Inverter (V)</label>
+          </div>
+          <div class="net-head">
+            <span class="net-status" id="camStatus">—</span>
+            <button class="btn btn-ghost" id="camTest">Testar</button>
+          </div>
+          <div class="hint">Webcam USB (V4L2) ou câmera do Raspberry Pi (libcamera). Ao engatar a ré o painel abre a câmera em tela cheia. Espelhar é útil em câmeras frontais.</div>
+        </div>
+
+        <div class="card">
           <div class="card-title">Conexão e modo</div>
           <label class="switch"><input type="checkbox" data-setting="simulation.enabled"><span></span>Modo simulação (bancada)</label>
           <label class="switch"><input type="checkbox" data-setting="serial.enabled"><span></span>Ler Arduino pela serial</label>
@@ -642,6 +681,18 @@
     <iframe id="appFrame" class="app-frame"
       allow="autoplay; encrypted-media; clipboard-write; fullscreen"
       referrerpolicy="no-referrer"></iframe>
+  </div>
+
+  <div class="reverse-cam" id="reverseCam" hidden>
+    <img id="reverseImg" alt="câmera de ré">
+    <div class="rev-guides" id="revGuides">
+      <span class="g-l"></span><span class="g-r"></span><span class="g-b"></span>
+    </div>
+    <div class="rev-top">
+      <span class="rev-tag"><i class="dot"></i>CÂMERA DE RÉ</span>
+      <button class="rev-btn" id="revExit">Fechar</button>
+    </div>
+    <div class="rev-empty" id="revEmpty">câmera indisponível — verifique em Ajustes › Câmera de ré</div>
   </div>
 
   <div class="modal" id="appModal" hidden>

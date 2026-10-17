@@ -20,6 +20,7 @@ struct Vehicle {
   uint32_t runtime = 0;
   uint8_t hl = 0, hb = 0, lt = 0, rt = 0, hz = 0, brk = 0;
   uint8_t sbl = 0, sbr = 0, door = 0, ign = 1;
+  uint8_t rev = 0;
   uint8_t fan = 0, ac = 0;
 };
 
@@ -35,6 +36,9 @@ static uint8_t inputPin[] = {PIN_LEFT, PIN_RIGHT, PIN_HEADLIGHT, PIN_HIGHBEAM,
                              PIN_IGNITION};
 static uint8_t inputVal[9];
 static uint32_t inputLast[9];
+
+static uint8_t revVal = 0;
+static uint32_t revLast = 0;
 
 static uint32_t lastJson = 0;
 static uint32_t lastAnalog = 0;
@@ -382,6 +386,16 @@ static void pollInputs() {
   veh.door = inputVal[6];
   veh.hz = inputVal[7];
   veh.ign = inputVal[8];
+
+  uint8_t rawRev = digitalRead(PIN_REVERSE);
+#if INPUT_ACTIVE_LOW
+  rawRev = rawRev ? 0 : 1;
+#endif
+  if (rawRev != revVal && millis() - revLast > DEBOUNCE_MS) {
+    revVal = rawRev;
+    revLast = millis();
+  }
+  veh.rev = revVal;
 }
 
 static void pollAnalog() {
@@ -641,6 +655,7 @@ static void sendJson() {
   jw.i("rt", veh.rt);
   jw.i("hz", veh.hz);
   jw.i("brk", veh.brk);
+  jw.i("rev", veh.rev);
   jw.i("sbl", veh.sbl);
   jw.i("door", veh.door);
   jw.i("ign", veh.ign);
@@ -692,6 +707,7 @@ void setup() {
     inputVal[i] = 0;
     inputLast[i] = 0;
   }
+  pinMode(PIN_REVERSE, INPUT_PULLUP);
   pinMode(PIN_BUZZER, OUTPUT);
   digitalWrite(PIN_BUZZER, LOW);
   pinMode(PIN_LED, OUTPUT);

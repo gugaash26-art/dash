@@ -141,6 +141,19 @@ DEFAULTS = {
         "width": 0,
         "height": 0,
     },
+    "camera": {
+        "enabled": True,
+        "trigger": "gear",
+        "device": "auto",
+        "backend": "auto",
+        "width": 0,
+        "height": 0,
+        "fps": 25,
+        "guidelines": True,
+        "flip_h": False,
+        "flip_v": False,
+        "extra_args": "",
+    },
     "paths": {"data_dir": str(ROOT / "data"), "db": str(ROOT / "data" / "cardash.db")},
     "ui": {"boot_animation": True, "theme": "auto", "brightness": 100},
 }
@@ -196,6 +209,17 @@ EDITABLE = [
     ("display.orientation", ["auto", "landscape", "portrait"]),
     ("display.width", None),
     ("display.height", None),
+    ("camera.enabled", None),
+    ("camera.trigger", ["gear", "manual", "always", "off"]),
+    ("camera.device", None),
+    ("camera.backend", ["auto", "v4l2", "rpicam"]),
+    ("camera.width", None),
+    ("camera.height", None),
+    ("camera.fps", None),
+    ("camera.guidelines", None),
+    ("camera.flip_h", None),
+    ("camera.flip_v", None),
+    ("camera.extra_args", None),
 ]
 
 
@@ -295,4 +319,12 @@ def validate_setting(key: str, value):
         value = str(value)
     if key in ("display.width", "display.height"):
         value = max(0, min(16000, int(value)))
+    if key in ("camera.enabled", "camera.guidelines", "camera.flip_h", "camera.flip_v"):
+        value = bool(value)
+    if key in ("camera.device", "camera.extra_args"):
+        value = str(value)[:128]
+    if key in ("camera.width", "camera.height"):
+        value = max(0, min(8000, int(value)))
+    if key == "camera.fps":
+        value = max(1, min(60, int(value)))
     return value
