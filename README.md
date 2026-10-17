@@ -620,7 +620,7 @@ painel). A página **Apps** continua sendo a opção leve/instantânea.
 
 ## 11. Tutorial em vídeo
 
-Em `docs/tutorial/` há **quatro** vídeos, com narração neural em português e música:
+Em `docs/tutorial/` há **cinco** vídeos, com narração neural em português e música:
 
 ### Tutorial com avatar (novidades do sistema) — `opendash-tutorial-avatar.mp4`
 
@@ -745,6 +745,31 @@ O roteiro fica em `build_promo.py` (lista `SCENES`), com os tipos de cena `hero`
 `assets/ui-anim.mp4`) e `outro` (encerramento). Para teste rápido, use `TUT_ONLY=3` para gerar
 só as primeiras cenas; se o `edge-tts` falhar, a cena é gerada com silêncio para não quebrar o
 vídeo.
+
+### Apresentação (sem avatar) — `opendash-apresentacao.mp4`
+
+Um vídeo de **2m15s** (14 cenas) que reúne, em ritmo de *showreel*, **as melhores
+apresentações** do produto — **sem avatar**: só interface, locução e trilha. Destaca o
+**mapa no painel de velocidade** com uma rota ativa (novidade), a **câmera de ré**, a
+**escala de tela**, o **cluster em barra** para duas telas, além de painel, navegação,
+diagnóstico, apps, clima e mídia. Ideal para ver o sistema "de ponta a ponta".
+
+```bash
+mpv docs/tutorial/opendash-apresentacao.mp4
+```
+
+Para regerar (requer `ffmpeg`, `ffprobe` e `edge-tts`, com internet para a voz):
+
+```bash
+# mapa no cluster: requer navegacao ativa + GPS no servidor (ver o proprio script)
+SHOT_URL=http://127.0.0.1:8098/ python3 docs/tutorial/capture_cluster_nav.py
+/car-dash/.venv/bin/python docs/tutorial/build_showcase.py
+```
+
+O roteiro fica em `build_showcase.py` (mesmos tipos de cena do promo, mas **sem avatar**).
+A cena do **mapa no cluster** usa `assets/page_cluster_nav.png`, capturado por
+`capture_cluster_nav.py` com a **navegação ativa** no servidor e **GPS ligado** (para o
+marcador do carro aparecer). Para teste rápido, use `TUT_ONLY=3`.
 
 ---
 
