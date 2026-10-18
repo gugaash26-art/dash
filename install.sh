@@ -426,6 +426,8 @@ EOF
 # Dependências do kiosk: X11 + Chromium ou app nativo. No DietPi usa
 # dietpi-software (6 = X11, 113 = Chromium), que já configura KMS/DPMS da placa.
 kiosk_deps() {
+  # Imagem OpenDash OS: X11/navegador (ou WebKit) já vêm no first boot do DietPi.
+  [ "${CARDASH_DEPS_READY:-0}" = "1" ] && return 0
   [ "$SKIP_APT" -eq 0 ] || return 0
   if [ "$USE_APP" -eq 1 ]; then
     if [ "$DISTRO" = "dietpi" ]; then
@@ -521,13 +523,17 @@ fi
 
 if [ ! -d "$HERE/.venv" ]; then
   say "criando virtualenv"
-  python3 -m venv "$HERE/.venv"
+  python3 -m venv --system-site-packages "$HERE/.venv"
 fi
 
 say "instalando dependencias Python"
 if ! "$HERE/.venv/bin/pip" install -q -r "$HERE/requirements.txt"; then
-  say "pip falhou; tentando pacotes do sistema"
-  sudo apt-get install -y python3-serial python3-yaml || true
+  if [ "$SKIP_APT" -eq 0 ]; then
+    say "pip falhou; tentando pacotes do sistema"
+    sudo apt-get install -y python3-serial python3-yaml || true
+  else
+    say "pip falhou; usando PyYAML/pyserial do sistema (--no-apt)"
+  fi
 fi
 
 mkdir -p "$HERE/data"
@@ -542,7 +548,7 @@ if [ "$SKIP_APT" -eq 0 ]; then
   sudo usermod -aG dialout "$USER_NAME" || true
 fi
 
-if [ "$PLATFORM" = "raspberrypi" ] && [ "$SETUP_RPI" -eq 1 ] && [ "$SKIP_APT" -eq 0 ]; then
+if [ "$PLATFORM" = "raspberrypi" ] && [ "$SETUP_RPI" -eq 1 ]; then
   rpi_config
 fi
 

@@ -1,0 +1,196 @@
+name: OpenDash OS images
+
+on:
+  workflow_dispatch:
+    inputs:
+      boards:
+        description: "default, all ou IDs separados por virgula (ex.: zero3,rpi234)"
+        required: true
+        default: "default"
+      version:
+        description: "Versao da imagem (ex.: 0.1.0)"
+        required: true
+        default: "0.1.0"
+      release:
+        description: "Publicar um GitHub Release com as imagens"
+        type: boolean
+        default: false
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      version: ${{ steps.matrix.outputs.version }}
+      release: ${{ steps.matrix.outputs.release }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: matrix
+        env:
+          BOARDS: ${{ github.event_name == 'workflow_dispatch' && inputs.boards || 'default' }}
+          VERSION_INPUT: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '' }}
+          RELEASE_INPUT: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.release) }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os, pathlib
+
+          ref_type = os.environ.get("REF_TYPE", "")
+          ref_name = os.environ.get("REF_NAME", "")
+          version = ref_name[1:] if ref_type == "tag" and ref_name.startswith("v") else os.environ.get("VERSION_INPUT", "").strip()
+          if not version:
+              version = pathlib.Path("distro/VERSION").read_text().strip()
+
+          wanted = os.environ.get("BOARDS", "default").strip()
+          rows = []
+          for line in pathlib.Path("distro/boards.conf").read_text().splitlines():
+              line = line.strip()
+              if not line or line.startswith("#") or line.count("|") < 3:
+                  continue
+              board, name, image, enabled = [x.strip() for x in line.split("|", 3)]
+              rows.append({"id": board, "name": name, "image": image, "enabled": enabled == "1"})
+
+          if wanted in ("", "default"):
+              selected = [r for r in rows if r["enabled"]]
+          elif wanted == "all":
+              selected = rows
+          else:
+              ids = {x.strip() for x in wanted.split(",") if x.strip()}
+              selected = [r for r in rows if r["id"] in ids]
+              missing = ids - {r["id"] for r in selected}
+              if missing:
+                  raise SystemExit(f"placas desconhecidas: {', '.join(sorted(missing))}")
+
+          if not selected:
+              raise SystemExit("nenhuma placa selecionada")
+
+          release = os.environ.get("RELEASE_INPUT", "").strip().lower() == "true"
+          print("matrix=" + json.dumps({"include": selected}, separators=(",", ":")))
+          print(f"version={version}")
+          print(f"release={str(release).lower()}")
+          PY
+
+      - name: Payload para instalacao manual
+        run: |
+          ./distro/make-runtime.sh distro/out/opendash-runtime.tar.gz
+          cd distro/out
+          sha256sum opendash-runtime.tar.gz > opendash-runtime.tar.gz.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: runtime
+          path: |
+            distro/out/opendash-runtime.tar.gz
+            distro/out/opendash-runtime.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 7
+
+  build:
+    needs: prepare
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar ferramentas
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mtools fdisk e2fsprogs xz-utils curl
+
+      - name: Gerar imagem ${{ matrix.id }}
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: ./distro/build-image.sh "${{ matrix.id }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-${{ matrix.id }}
+          path: distro/out/*
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    needs: [prepare, build]
+    if: needs.prepare.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: "*"
+          merge-multiple: true
+          path: distro/out
+
+      - name: Checksums e manifesto
+        working-directory: distro/out
+        run: |
+          sha256sum *.img.xz > SHA256SUMS
+          cat *.info > manifest.txt
+          echo "== Imagens =="
+          ls -lh *.img.xz
+          echo
+          cat manifest.txt
+
+      - name: Texto do Release
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          cat > "$RUNNER_TEMP/release.md" <<EOF
+          # OpenDash OS ${VERSION}
+
+          Imagens prontas para Orange Pi (Zero 3 em diante) e Raspberry Pi.
+          Base: DietPi Bookworm + OpenDash + kiosk automatico.
+
+          ## Gravar
+          1. Baixe o \`.img.xz\` da sua placa e o \`SHA256SUMS\`.
+          2. Confira: \`sha256sum -c SHA256SUMS --ignore-missing\`.
+          3. Grave com balenaEtcher ou Raspberry Pi Imager (Use custom image).
+
+          ## Antes do primeiro boot
+          - Wi-Fi: preencha \`dietpi-wifi.txt\` e mude
+            \`AUTO_SETUP_NET_WIFI_ENABLED=1\` em \`dietpi.txt\`.
+          - Modo: \`OPENDASH_MODE=kiosk|duo|cluster|bar|cluster-only\`.
+          - O primeiro boot precisa de internet (instala X11/Chromium).
+          - Login: \`root\` / \`opendash\` (SSH desligado por padrao; troque a senha).
+
+          Depois do reboot: \`http://opendash.local:8080\`.
+
+          Instalação manual (qualquer Debian/DietPi):
+          \`opendash-runtime.tar.gz\` + \`install.sh\` do repositório.
+
+          Guia completo: https://github.com/gugaash26-art/dash/blob/main/docs/distro.md
+
+          ## Arquivos
+          - \`*.img.xz\`: imagens por placa
+          - \`*.sha256\`: checksum individual
+          - \`SHA256SUMS\`: todos os checksums
+          - \`manifest.txt\`: placa, versao e base usada
+          EOF
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', needs.prepare.outputs.version) }}
+          name: OpenDash OS ${{ needs.prepare.outputs.version }}
+          body_path: ${{ runner.temp }}/release.md
+          prerelease: ${{ contains(needs.prepare.outputs.version, '-') }}
+          make_latest: ${{ !contains(needs.prepare.outputs.version, '-') }}
+          files: |
+            distro/out/*.img.xz
+            distro/out/*.sha256
+            distro/out/*.info
+            distro/out/opendash-runtime.tar.gz
+            distro/out/opendash-runtime.tar.gz.sha256
+            distro/out/SHA256SUMS
+            distro/out/manifest.txt

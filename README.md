@@ -1,9 +1,14 @@
-# OpenDash — painel automotivo estilo Tesla para Orange Pi + Arduino
+# OpenDash OS — distro automotiva para Orange Pi e Raspberry Pi
 
-Painel digital completo (cluster + energia + mídia + clima + diagnóstico) que roda no
-**Orange Pi** com tela touch, lendo os sensores do carro por um **Arduino** (OBD‑II via
-CAN bus + sensores analógicos e digitais). Interface web em tela cheia (kiosk),
-tema escuro estilo Tesla, animações suaves e alertas em tempo real.
+**OpenDash OS** é uma distribuição ARM pronta para gravar no cartão SD e ligar no carro:
+painel digital completo (cluster + energia + mídia + clima + diagnóstico), kiosk
+automático e atualização pelo GitHub. Roda em **Orange Pi Zero 3 em diante** e em
+**Raspberry Pi**, com tela touch e um **Arduino** lendo OBD‑II/CAN e sensores.
+
+A base é o **DietPi** (Debian leve): o servidor OpenDash, o código e a configuração
+já vão embutidos no cartão; no primeiro boot a imagem instala X11/Chromium e
+configura o autostart. Também é possível instalar o OpenDash sobre Armbian, Debian,
+Raspberry Pi OS ou DietPi com `./install.sh` (instalação manual).
 
 ```
 ┌────────────────────┐   USB serial    ┌──────────────────────────┐   WebSocket   ┌──────────────┐
@@ -13,6 +18,57 @@ tema escuro estilo Tesla, animações suaves e alertas em tempo real.
 │  entradas digitais │   comandos      │  simulação embutida      │               │  UI web      │
 └────────────────────┘                 └──────────────────────────┘               └──────────────┘
 ```
+
+
+---
+
+## OpenDash OS (imagem pronta)
+
+Baixe a imagem da sua placa em **[Releases](https://github.com/gugaash26-art/dash/releases)**,
+grave com **balenaEtcher** ou **Raspberry Pi Imager** (Use custom image) e ligue.
+No primeiro boot a imagem instala as dependências (precisa de internet) e reinicia
+sozinha no painel.
+
+| Placa | ID da imagem |
+|---|---|
+| Orange Pi Zero 3 / Zero 3W / Zero 2W | `zero3`, `zero3w`, `zero2w` |
+| Orange Pi 3 / 3 LTS / 3B | `opi3`, `opi3lts`, `opi3b` |
+| Orange Pi 4 LTS / 4 Pro | `opi4lts`, `opi4pro` |
+| Orange Pi 5 / 5B / 5 Pro / 5 Plus / 5 Max / 5 Ultra / CM5 | `opi5`, `opi5b`, `opi5pro`, `opi5plus`, `opi5max`, `opi5ultra`, `opicm5` |
+| Raspberry Pi 3/4/Zero 2 W / Pi 2 v1.2 (64-bit) | `rpi234` |
+| Raspberry Pi 2 v1.1 (32-bit) | `rpi2` |
+| Raspberry Pi 5 | `rpi5` |
+
+**Antes do primeiro boot** edite os arquivos da partição de configuração (FAT,
+visível no PC):
+
+- `dietpi-wifi.txt`: SSID e senha do Wi‑Fi;
+- `dietpi.txt`: mude `AUTO_SETUP_NET_WIFI_ENABLED=1` e ajuste o modo em
+  `OPENDASH_MODE` (`kiosk`, `duo`, `cluster`, `bar`, `cluster-only`),
+  `OPENDASH_BAR_SIZE`, `OPENDASH_CAR_NAME`, etc.
+
+Depois do primeiro boot: painel em `http://opendash.local:8080` (ou `http://IP:8080`),
+usuário `root`, senha `opendash` (SSH desligado por padrão; troque a senha).
+Se precisar repetir a configuração: `sudo /boot/Automation_Custom_Script.sh`
+(ou `sudo /opt/opendash/firstboot.sh`, criado no primeiro boot).
+
+> **Primeiro boot sem internet?** A imagem baixa X11/Chromium e o restante pelo
+> `apt`/DietPi. Conecte cabo de rede ou preencha o Wi‑Fi antes de ligar. O payload
+> do OpenDash já vai embutido no cartão.
+
+**Gerar as imagens você mesmo** (Linux, sem root, precisa de `mtools`, `fdisk`,
+`e2fsprogs`, `xz` e `curl`):
+
+```bash
+./distro/build-image.sh zero3     # gera distro/out/OpenDash-OS-*-zero3-arm64.img.xz
+./distro/build-image.sh rpi234
+```
+
+O workflow de exemplo em `distro/github-workflow.yml` gera todas as placas e
+publica os arquivos `.img.xz`, `.sha256` e o manifesto em um Release. Copie-o para
+`.github/workflows/distro.yml` (o token do GitHub precisa do escopo `workflow`).
+Guia completo, arquitetura e solução de problemas:
+**[`docs/distro.md`](docs/distro.md)**.
 
 ---
 
@@ -230,10 +286,13 @@ python3 tools/serial_monitor.py --port /dev/ttyUSB0 --baud 115200
 
 ---
 
-## 4. Instalação no Orange Pi (Armbian, Debian ou DietPi)
+## 4. Instalação manual (Armbian, Debian, Raspberry Pi OS ou DietPi)
 
-Pré‑requisitos: Armbian, Debian ou **DietPi** com acesso à internet e um usuário
-com `sudo` (no DietPi o login padrão é `root`).
+> Se você quer a imagem pronta, use a seção **OpenDash OS** acima. Este caminho
+> instala o OpenDash em um sistema que você já tem.
+
+Pré‑requisitos: Armbian, Debian, Raspberry Pi OS ou **DietPi** com acesso à internet
+e um usuário com `sudo` (no DietPi o login padrão é `root`).
 
 ```bash
 git clone <este-repositorio> car-dash      # ou copie a pasta
@@ -551,7 +610,13 @@ Variáveis de ambiente:
 ```
 car-dash/
 ├── docs/tutorial/         vídeo-tutorial (slides narrados) + gerador
+├── docs/distro.md         OpenDash OS: imagens, build, primeiro boot
 ├── docs/dietpi.md         guia do DietPi (Orange Pi Zero 3 em diante)
+├── distro/                build das imagens prontas (DietPi + first boot)
+│   ├── boards.conf        placas e imagens base
+│   ├── build-image.sh     injeta payload/config e gera .img.xz
+│   ├── firstboot.sh       instalação automática no primeiro boot
+│   └── make-runtime.sh    tarball mínimo do OpenDash
 ├── arduino/car_dash/      sketch + config.h do Arduino Mega
 ├── hardware/              placa de junção (esquema, BOM, netlist, desenho)
 ├── server/               servidor (biblioteca padrão do Python)

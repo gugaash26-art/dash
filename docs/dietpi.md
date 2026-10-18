@@ -5,6 +5,10 @@ Orange Pi 3/3B/4/4 Pro/5/5 Pro** e modelos ARM equivalentes. O instalador detect
 o DietPi sozinho e troca o autostart de desktop pelo **`dietpi-autostart 17`**
 (script custom com autologin), que funciona **sem desktop** e também em duas telas.
 
+> Quer a imagem pronta (OpenDash OS) com tudo configurado? Veja
+> [`docs/distro.md`](distro.md). Este guia cobre a instalação manual sobre um
+> DietPi que você já tem.
+>
 > DietPi é Debian enxuto para SBCs. Para as imagens oficiais e a lista atualizada
 > de placas, veja <https://dietpi.com/#downloadinfo>. O DietPi **10.6+** traz
 > imagens oficiais para Orange Pi Zero 3W e Orange Pi 4 Pro; Zero 3, Zero 2W e
