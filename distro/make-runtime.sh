@@ -20,7 +20,7 @@ tar --sort=name --mtime="@0" --owner=0 --group=0 --numeric-owner \
   --exclude='ui/react/preview.png' \
   -cf - \
   install.sh run.py config.yaml requirements.txt README.md \
-  server ui kiosk systemd tools \
+  server ui kiosk systemd tools distro/wifi-setup.sh \
   | gzip -9n > "$OUT"
 
 printf '%s  %s\n' "$(sha256sum "$OUT" | awk '{print $1}')" "$(basename "$OUT")" \

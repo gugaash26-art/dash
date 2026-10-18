@@ -73,6 +73,11 @@ if [ "$BROWSER" = "app" ]; then
   apt-get install -y gir1.2-webkit2-4.1 || apt-get install -y gir1.2-webkit2-4.0 || true
 fi
 
+# --- configura Wi-Fi interativo se necessário ----------------------------------
+if [ -x /opt/opendash/wifi-setup.sh ]; then
+  /opt/opendash/wifi-setup.sh || true
+fi
+
 # --- instala o OpenDash -------------------------------------------------------
 mkdir -p /opt/opendash
 tar -xzf "$PAYLOAD" -C /opt/opendash
