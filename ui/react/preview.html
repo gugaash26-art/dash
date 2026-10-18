@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DashboardMcLaren — preview</title>
+  <link rel="stylesheet" href="./dashboard.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { ice: "#eafcff", neon: "#38f8ff" },
+          fontFamily: {
+            display: ["Orbitron", "sans-serif"],
+            body: ["Rajdhani", "sans-serif"],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    html, body, #root { margin: 0; min-height: 100%; background: #000; }
+    #root { display: flex; align-items: center; justify-content: center; }
+    .frame { width: 100vw; }
+    #err {
+      display: none; position: fixed; inset: 12px; z-index: 99999;
+      margin: 0; padding: 14px; overflow: auto;
+      background: #1a0000; color: #ffb4b4; border: 1px solid #ff3b3b;
+      font: 12px/1.45 ui-monospace, monospace; white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <pre id="err"></pre>
+  <script>
+    window.__err = null;
+    window.__showErr = function () {
+      var el = document.getElementById("err");
+      if (el && window.__err) { el.textContent = window.__err; el.style.display = "block"; }
+    };
+    window.addEventListener("error", function (e) {
+      window.__err = String((e.error && e.error.stack) || e.message);
+      window.__showErr();
+    });
+    window.addEventListener("unhandledrejection", function (e) {
+      window.__err = String((e.reason && e.reason.stack) || e.reason);
+      window.__showErr();
+    });
+  </script>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/framer-motion@11/dist/framer-motion.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin></script>
+
+  <script>
+    (async function () {
+      try {
+      const qs = new URLSearchParams(location.search);
+      const staticMode = qs.has("static");
+      const initRpm = qs.has("rpm") ? Number(qs.get("rpm")) : 500;
+      const initSpeed = qs.has("speed") ? Number(qs.get("speed")) : 0;
+
+      // Load the real component source and transpile it in the browser.
+      const source = await (await fetch("./DashboardMcLaren.jsx", { cache: "no-store" })).text();
+      const stripped = source
+        .replace(/^\s*import[^;]+;\s*$/gm, "")
+        .replace(/export\s+default\s+function\s+DashboardMcLaren/, "function DashboardMcLaren");
+
+      const { code } = Babel.transform(stripped, {
+        presets: [["react", { runtime: "classic" }]],
+        filename: "DashboardMcLaren.jsx",
+      });
+
+      const factory = new Function("React", "motion", code + "\nreturn DashboardMcLaren;");
+      const DashboardMcLaren = factory(React, Motion.motion);
+
+      function Demo() {
+        const [rpm, setRpm] = React.useState(initRpm);
+        const [speed, setSpeed] = React.useState(initSpeed);
+
+        React.useEffect(() => {
+          if (staticMode) return;
+          let t = 0;
+          const id = setInterval(() => {
+            t += 0.055;
+            const target = 500 + Math.abs(Math.sin(t * 0.9)) * 8600;
+            setRpm(target);
+            setSpeed(Math.round((target / 1000) * 17 + Math.abs(Math.sin(t)) * 20));
+          }, 80);
+          return () => clearInterval(id);
+        }, []);
+
+        return React.createElement(
+          "div",
+          { className: "frame" },
+          React.createElement(DashboardMcLaren, {
+            rpm,
+            speed,
+            gear: "P",
+            odo: 1612,
+            time: "10:22",
+            temp: 27,
+            fuel: 0.62,
+            fmFreq: 91.1,
+            mode: "AUTO",
+          })
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(Demo));
+      requestAnimationFrame(function () {
+        window.__ok = !!document.querySelector(".frame");
+      });
+      } catch (e) {
+        window.__err = String((e && e.stack) || e);
+        window.__showErr();
+      }
+    })();
+  </script>
+</body>
+</html>

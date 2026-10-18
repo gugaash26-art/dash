@@ -562,7 +562,8 @@ car-dash/
 │   ├── bar.html          cluster em barra (ex.: 1920x480)
 │   ├── css/style.css  css/bar.css
 │   ├── js/app.js  js/bar.js  js/gauges.js
-│   └── vendor/leaflet/   Leaflet (mapa offline, sem CDN)
+│   ├── vendor/leaflet/   Leaflet (mapa offline, sem CDN)
+│   └── react/            DashboardMcLaren.jsx (variante React, opcional)
 ├── systemd/              cardash.service, kiosk, kiosk-bar e kiosk-cluster
 ├── kiosk/kiosk.sh        lançador do navegador em tela cheia (ou do app nativo)
 ├── kiosk/opendash.py     aplicativo nativo (WebKitGTK, sem navegador)
