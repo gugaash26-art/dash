@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1033" height="849" viewBox="0 0 1033 849">
+<rect width="1033" height="849" fill="#f7f9fc"/>
+<text x="60.0" y="40.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="22" font-weight="bold" fill="#0b2545" text-anchor="start">OpenDash — Placa de junção (shield Arduino Mega 2560)</text>
+<text x="60.0" y="66.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="start">Desenho mecânico · vista superior · escala 9 px/mm (101,5 × 53,3 mm)</text>
+<rect x="60.0" y="100.0" width="913.5" height="479.7" rx="6" fill="#1f7a4d" stroke="#08351f" stroke-width="2"/>
+<rect x="114.0" y="136.0" width="810.0" height="22.5" rx="2" fill="#1a1a1a" stroke="#000" stroke-width="2"/>
+<text x="132.0" y="131.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="8" font-weight="normal" fill="#dff5e6" text-anchor="start">headers do Arduino Mega (encaixe)</text>
+<rect x="114.0" y="523.0" width="810.0" height="22.5" rx="2" fill="#1a1a1a" stroke="#000" stroke-width="2"/>
+<rect x="726.0" y="136.0" width="198.0" height="22.5" rx="2" fill="#1a1a1a" stroke="#000" stroke-width="2"/>
+<rect x="330.0" y="172.0" width="252.0" height="81.0" rx="4" fill="#eef4ff" stroke="#0b2545" stroke-width="1.6"/>
+<text x="456.0" y="210.5" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" fill="#0b2545" text-anchor="middle">MCP2515</text>
+<text x="456.0" y="223.5" font-family="DejaVu Sans, Arial, sans-serif" font-size="7" font-weight="normal" fill="#555555" text-anchor="middle">CAN/OBD</text>
+<rect x="330.0" y="262.0" width="252.0" height="63.0" rx="4" fill="#eef4ff" stroke="#0b2545" stroke-width="1.6"/>
+<text x="456.0" y="291.5" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" fill="#0b2545" text-anchor="middle">GPS NEO-6M</text>
+<rect x="618.0" y="172.0" width="108.0" height="99.0" rx="4" fill="#fff7e6" stroke="#0b2545" stroke-width="1.6"/>
+<text x="672.0" y="219.5" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" fill="#0b2545" text-anchor="middle">LM2596</text>
+<text x="672.0" y="232.5" font-family="DejaVu Sans, Arial, sans-serif" font-size="7" font-weight="normal" fill="#555555" text-anchor="middle">5 V</text>
+<rect x="618.0" y="280.0" width="108.0" height="99.0" rx="4" fill="#fff7e6" stroke="#0b2545" stroke-width="1.6"/>
+<text x="672.0" y="327.5" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" fill="#0b2545" text-anchor="middle">F1 + TVS</text>
+<text x="672.0" y="340.5" font-family="DejaVu Sans, Arial, sans-serif" font-size="7" font-weight="normal" fill="#555555" text-anchor="middle">12 V</text>
+<rect x="744.0" y="172.0" width="180.0" height="72.0" rx="4" fill="#eafaf1" stroke="#1f7a4d" stroke-width="1.6"/>
+<text x="834.0" y="206.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" fill="#0b2545" text-anchor="middle">RC analógico</text>
+<text x="834.0" y="219.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="7" font-weight="normal" fill="#555555" text-anchor="middle">A0..A3</text>
+<rect x="96.0" y="172.0" width="117.0" height="63.0" rx="4" fill="#ffffff" stroke="#0b2545" stroke-width="1.6"/>
+<text x="154.5" y="201.5" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" fill="#0b2545" text-anchor="middle">drivers de relé</text>
+<text x="154.5" y="214.5" font-family="DejaVu Sans, Arial, sans-serif" font-size="7" font-weight="normal" fill="#555555" text-anchor="middle">Q302/Q303</text>
+<rect x="96.0" y="253.0" width="117.0" height="63.0" rx="4" fill="#ffffff" stroke="#0b2545" stroke-width="1.6"/>
+<text x="154.5" y="282.5" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" fill="#0b2545" text-anchor="middle">buzzer</text>
+<text x="154.5" y="295.5" font-family="DejaVu Sans, Arial, sans-serif" font-size="7" font-weight="normal" fill="#555555" text-anchor="middle">Q301</text>
+<rect x="231.0" y="172.0" width="90.0" height="63.0" rx="4" fill="#ffffff" stroke="#0b2545" stroke-width="1.6"/>
+<text x="276.0" y="201.5" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" fill="#0b2545" text-anchor="middle">LED D13</text>
+<rect x="96.0" y="334.0" width="70.2" height="55.8" rx="4" fill="#eafaf1" stroke="#1f7a4d" stroke-width="1.6"/>
+<text x="131.1" y="359.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" fill="#0b2545" text-anchor="middle">IN1</text>
+<text x="131.1" y="372.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="7" font-weight="normal" fill="#555555" text-anchor="middle">22k/10k</text>
+<rect x="173.4" y="334.0" width="70.2" height="55.8" rx="4" fill="#eafaf1" stroke="#1f7a4d" stroke-width="1.6"/>
+<text x="208.5" y="359.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" fill="#0b2545" text-anchor="middle">IN2</text>
+<text x="208.5" y="372.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="7" font-weight="normal" fill="#555555" text-anchor="middle">22k/10k</text>
+<rect x="250.8" y="334.0" width="70.2" height="55.8" rx="4" fill="#eafaf1" stroke="#1f7a4d" stroke-width="1.6"/>
+<text x="285.9" y="359.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" fill="#0b2545" text-anchor="middle">IN3</text>
+<text x="285.9" y="372.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="7" font-weight="normal" fill="#555555" text-anchor="middle">22k/10k</text>
+<rect x="328.2" y="334.0" width="70.2" height="55.8" rx="4" fill="#eafaf1" stroke="#1f7a4d" stroke-width="1.6"/>
+<text x="363.3" y="359.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" fill="#0b2545" text-anchor="middle">IN4</text>
+<text x="363.3" y="372.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="7" font-weight="normal" fill="#555555" text-anchor="middle">22k/10k</text>
+<rect x="405.6" y="334.0" width="70.2" height="55.8" rx="4" fill="#eafaf1" stroke="#1f7a4d" stroke-width="1.6"/>
+<text x="440.7" y="359.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" fill="#0b2545" text-anchor="middle">IN5</text>
+<text x="440.7" y="372.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="7" font-weight="normal" fill="#555555" text-anchor="middle">22k/10k</text>
+<rect x="96.0" y="397.0" width="70.2" height="55.8" rx="4" fill="#eafaf1" stroke="#1f7a4d" stroke-width="1.6"/>
+<text x="131.1" y="422.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" fill="#0b2545" text-anchor="middle">IN6</text>
+<text x="131.1" y="435.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="7" font-weight="normal" fill="#555555" text-anchor="middle">22k/10k</text>
+<rect x="173.4" y="397.0" width="70.2" height="55.8" rx="4" fill="#eafaf1" stroke="#1f7a4d" stroke-width="1.6"/>
+<text x="208.5" y="422.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" fill="#0b2545" text-anchor="middle">IN7</text>
+<text x="208.5" y="435.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="7" font-weight="normal" fill="#555555" text-anchor="middle">22k/10k</text>
+<rect x="250.8" y="397.0" width="70.2" height="55.8" rx="4" fill="#eafaf1" stroke="#1f7a4d" stroke-width="1.6"/>
+<text x="285.9" y="422.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" fill="#0b2545" text-anchor="middle">IN8</text>
+<text x="285.9" y="435.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="7" font-weight="normal" fill="#555555" text-anchor="middle">22k/10k</text>
+<rect x="328.2" y="397.0" width="70.2" height="55.8" rx="4" fill="#eafaf1" stroke="#1f7a4d" stroke-width="1.6"/>
+<text x="363.3" y="422.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" fill="#0b2545" text-anchor="middle">IN9</text>
+<text x="363.3" y="435.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="7" font-weight="normal" fill="#555555" text-anchor="middle">22k/10k</text>
+<rect x="405.6" y="397.0" width="70.2" height="55.8" rx="4" fill="#eafaf1" stroke="#1f7a4d" stroke-width="1.6"/>
+<text x="440.7" y="422.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" fill="#0b2545" text-anchor="middle">IN10</text>
+<text x="440.7" y="435.9" font-family="DejaVu Sans, Arial, sans-serif" font-size="7" font-weight="normal" fill="#555555" text-anchor="middle">22k/10k</text>
+<rect x="96.0" y="461.8" width="54.0" height="36.0" rx="3" fill="#fde68a" stroke="#b45309" stroke-width="1.4"/>
+<text x="123.0" y="487.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="8" font-weight="normal" fill="#7c2d12" text-anchor="middle">J2 12V</text>
+<rect x="159.0" y="461.8" width="90.0" height="36.0" rx="3" fill="#fde68a" stroke="#b45309" stroke-width="1.4"/>
+<text x="204.0" y="487.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="8" font-weight="normal" fill="#7c2d12" text-anchor="middle">J4 CAN</text>
+<rect x="258.0" y="461.8" width="180.0" height="36.0" rx="3" fill="#fde68a" stroke="#b45309" stroke-width="1.4"/>
+<text x="348.0" y="487.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="8" font-weight="normal" fill="#7c2d12" text-anchor="middle">J6 entradas ×12</text>
+<rect x="447.0" y="461.8" width="90.0" height="36.0" rx="3" fill="#fde68a" stroke="#b45309" stroke-width="1.4"/>
+<text x="492.0" y="487.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="8" font-weight="normal" fill="#7c2d12" text-anchor="middle">J7 analóg ×5</text>
+<rect x="546.0" y="461.8" width="126.0" height="36.0" rx="3" fill="#fde68a" stroke="#b45309" stroke-width="1.4"/>
+<text x="609.0" y="487.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="8" font-weight="normal" fill="#7c2d12" text-anchor="middle">J8/J9/J10</text>
+<rect x="681.0" y="461.8" width="54.0" height="36.0" rx="3" fill="#fde68a" stroke="#b45309" stroke-width="1.4"/>
+<text x="708.0" y="487.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="8" font-weight="normal" fill="#7c2d12" text-anchor="middle">J5 GPS</text>
+<rect x="744.0" y="461.8" width="54.0" height="36.0" rx="3" fill="#fde68a" stroke="#b45309" stroke-width="1.4"/>
+<text x="771.0" y="487.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="8" font-weight="normal" fill="#7c2d12" text-anchor="middle">J11 5V→Pi</text>
+<circle cx="87.0" cy="127.0" r="7.0" fill="#f7f9fc" stroke="#0b2545" stroke-width="1.4"/>
+<circle cx="87.0" cy="127.0" r="3.2" fill="#0b2545" stroke="#243b53" stroke-width="2"/>
+<circle cx="946.5" cy="127.0" r="7.0" fill="#f7f9fc" stroke="#0b2545" stroke-width="1.4"/>
+<circle cx="946.5" cy="127.0" r="3.2" fill="#0b2545" stroke="#243b53" stroke-width="2"/>
+<circle cx="87.0" cy="550.0" r="7.0" fill="#f7f9fc" stroke="#0b2545" stroke-width="1.4"/>
+<circle cx="87.0" cy="550.0" r="3.2" fill="#0b2545" stroke="#243b53" stroke-width="2"/>
+<circle cx="946.5" cy="550.0" r="7.0" fill="#f7f9fc" stroke="#0b2545" stroke-width="1.4"/>
+<circle cx="946.5" cy="550.0" r="3.2" fill="#0b2545" stroke="#243b53" stroke-width="2"/>
+<text x="60.0" y="639.7" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#0b2545" text-anchor="start">Furação (brocas):</text>
+<text x="60.0" y="661.7" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#555555" text-anchor="start">• conectores/headers: ø1,0 mm   • fios/links: ø0,8 mm   • montagem M3: ø3,2 mm   • bornes de parafuso: ø1,3 mm</text>
+<text x="60.0" y="685.7" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#555555" text-anchor="start">Componentes de furo (THT) na face superior; trilhas na face inferior (placa de face simples).</text>
+<text x="60.0" y="709.7" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#555555" text-anchor="start">Para fabricar em casa: transferência térmica / UV da arte de cobre na face inferior + corrosão.</text>
+<text x="60.0" y="733.7" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#555555" text-anchor="start">Alternativa DIY: placa ilhada (perfboard) seguindo a lista de ligações (netlist.csv).</text>
+<text x="60.0" y="769.7" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="normal" fill="#555555" text-anchor="start">OpenDash · hardware/board.svg (gerado por generate.py)</text>
+</svg>

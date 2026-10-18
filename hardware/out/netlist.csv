@@ -1,0 +1,105 @@
+Net,Componente/Terminal,Pino,Observacao
++12V,F1,2,após o fusível
++12V,D1,A,anodo do SS54
++12V,U1,IN,entrada do buck
++12V,J4,3,12 V do OBD (opcional)
++12V,J9/J10,1,bobinas dos relés
++5V,U1,OUT,"5,0 V"
++5V,U_ARDUINO,5V,alimenta o Arduino (JP_VUSB)
++5V,J3,1,VCC do MCP2515
++5V,J5,1,VCC do GPS
++5V,LED1,A,via R1
++5V,J11,1,para a Orange Pi/Raspberry
++5V,R203,1,pull-up opcional de A1 (JP201)
++5V,J8,2,buzzer
+GND,J2,2,terra do chassi
+GND,J4,4,GND do OBD
+GND,J6,11/12,referência das entradas
+GND,J7,5,referência das analógicas
+GND,U1,GND,terra do buck
+GND,J3,2,GND do MCP2515
+GND,J5,2,GND do GPS
+GND,Q301/Q302/Q303,E,emissores
+GND,J11,2,para a Orange Pi/Raspberry
+IN_LEFT,J6,1,Seta esquerda (borne J6.1)
+IN_LEFT,U_ARDUINO,D2,pino do Arduino (INPUT_PULLUP)
+IN_LEFT,R101,1,série 22k (lado do borne)
+IN_LEFT,JP101,1,jumper 1-2 = sinal 12 V
+IN_LEFT_GND,JP101,3,jumper 2-3 = chave-para-GND
+IN_RIGHT,J6,2,Seta direita (borne J6.2)
+IN_RIGHT,U_ARDUINO,D3,pino do Arduino (INPUT_PULLUP)
+IN_RIGHT,R102,1,série 22k (lado do borne)
+IN_RIGHT,JP102,1,jumper 1-2 = sinal 12 V
+IN_RIGHT_GND,JP102,3,jumper 2-3 = chave-para-GND
+IN_HEAD,J6,3,Farol baixo (borne J6.3)
+IN_HEAD,U_ARDUINO,D4,pino do Arduino (INPUT_PULLUP)
+IN_HEAD,R103,1,série 22k (lado do borne)
+IN_HEAD,JP103,1,jumper 1-2 = sinal 12 V
+IN_HEAD_GND,JP103,3,jumper 2-3 = chave-para-GND
+IN_HIGH,J6,4,Farol alto (borne J6.4)
+IN_HIGH,U_ARDUINO,D5,pino do Arduino (INPUT_PULLUP)
+IN_HIGH,R104,1,série 22k (lado do borne)
+IN_HIGH,JP104,1,jumper 1-2 = sinal 12 V
+IN_HIGH_GND,JP104,3,jumper 2-3 = chave-para-GND
+IN_BRAKE,J6,5,Freio de mao (borne J6.5)
+IN_BRAKE,U_ARDUINO,D6,pino do Arduino (INPUT_PULLUP)
+IN_BRAKE,R105,1,série 22k (lado do borne)
+IN_BRAKE,JP105,1,jumper 1-2 = sinal 12 V
+IN_BRAKE_GND,JP105,3,jumper 2-3 = chave-para-GND
+IN_BELT,J6,6,Cinto (borne J6.6)
+IN_BELT,U_ARDUINO,D7,pino do Arduino (INPUT_PULLUP)
+IN_BELT,R106,1,série 22k (lado do borne)
+IN_BELT,JP106,1,jumper 1-2 = sinal 12 V
+IN_BELT_GND,JP106,3,jumper 2-3 = chave-para-GND
+IN_DOOR,J6,7,Porta aberta (borne J6.7)
+IN_DOOR,U_ARDUINO,D8,pino do Arduino (INPUT_PULLUP)
+IN_DOOR,R107,1,série 22k (lado do borne)
+IN_DOOR,JP107,1,jumper 1-2 = sinal 12 V
+IN_DOOR_GND,JP107,3,jumper 2-3 = chave-para-GND
+IN_HAZARD,J6,8,Pisca alerta (borne J6.8)
+IN_HAZARD,U_ARDUINO,D9,pino do Arduino (INPUT_PULLUP)
+IN_HAZARD,R108,1,série 22k (lado do borne)
+IN_HAZARD,JP108,1,jumper 1-2 = sinal 12 V
+IN_HAZARD_GND,JP108,3,jumper 2-3 = chave-para-GND
+IN_IGN,J6,9,Ignicao (pos-chave) (borne J6.9)
+IN_IGN,U_ARDUINO,D22,pino do Arduino (INPUT_PULLUP)
+IN_IGN,R109,1,série 22k (lado do borne)
+IN_IGN,JP109,1,jumper 1-2 = sinal 12 V
+IN_IGN_GND,JP109,3,jumper 2-3 = chave-para-GND
+IN_REV,J6,10,Marcha a re (borne J6.10)
+IN_REV,U_ARDUINO,D46,pino do Arduino (INPUT_PULLUP)
+IN_REV,R110,1,série 22k (lado do borne)
+IN_REV,JP110,1,jumper 1-2 = sinal 12 V
+IN_REV_GND,JP110,3,jumper 2-3 = chave-para-GND
+ANA_OILP,J7,1,"Pressao do oleo (0,5-4,5 V) (borne J7.1)"
+ANA_OILP,U_ARDUINO,A0,pino analógico do Arduino
+ANA_FUEL,J7,2,Nivel combustivel (boia) (borne J7.2)
+ANA_FUEL,U_ARDUINO,A1,pino analógico do Arduino
+ANA_OILT,J7,3,Temperatura do oleo (borne J7.3)
+ANA_OILT,U_ARDUINO,A2,pino analógico do Arduino
+ANA_BATT,J7,4,Tensao da bateria (borne J7.4)
+ANA_BATT,U_ARDUINO,A3,pino analógico do Arduino
+CAN_CS,J3,3,CS
+CAN_CS,U_ARDUINO,D10,
+CAN_SCK,J3,4,SCK
+CAN_SCK,U_ARDUINO,D52,
+CAN_SI,J3,5,MOSI
+CAN_SI,U_ARDUINO,D51,
+CAN_SO,J3,6,MISO
+CAN_SO,U_ARDUINO,D50,
+CAN_INT,J3,7,INT (não usado pelo firmware)
+CAN_H,J4,1,para OBD pino 6
+CAN_L,J4,2,para OBD pino 14
+GPS_TX,J5,3,TX do GPS
+GPS_TX,U_ARDUINO,D19,RX1
+GPS_RX,J5,4,RX do GPS (via R3 1k)
+GPS_RX,U_ARDUINO,D18,TX1
+BUZZ,U_ARDUINO,D12,
+BUZZ,R301,1,via base do Q301
+LED_ST,U_ARDUINO,D13,via R310
+RELAY_FAN,U_ARDUINO,D44,
+RELAY_FAN,R302,1,base do Q302
+COIL_FAN,Q302,C,coletor (J9.2)
+RELAY_AC,U_ARDUINO,D45,
+RELAY_AC,R304,1,base do Q303
+COIL_AC,Q303,C,coletor (J10.2)

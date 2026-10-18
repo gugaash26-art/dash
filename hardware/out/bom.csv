@@ -1,0 +1,52 @@
+Referencia,Valor,Encapsulamento,Descricao
+U_ARDUINO,Arduino Mega 2560,módulo,Comutador de bordo (car_dash.ino)
+U1,LM2596S-5.0,TO-263-5,Conversor buck 12V→5V 3A
+L1,33 µH / 3 A,THT,Indutor do buck
+D3,SS34,DO-214AC,Diodo Schottky do buck
+D1,SS54,SMC,Proteção de polaridade reversa
+D2,SMBJ18A,SMB,TVS / transientes automotivos
+F1,Fusível 3 A,porta-fusível,Proteção da alimentação
+C1,470 µF / 25 V,eletrolítico,Capacitor de entrada
+"C2,C4",100 nF,cerâmico,Desacoplamento do buck
+C3,220 µF / 16 V,eletrolítico,Capacitor de saída
+C6,100 nF,cerâmico,Desacoplamento do MCP2515
+C7,100 nF,cerâmico,Desacoplamento do GPS
+JP_VUSB,Jumper 3 pinos,THT,Fonte de 5 V do Arduino
+R1,1 kΩ,THT,Resistor do LED de power
+LED1,LED verde 5 mm,THT,Indicador de alimentação
+J2,Borne 2 vias,"parafuso 5,08",Entrada 12 V + GND
+J3,Header 1×7 fêmea,"THT 2,54",Módulo MCP2515
+JP1,Jumper 2 pinos,THT,Terminação do CAN
+R2,120 Ω,THT,Terminação do CAN
+J4,Borne 4 vias,parafuso,"OBD-II: CAN_H/L, +12 V, GND"
+J5,Header 1×4,THT,"GPS (VCC, GND, TX, RX)"
+R3,1 kΩ,THT,Série TX Arduino → RX do GPS
+J6,Borne 12 vias,parafuso,Entradas digitais (10 + GND)
+R101-R110,22 kΩ,THT,Série das entradas digitais (10×)
+R111-R120,10 kΩ,THT,Divisor das entradas digitais (10×)
+DZ101-DZ110,"Zener 5,1 V",THT,Proteção das entradas (10×)
+C101-C110,100 nF,cerâmico,Filtro das entradas (10×)
+JP101-JP110,Jumper 3 pinos,THT,Seleção 12 V / chave-GND (10×)
+J7,Borne 5 vias,parafuso,Analógicas A0..A3 + GND
+R201,1 kΩ,THT,Série A0 (pressão do óleo)
+"R202,R203",1 kΩ,THT,Série e pull-up de A1 (combustível)
+JP201,Jumper 2 pinos,THT,Ativa pull-up do A1
+R204,1 kΩ,THT,Série A2 (temperatura do óleo)
+R205,30 kΩ,THT,Divisor A3 (topo)
+R206,10 kΩ,THT,Divisor A3 (base)
+DZ201-DZ204,"Zener 5,1 V",THT,Proteção das analógicas (4×)
+C201-C204,100 nF,cerâmico,Filtro das analógicas (4×)
+J8,Borne 2 vias,parafuso,Buzzer
+R301,1 kΩ,THT,Base do Q301
+Q301,2N2222,TO-92,Driver do buzzer
+D301,1N4148,DO-35,Roda-livre do buzzer
+J9,Borne 2 vias,parafuso,Bobina do relé do ventilador
+J10,Borne 2 vias,parafuso,Bobina do relé do ar-condicionado
+"R302,R304",1 kΩ,THT,Base dos drivers de relé
+"R303,R305",10 kΩ,THT,Pulldown base-emissor
+"Q302,Q303",2N2222 / BD135,TO-92/TO-126,Drivers dos relés
+"D302,D303",1N4007,DO-41,Roda-livre das bobinas
+R310,1 kΩ,THT,Resistor do LED de status
+D310,LED,THT,LED de status (D13)
+J11,Borne 2 vias,parafuso,5 V/GND para Orange Pi/Raspberry
+—,Placa de circuito,face simples,"101,5 × 53,3 mm (shield Mega)"

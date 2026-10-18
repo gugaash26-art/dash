@@ -176,6 +176,23 @@ Divisor de tensão para A3 (12 V → ~3–4 V): **R1 = 30 kΩ** (do +12 V para A
 | Relé ventilador | D44 | clima (passo > 0) |
 | Relé ar‑condicionado | D45 | clima (A/C ligado) |
 
+### 2.2 Placa de junção (shield)
+
+O diretório [`hardware/`](hardware/) traz uma **placa de junção** no formato shield
+do Mega 2560 (101,5 × 53,3 mm) que reúne alimentação protegida, CAN/OBD‑II, GPS,
+as 10 entradas digitais, as 4 analógicas e as saídas — com fusível, proteção de
+polaridade reversa, TVS, zeners e filtros.
+
+- [`hardware/out/schematic.svg`](hardware/out/schematic.svg) / `.png` — esquema completo
+- [`hardware/out/board.svg`](hardware/out/board.svg) / `.png` — desenho mecânico
+- [`hardware/out/bom.csv`](hardware/out/bom.csv) — lista de materiais
+- [`hardware/out/netlist.csv`](hardware/out/netlist.csv) — todas as conexões
+- [`hardware/README.md`](hardware/README.md) — montagem, solda, jumpers e testes
+
+O esquema é **gerado por código** (`hardware/generate.py`) a partir da pinagem de
+`arduino/car_dash/config.h`. A placa pode ser feita em perfboard seguindo a netlist
+ou fabricada (o desenho mecânico não inclui trilhas/Gerbers).
+
 ---
 
 ## 3. Software do Arduino
@@ -524,6 +541,7 @@ Variáveis de ambiente:
 car-dash/
 ├── docs/tutorial/         vídeo-tutorial (slides narrados) + gerador
 ├── arduino/car_dash/      sketch + config.h do Arduino Mega
+├── hardware/              placa de junção (esquema, BOM, netlist, desenho)
 ├── server/               servidor (biblioteca padrão do Python)
 │   ├── main.py           HTTP + WebSocket + rotas REST
 │   ├── hub.py            serial, estado, viagens, GPS, comandos
@@ -1026,3 +1044,6 @@ sudo snap install red-app
 - Este projeto lê dados pela porta OBD‑II; **não** altere a ECU. Modificações no
   veículo são de sua responsabilidade — siga as leis locais e não use comandos que
   interfiram na direção, freios ou airbag.
+- Para montar a eletrônica, use a [placa de junção](hardware/README.md): ela já
+  inclui fusível de 3 A, proteção de polaridade, TVS e divisores para todos os
+  sinais. Nunca ligue 12 V direto nos pinos do Arduino.
