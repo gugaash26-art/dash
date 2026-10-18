@@ -4,7 +4,7 @@
 Saida (em hardware/out/):
   schematic.svg   esquema eletrico completo (alimentacao, CAN, GPS, entradas,
                   analogicos, saidas) com rotulos de rede
-  board.svg       desenho mecanico da placa (shield do Arduino Mega) com
+  board.svg       desenho mecanico da placa (shield do ESP32) com
                   conectores, modulos, furos e tabela de brocas
   bom.csv         lista de materiais
   netlist.csv     lista de conexoes (net <-> componente/pino)
@@ -235,7 +235,7 @@ def section(s, x, y, w, h, title, color="#2f6fed"):
 # =============================================================== SCHEMATIC
 def build_schematic():
     s = Sheet(1720, 2640)
-    s.text(40, 46, "OpenDash — Placa de junção (shield Arduino Mega 2560)", size=24,
+    s.text(40, 46, "OpenDash — Placa de junção (shield ESP32)", size=24,
            weight="bold", fill="#0b2545")
     s.text(40, 72, "Esquema elétrico · alimentação 12 V protegida, CAN/OBD-II, GPS, "
                    "10 entradas digitais, 4 analógicas e 3 saídas", size=13, fill=VAL)
@@ -351,7 +351,7 @@ def build_power(s):
 
 def build_mcu(s):
     mx, my, mw, mh = 630, 92, 440, 650
-    section(s, mx, my, mw, mh, "2. Arduino Mega 2560 (U_ARDUINO)")
+    section(s, mx, my, mw, mh, "2. ESP32 (U_ARDUINO)")
     s.rect(mx + 26, my + 46, mw - 52, mh - 96, fill="#fff", rx=6)
     s.text(mx + mw / 2, my + 74, "ARDUINO MEGA 2560", size=16, anchor="middle",
            weight="bold", fill=BODY)
@@ -575,7 +575,7 @@ def build_board():
     w = int(MW * K) + 2 * m
     h = int(MH * K) + 2 * m + 250
     s = Sheet(w, h, "#f7f9fc")
-    s.text(m, 40, "OpenDash — Placa de junção (shield Arduino Mega 2560)", size=22,
+    s.text(m, 40, "OpenDash — Placa de junção (shield ESP32)", size=22,
            weight="bold", fill="#0b2545")
     s.text(m, 66, "Desenho mecânico · vista superior · escala 9 px/mm "
                   "(101,5 × 53,3 mm)", size=12, fill=VAL)
@@ -598,7 +598,7 @@ def build_board():
     # headers do Arduino
     a, b = mm(6, 4)
     s.rect(a, b, 90 * K, 2.5 * K, fill="#1a1a1a", stroke="#000", rx=2)
-    s.text(a + 2 * K, b - 5, "headers do Arduino Mega (encaixe)", size=8,
+    s.text(a + 2 * K, b - 5, "headers do ESP32 (encaixe)", size=8,
            fill="#dff5e6")
     a2, b2 = mm(6, 47)
     s.rect(a2, b2, 90 * K, 2.5 * K, fill="#1a1a1a", stroke="#000", rx=2)
@@ -656,7 +656,7 @@ def build_board():
 # =============================================================== CSV
 def build_csv():
     bom = [
-        ("U_ARDUINO", "Arduino Mega 2560", "módulo", "Comutador de bordo (car_dash.ino)"),
+        ("U_ARDUINO", "ESP32", "módulo", "Comutador de bordo (car_dash.ino)"),
         ("U1", "LM2596S-5.0", "TO-263-5", "Conversor buck 12V→5V 3A"),
         ("L1", "33 µH / 3 A", "THT", "Indutor do buck"),
         ("D3", "SS34", "DO-214AC", "Diodo Schottky do buck"),
@@ -706,7 +706,7 @@ def build_csv():
         ("R310", "1 kΩ", "THT", "Resistor do LED de status"),
         ("D310", "LED", "THT", "LED de status (D13)"),
         ("J11", "Borne 2 vias", "parafuso", "5 V/GND para Orange Pi/Raspberry"),
-        ("—", "Placa de circuito", "face simples", "101,5 × 53,3 mm (shield Mega)"),
+        ("—", "Placa de circuito", "face simples", "101,5 × 53,3 mm (shield ESP32)"),
     ]
     with open(os.path.join(OUT, "bom.csv"), "w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)

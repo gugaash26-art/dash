@@ -1,0 +1,134 @@
+# Firmware OpenDash
+
+O sketch `car_dash/car_dash.ino` le CAN/OBD-II, entradas digitais e sensores
+analógicos e envia JSON pela serial a 115200 baud. A pinagem e o ADC são
+selecionados em `car_dash/board_config.h` conforme a placa.
+
+## Placas suportadas
+
+| Placa | Perfil | Status | Observação |
+|---|---|---|---|
+| ESP32 | `esp32` | completo | pinagem original, todos os sinais diretos |
+| Arduino Uno/Nano | `uno-nano` | completo | exige expansor **PCF8574** para 8 entradas; GPS por SoftwareSerial |
+| Arduino Leonardo/Micro | `leonardo` | completo | PCF8574; I2C em D2/D3; GPS em D8/D9 |
+| ESP32 clássico | `esp32` | completo | 3,3 V; pinagem direta |
+| ESP32-S3 | `esp32s3` | experimental | 3,3 V; pinagem direta |
+| ESP32-C3 | `esp32c3` | experimental | 3,3 V; exige PCF8574 |
+| Raspberry Pi Pico/RP2040 | `rp2040` | experimental | 3,3 V; pinagem direta |
+| Teensy 4.0/4.1 | `teensy4` | experimental | 3,3 V; pinagem direta |
+| Outra | `custom` | manual | defina `CARDASH_CUSTOM_PINS` e a pinagem |
+
+> **Placas de 3,3 V:** os sinais analógicos do carro chegam a 5 V. Use divisor
+> de tensão (ou sensor 3,3 V) em A0–A3. O divisor da bateria precisa manter a
+> saída abaixo de 3,3 V; ajuste `BATT_DIVIDER` e `OIL_PSI_*` de acordo com o
+> hardware. O MCP2515 também deve ser de 3,3 V ou ter level shifter.
+
+## Bibliotecas
+
+- **MCP_CAN** de coryjfowler (testado com 1.5.1).
+- `SPI`, `Wire` e `SoftwareSerial` já vêm com as plataformas Arduino/ESP32/RP2040.
+- Para ESP32, instale o core `esp32:esp32` (2.x ou 3.x).
+- Para RP2040, use o core **Arduino-Pico** (Earle Philhower).
+
+## Pinagem por placa
+
+### ESP32
+
+| Sinal | Pino | Sinal | Pino |
+|---|---|---|---|
+| CAN CS | D10 | Buzzer | D12 |
+| CAN SCK | D52 | LED | D13 |
+| CAN MOSI | D51 | Relé ventilador | D44 |
+| CAN MISO | D50 | Relé A/C | D45 |
+| Analógico óleo | A0 | Seta esquerda | D2 |
+| Analógico combustível | A1 | Seta direita | D3 |
+| Analógico temp. óleo | A2 | Farol baixo | D4 |
+| Analógico bateria | A3 | Farol alto | D5 |
+| GPS RX | D19 | Freio de mão | D6 |
+| GPS TX | D18 | Cinto | D7 |
+|  |  | Porta | D8 |
+|  |  | Alerta | D9 |
+|  |  | Ignição | D22 |
+|  |  | Ré | D46 |
+
+### Arduino Uno/Nano (PCF8574 obrigatório)
+
+| Sinal | Pino | Sinal | Pino |
+|---|---|---|---|
+| CAN CS | D10 | Buzzer | D7 |
+| CAN SCK | D13 | LED | D8 |
+| CAN MOSI | D11 | Relé ventilador | D5 |
+| CAN MISO | D12 | Relé A/C | D6 |
+| I2C SDA | A4 | Freio de mão | D4 |
+| I2C SCL | A5 | Ré | D3 |
+| GPS RX (SoftwareSerial) | D2 | GPS TX | D9 |
+| Analógico óleo | A0 | Combustível | A1 |
+| Temp. óleo | A2 | Bateria | A3 |
+
+O PCF8574 (endereço `0x20`) fornece: seta esquerda, seta direita, farol baixo,
+farol alto, cinto, porta, alerta e ignição (bits 0–7). As entradas são ativas
+em LOW, com pull-up no módulo.
+
+### ESP32 clássico
+
+| Sinal | GPIO | Sinal | GPIO |
+|---|---|---|---|
+| CAN CS | 5 | Buzzer | 22 |
+| CAN SCK | 18 | LED | 2 |
+| CAN MISO | 19 | Relé ventilador | 12 |
+| CAN MOSI | 23 | Relé A/C | 15 |
+| Analógico óleo | 34 | Seta esquerda | 25 |
+| Analógico combustível | 35 | Seta direita | 26 |
+| Analógico temp. óleo | 36 | Farol baixo | 27 |
+| Analógico bateria | 39 | Farol alto | 32 |
+| GPS RX | 14 | Freio de mão | 33 |
+| GPS TX | — | Cinto | 4 |
+|  |  | Porta | 13 |
+|  |  | Alerta | 16 |
+|  |  | Ignição | 17 |
+|  |  | Ré | 21 |
+
+### ESP32-S3 / C3, RP2040 e Teensy
+
+A pinagem está em `board_config.h`. Para variantes diferentes (ESP32-S2,
+ESP32-S3 com outra placa, Pico W etc.), defina `CARDASH_CUSTOM_PINS` e os pinos
+no topo de `config.h` antes do `#include "board_config.h"`, ou edite o perfil.
+
+## Personalização
+
+1. Abra `car_dash/config.h` para calibrar sensores, CAN e intervalos.
+2. Para pinos diferentes, crie um bloco antes do include:
+   ```cpp
+   #define CARDASH_CUSTOM_PINS
+   #define PIN_CS_CAN 10
+   #define PIN_BUZZER 12
+   // ... todos os PIN_*, ADC_*, GPS_* usados
+   #include "board_config.h"
+   ```
+3. Para uma placa fora da lista, o build falha com mensagem pedindo
+   `CARDASH_CUSTOM_PINS`; isso evita gravar uma pinagem errada por engano.
+
+## Compilação de teste
+
+```bash
+arduino-cli core install arduino:avr
+arduino-cli lib install mcp_can
+arduino-cli compile --fqbn arduino:avr:mega arduino/car_dash
+arduino-cli compile --fqbn arduino:avr:uno arduino/car_dash
+arduino-cli compile --fqbn arduino:avr:leonardo arduino/car_dash
+```
+
+No Uno/Nano o firmware usa ~89% da RAM (1836 bytes) por causa do JSON, GPS e
+expansor. Para uso intenso, prefira ESP32 ou ESP32; no Uno, reduza `STATE_SIZE`
+ou desligue GPS se necessário.
+
+## JSON enviado
+
+A versão 2 acrescenta `board` e `adc`:
+
+```json
+{"v":2,"board":"esp32","adc":10,"ms":12345,"obd":1,"speed":64, ...}
+```
+
+O servidor aceita chaves extras; a tela de diagnóstico mostra a placa e a
+resolução do ADC.

@@ -1,11 +1,11 @@
-# Placa de junção OpenDash (shield Arduino Mega 2560)
+# Placa de junção OpenDash (shield ESP32)
 
 Placa que concentra **alimentação, proteção, entradas, saídas, CAN e GPS** entre o
-carro e o Arduino Mega 2560. O Arduino continua sendo o cérebro; a placa só faz a
+carro e o ESP32. O Arduino continua sendo o cérebro; a placa só faz a
 "cola" elétrica com proteção — nenhum sinal de 12 V chega direto aos pinos.
 
 Este diretório é **gerado por código** (`generate.py`), então esquema, BOM e netlist
-nunca ficam fora de sincronia com a pinagem oficial (`arduino/car_dash/config.h`).
+nunca ficam fora de sincronia com a pinagem oficial do perfil ESP32 (`arduino/car_dash/board_config.h`).
 
 ```
 hardware/
@@ -33,7 +33,7 @@ python3 hardware/render_svg.py      # requer python3 com PyGObject/GdkPixbuf
 | Bloco | O que faz |
 |---|---|
 | **1. Alimentação** | Entrada 12 V pós-chave → fusível 3 A → SS54 (polaridade reversa) → SMBJ18A (TVS) → buck LM2596S-5.0 → 5 V / 3 A |
-| **2. Arduino Mega** | Shield encaixa nos headers; leva 5 V, GND, entradas/saídas e SPI/Serial1 |
+| **2. ESP32** | Shield encaixa nos headers; leva 5 V, GND, entradas/saídas e SPI/Serial1 |
 | **3. CAN / OBD‑II** | MCP2515 + TJA1050 (SPI: CS D10, SCK D52, SI D51, SO D50); terminação 120 Ω com jumper |
 | **4. GPS** | NEO‑6M/8M/M8N em 9600 baud no Serial1 (TX GPS→D19/RX1, RX GPS←D18/TX1 via R3 1 k) |
 | **5. Entradas digitais** | 10 canais com R série 22 k, divisor 10 k, zener 5,1 V, 100 nF e jumper por canal (12 V **ou** chave-para-GND) |
@@ -45,7 +45,7 @@ python3 hardware/render_svg.py      # requer python3 com PyGObject/GdkPixbuf
 A lista completa, com encapsulamento e descrição, está em
 [`out/bom.csv`](out/bom.csv). Resumo:
 
-- **Módulo**: Arduino Mega 2560; módulo MCP2515 (TJA1050); módulo GPS NEO‑6M/8M.
+- **Módulo**: ESP32; módulo MCP2515 (TJA1050); módulo GPS NEO‑6M/8M.
 - **Alimentação**: LM2596S‑5.0, L1 33 µH/3 A, D3 SS34, D1 SS54, D2 SMBJ18A,
   F1 3 A, C1 470 µF/25 V, C3 220 µF/16 V, C2/C4 100 nF.
 - **Entradas**: 10× R 22 k, 10× R 10 k, 10× zener 5,1 V, 10× 100 nF,
@@ -55,14 +55,14 @@ A lista completa, com encapsulamento e descrição, está em
 - **Saídas**: Q301–Q303, R301/R302/R304 1 k, R303/R305 10 k, D301/D302/D303,
   R310 1 k, LED1/D310, bornes J8/J9/J10/J11.
 - **Conectores**: J2 (12 V), J3 (MCP2515), J4 (OBD‑II), J5 (GPS), J11 (5 V→Pi).
-- **Placa**: face simples, **101,5 × 53,3 mm** (formato shield Mega).
+- **Placa**: face simples, **101,5 × 53,3 mm** (formato shield ESP32).
 
 ## 3. Perfboard (DIY) ou placa fabricada?
 
 **Perfboard / placa ilhada** — mais rápido e barato para uma unidade:
 
 1. Corte uma placa de 101,5 × 53,3 mm e faça os 4 furos M3.
-2. Encaixe os headers fêmea que vão receber o Mega (ou pinos macho, se a placa
+2. Encaixe os headers fêmea que vão receber o ESP32 (ou pinos macho, se a placa
    ficar embaixo) e marque os furos.
 3. Siga a [`netlist.csv`](out/netlist.csv) **net a net**, usando fio de cobre
    esmaltado (0,5 mm) para as ligações longas e ilhas para os nós curtos.
@@ -81,7 +81,7 @@ A lista completa, com encapsulamento e descrição, está em
 
 1. **Alimentação primeiro** (com a placa fora do carro): D1, D2, F1, C1, C3,
    buck U1 e LED de power. Teste as tensões antes de soldar qualquer outra coisa.
-2. **MCU/headers**: soquetes/headers do Mega e o jumper `JP_VUSB`.
+2. **MCU/headers**: soquetes/headers do ESP32 e o jumper `JP_VUSB`.
 3. **CAN**: J3, R2, JP1, C6.
 4. **GPS**: J5, R3, C7.
 5. **Entradas digitais**: por canal — R série, R de divisor, zener, capacitor e
@@ -119,7 +119,7 @@ Com o carro desligado e a placa na bancada:
    meça ~3 V no pino (divisor 4:1).
 5. **Saídas**: acione D12/D13/D44/D45 pelo firmware de teste e confira o buzzer,
    o LED e o clique dos relés.
-6. **CAN/GPS**: com o Mega gravado, confira `candump`/modo demo e o GPS no
+6. **CAN/GPS**: com o ESP32 gravado, confira `candump`/modo demo e o GPS no
    `/dev/ttyS0`/Serial1 a 9600 baud.
 
 Só depois disso instale no carro, sempre com a **bateria desconectada**.
@@ -142,5 +142,5 @@ Só depois disso instale no carro, sempre com a **bateria desconectada**.
 - Sem projeto KiCad/Gerber: `board.svg` é desenho mecânico (posições, furos,
   conectores), não trilhas roteadas.
 - O netlist é a fonte para conferir a fiação; não substitui o teste com multímetro.
-- A pinagem segue `arduino/car_dash/config.h` — se você mudar um pino lá, rode
+- A pinagem segue o perfil ESP32 em `arduino/car_dash/board_config.h` — se você mudar um pino lá, rode
   `generate.py` novamente para atualizar esquema/BOM/netlist.

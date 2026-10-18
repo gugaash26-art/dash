@@ -59,6 +59,22 @@ if [ -f /opt/opendash-runtime.sha256 ]; then
   ( cd /opt && sha256sum -c opendash-runtime.sha256 ) || exit 1
 fi
 
+# --- extrai o payload antes da rede (o assistente de Wi-Fi vem dele) -----------
+mkdir -p /opt/opendash
+tar -xzf "$PAYLOAD" -C /opt/opendash
+cp -f "$0" /opt/opendash/firstboot.sh 2>/dev/null || true
+chmod +x /opt/opendash/install.sh /opt/opendash/kiosk/kiosk.sh \
+  /opt/opendash/kiosk/dietpi-kiosk.sh /opt/opendash/kiosk/dietpi-session.sh 2>/dev/null || true
+
+# --- configura Wi-Fi interativo se necessario ----------------------------------
+if [ -x /opt/opendash/distro/wifi-setup.sh ]; then
+  if [ -c /dev/tty1 ]; then
+    WIFI_TTY=1 /opt/opendash/distro/wifi-setup.sh </dev/tty1 >/dev/tty1 2>&1 || true
+  else
+    /opt/opendash/distro/wifi-setup.sh || true
+  fi
+fi
+
 # --- rede e dependencias basicas ----------------------------------------------
 if ! command -v python3 >/dev/null 2>&1 || ! python3 -m venv --help >/dev/null 2>&1; then
   echo "instalando python3/venv..."
@@ -73,18 +89,7 @@ if [ "$BROWSER" = "app" ]; then
   apt-get install -y gir1.2-webkit2-4.1 || apt-get install -y gir1.2-webkit2-4.0 || true
 fi
 
-# --- configura Wi-Fi interativo se necessário ----------------------------------
-if [ -x /opt/opendash/wifi-setup.sh ]; then
-  /opt/opendash/wifi-setup.sh || true
-fi
-
-# --- instala o OpenDash -------------------------------------------------------
-mkdir -p /opt/opendash
-tar -xzf "$PAYLOAD" -C /opt/opendash
-cp -f "$0" /opt/opendash/firstboot.sh 2>/dev/null || true
-chmod +x /opt/opendash/install.sh /opt/opendash/kiosk/kiosk.sh \
-  /opt/opendash/kiosk/dietpi-kiosk.sh /opt/opendash/kiosk/dietpi-session.sh 2>/dev/null || true
-
+# --- configuracao do OpenDash -------------------------------------------------
 if [ -f /opt/opendash/config.yaml ]; then
   awk -v name="$CAR_NAME" '
     /^car:[[:space:]]*$/ { incar=1; print; next }

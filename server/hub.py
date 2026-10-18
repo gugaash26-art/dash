@@ -202,6 +202,7 @@ class Hub:
             "conn": "off",
             "ts": int(time.time() * 1000),
             "age_ms": 0,
+            "board": None, "adc": None,
             "speed": 0, "rpm": 0, "coolant": 20, "iat": 20, "oilt": 20,
             "throttle": 0, "fuel": 50, "volt": 12.4, "oilp": 0.0, "batt": 12.4,
             "load": 0, "runtime": 0, "mil": 0, "obd": 0, "dtc_count": 0,

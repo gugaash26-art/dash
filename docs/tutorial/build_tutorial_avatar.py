@@ -113,7 +113,7 @@ SCENES = [
     },
     {
         "kicker": "SISTEMA", "title": "Como funciona",
-        "body": ["Arduino Mega lê OBD-II (CAN) e sensores",
+        "body": ["ESP32 lê OBD-II (CAN) e sensores",
                  "Orange Pi roda o servidor e a interface web",
                  "Os dados atualizam 10 vezes por segundo",
                  "Tela touch mostra o painel em tela cheia"],

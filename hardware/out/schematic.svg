@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1720" height="2640" viewBox="0 0 1720 2640">
 <rect width="1720" height="2640" fill="#ffffff"/>
-<text x="40.0" y="46.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="24" font-weight="bold" fill="#0b2545" text-anchor="start">OpenDash — Placa de junção (shield Arduino Mega 2560)</text>
+<text x="40.0" y="46.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="24" font-weight="bold" fill="#0b2545" text-anchor="start">OpenDash — Placa de junção (shield ESP32)</text>
 <text x="40.0" y="72.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="normal" fill="#555555" text-anchor="start">Esquema elétrico · alimentação 12 V protegida, CAN/OBD-II, GPS, 10 entradas digitais, 4 analógicas e 3 saídas</text>
 <text x="1680.0" y="46.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" font-weight="bold" fill="#555555" text-anchor="end">Rev. A</text>
 <text x="1680.0" y="66.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#555555" text-anchor="end">github.com/gugaash26-art/dash</text>
@@ -103,7 +103,7 @@
 <text x="64.0" y="480.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="normal" fill="#555555" text-anchor="start">5 V: Arduino (JP_VUSB), módulos e J11 (Pi).</text>
 <rect x="630.0" y="92.0" width="440.0" height="650.0" rx="8" fill="#fcfdff" stroke="#cdd7e5" stroke-width="1.5"/>
 <rect x="630.0" y="92.0" width="440.0" height="30.0" rx="8" fill="#eaf1ff" stroke="#cdd7e5" stroke-width="1.5"/>
-<text x="642.0" y="112.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="15" font-weight="bold" fill="#2f6fed" text-anchor="start">2. Arduino Mega 2560 (U_ARDUINO)</text>
+<text x="642.0" y="112.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="15" font-weight="bold" fill="#2f6fed" text-anchor="start">2. ESP32 (U_ARDUINO)</text>
 <rect x="656.0" y="138.0" width="388.0" height="554.0" rx="6" fill="#fff" stroke="#243b53" stroke-width="2"/>
 <text x="850.0" y="166.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="16" font-weight="bold" fill="#243b53" text-anchor="middle">ARDUINO MEGA 2560</text>
 <text x="850.0" y="186.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="normal" fill="#555555" text-anchor="middle">o shield encaixa nos headers</text>

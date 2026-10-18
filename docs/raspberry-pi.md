@@ -35,9 +35,11 @@ Para **não** aplicar isso, use `--no-rpi`. Depois, **reinicie** para valer.
 
 ## 2. Arduino (serial)
 
-O Arduino Mega se conecta por **USB**. No Raspberry Pi ele aparece em `/dev/ttyACM0`
-(ou `/dev/ttyUSB0`). Adicione seu usuário ao grupo `dialout` (o instalador já faz) e
+O microcontrolador (ESP32, ESP32, Pico/RP2040, Teensy ou Uno/Nano) se
+conecta por **USB**. No Raspberry Pi ele aparece em `/dev/ttyACM0` (ou
+`/dev/ttyUSB0`). Adicione seu usuário ao grupo `dialout` (o instalador já faz) e
 selecione a porta em **Ajustes → Conexão**, ou deixe `serial.port: auto`.
+A pinagem de cada placa está em [`../arduino/README.md`](../arduino/README.md).
 
 Se preferir a **UART de hardware** (GPIO 14/15), desative o console serial
 (`sudo raspi-config nonint do_serial_cons 1`) e ligue:
@@ -60,7 +62,7 @@ Duas opções:
 No painel, **Ajustes → Câmera de ré** controla o disparo (`ao engatar a ré`, `manual`,
 `sempre`, `desligado`), backend, resolução, linhas guia e espelhamento. Ao engatar a **ré**,
 a imagem abre em **tela cheia** (via `/camera/stream`, MJPEG). No Arduino, o sinal de ré
-entra em `PIN_REVERSE` (`arduino/car_dash/config.h`) e vira o campo `rev` no JSON.
+entra em `PIN_REVERSE` (`arduino/car_dash/board_config.h`) e vira o campo `rev` no JSON.
 
 Teste rápido (modo simulação):
 

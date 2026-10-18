@@ -78,6 +78,11 @@ aWIFI_SSID[0]='minha-rede'
 aWIFI_KEY[0]='minha-senha'
 ```
 
+Se esses campos ficarem com os placeholders, o `firstboot.sh` abre o assistente
+de Wi‑Fi (`nmtui`/`nmcli` ou `dietpi-config`) no console antes de instalar o
+OpenDash. Também é possível configurar depois em `dietpi-config` → Network
+Options → Wi‑Fi.
+
 `dietpi.txt`:
 
 ```

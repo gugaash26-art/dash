@@ -1,5 +1,5 @@
 Referencia,Valor,Encapsulamento,Descricao
-U_ARDUINO,Arduino Mega 2560,módulo,Comutador de bordo (car_dash.ino)
+U_ARDUINO,ESP32,módulo,Comutador de bordo (car_dash.ino)
 U1,LM2596S-5.0,TO-263-5,Conversor buck 12V→5V 3A
 L1,33 µH / 3 A,THT,Indutor do buck
 D3,SS34,DO-214AC,Diodo Schottky do buck
@@ -49,4 +49,4 @@ J10,Borne 2 vias,parafuso,Bobina do relé do ar-condicionado
 R310,1 kΩ,THT,Resistor do LED de status
 D310,LED,THT,LED de status (D13)
 J11,Borne 2 vias,parafuso,5 V/GND para Orange Pi/Raspberry
-—,Placa de circuito,face simples,"101,5 × 53,3 mm (shield Mega)"
+—,Placa de circuito,face simples,"101,5 × 53,3 mm (shield ESP32)"

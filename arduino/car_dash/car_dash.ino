@@ -2,6 +2,20 @@
 #include <mcp_can.h>
 #include "config.h"
 
+#if INPUT_EXPANDER
+#include <Wire.h>
+#endif
+#if GPS_ENABLED && GPS_SOFTWARE
+#ifndef _SS_MAX_RX_BUFF
+#define _SS_MAX_RX_BUFF 32
+#endif
+#include <SoftwareSerial.h>
+static SoftwareSerial gpsSerial(GPS_RX_PIN, GPS_TX_PIN);
+#define GPS_PORT gpsSerial
+#else
+#define GPS_PORT Serial1
+#endif
+
 struct Vehicle {
   uint8_t obd_ok = 0;
   uint8_t mil = 0;
@@ -24,9 +38,11 @@ struct Vehicle {
   uint8_t fan = 0, ac = 0;
 };
 
-static mcp_can CAN(PIN_CS_CAN);
+static Vehicle veh;
 
-static char dtcList[16][6];
+static MCP_CAN CAN(PIN_CS_CAN);
+
+static char dtcList[DTC_MAX][6];
 static uint8_t dtcN = 0;
 static uint8_t wantDtcRead = 0;
 static uint8_t wantDtcClear = 0;
@@ -39,6 +55,22 @@ static uint32_t inputLast[9];
 
 static uint8_t revVal = 0;
 static uint32_t revLast = 0;
+
+#if INPUT_EXPANDER
+static uint8_t expanderVal = 0xFF;
+
+static void pollExpander() {
+  if (Wire.requestFrom((uint8_t)INPUT_EXPANDER_ADDR, (uint8_t)1) == 1)
+    expanderVal = Wire.read();
+}
+#endif
+
+static uint8_t readInputPin(uint8_t pin) {
+#if INPUT_EXPANDER
+  if (pin >= EXPANDER_BASE) return (expanderVal >> (pin - EXPANDER_BASE)) & 1;
+#endif
+  return digitalRead(pin);
+}
 
 static uint32_t lastJson = 0;
 static uint32_t lastAnalog = 0;
@@ -55,7 +87,7 @@ static uint32_t reqAt = 0;
 static uint8_t reqMode = 0x01;
 static uint8_t reqPid = 0;
 
-static uint8_t rxData[64];
+static uint8_t rxData[RX_DATA_SIZE];
 static uint8_t rxLen = 0;
 static uint8_t isoActive = 0;
 static uint16_t isoExpect = 0;
@@ -201,7 +233,7 @@ static void dtcAdd(uint16_t v) {
   char code[6];
   fmtDtc(code, v);
   if (dtcFind(code) >= 0) return;
-  if (dtcN >= 16) return;
+  if (dtcN >= DTC_MAX) return;
   memcpy(dtcList[dtcN], code, 6);
   dtcN++;
 }
@@ -352,8 +384,8 @@ static void parseGpsLine(char* line) {
 }
 
 static void pollGps() {
-  while (Serial1.available()) {
-    char c = (char)Serial1.read();
+  while (GPS_PORT.available()) {
+    char c = (char)GPS_PORT.read();
     if (c == '\n') {
       gpsLine[gpsLen] = 0;
       if (gpsLen > 6) parseGpsLine(gpsLine);
@@ -368,7 +400,7 @@ static void pollGps() {
 
 static void pollInputs() {
   for (uint8_t i = 0; i < sizeof(inputPin); i++) {
-    uint8_t raw = digitalRead(inputPin[i]);
+    uint8_t raw = readInputPin(inputPin[i]);
 #if INPUT_ACTIVE_LOW
     raw = raw ? 0 : 1;
 #endif
@@ -387,7 +419,7 @@ static void pollInputs() {
   veh.hz = inputVal[7];
   veh.ign = inputVal[8];
 
-  uint8_t rawRev = digitalRead(PIN_REVERSE);
+  uint8_t rawRev = readInputPin(PIN_REVERSE);
 #if INPUT_ACTIVE_LOW
   rawRev = rawRev ? 0 : 1;
 #endif
@@ -400,9 +432,9 @@ static void pollInputs() {
 
 static void pollAnalog() {
   float v;
-  v = ADC_VREF * analogRead(PIN_BATT_SENSE) / 1023.0f;
+  v = ADC_VREF * analogRead(PIN_BATT_SENSE) / ADC_MAX;
   veh.batt = v * BATT_DIVIDER;
-  v = ADC_VREF * analogRead(PIN_OIL_PRESS) / 1023.0f;
+  v = ADC_VREF * analogRead(PIN_OIL_PRESS) / ADC_MAX;
   veh.oilp = ((v - OIL_PSI_MIN_V) / (OIL_PSI_MAX_V - OIL_PSI_MIN_V)) * OIL_PSI_MAX;
   if (veh.oilp < 0) veh.oilp = 0;
   if (veh.oilp > OIL_PSI_MAX) veh.oilp = OIL_PSI_MAX;
@@ -411,7 +443,7 @@ static void pollAnalog() {
   if (pct < 0) pct = 0;
   if (pct > 100) pct = 100;
   if (!veh.obd_ok) veh.fuel = (uint8_t)pct;
-  v = ADC_VREF * analogRead(PIN_OIL_TEMP) / 1023.0f;
+  v = ADC_VREF * analogRead(PIN_OIL_TEMP) / ADC_MAX;
   veh.oilt = (int16_t)(v * OILT_SCALE - 40.0f);
 }
 
@@ -556,7 +588,7 @@ static void obdTick() {
       uint32_t id;
       uint8_t len;
       uint8_t b[8];
-      CAN.readMsgBuf(&len, b, &id);
+      CAN.readMsgBuf(&id, &len, b);
       feedFrame(id, b, len);
   }
   if (phase == 1) {
@@ -633,6 +665,8 @@ static void demoTick() {
 static void sendJson() {
   jw.begin();
   jw.i("v", FW_VERSION);
+  jw.s("board", BOARD_NAME);
+  jw.i("adc", ADC_BITS);
   jw.u("ms", millis());
   jw.i("obd", veh.obd_ok);
   jw.i("mil", veh.mil);
@@ -700,23 +734,53 @@ static void initCan() {
 void setup() {
   Serial.begin(SERIAL_BAUD);
 #if GPS_ENABLED
-  Serial1.begin(GPS_BAUD);
+#if defined(CARDASH_GPS_BEGIN)
+  CARDASH_GPS_BEGIN();
+#else
+  GPS_PORT.begin(GPS_BAUD);
+#endif
 #endif
   for (uint8_t i = 0; i < sizeof(inputPin); i++) {
-    pinMode(inputPin[i], INPUT_PULLUP);
     inputVal[i] = 0;
     inputLast[i] = 0;
+#if INPUT_EXPANDER
+    if (inputPin[i] < EXPANDER_BASE)
+      pinMode(inputPin[i], INPUT_PULLUP);
+#else
+    pinMode(inputPin[i], INPUT_PULLUP);
+#endif
   }
+#if INPUT_EXPANDER
+  if (PIN_REVERSE < EXPANDER_BASE) pinMode(PIN_REVERSE, INPUT_PULLUP);
+#else
   pinMode(PIN_REVERSE, INPUT_PULLUP);
+#endif
   pinMode(PIN_BUZZER, OUTPUT);
   digitalWrite(PIN_BUZZER, LOW);
   pinMode(PIN_LED, OUTPUT);
   pinMode(PIN_RELAY_FAN, OUTPUT);
   pinMode(PIN_RELAY_AC, OUTPUT);
   applyClimate();
+#if INPUT_EXPANDER
+#ifdef CARDASH_I2C_SDA
+  Wire.begin(CARDASH_I2C_SDA, CARDASH_I2C_SCL);
+#else
+  Wire.begin();
+#endif
+  Wire.setClock(100000);
+  Wire.beginTransmission(INPUT_EXPANDER_ADDR);
+  Wire.write(0xFF);
+  Wire.endTransmission();
+#endif
+#if HAS_ADC_RESOLUTION
+  analogReadResolution(ADC_BITS);
+#endif
+#if HAS_ADC_ATTENUATION
+  analogSetAttenuation(ADC_11db);
+#endif
   SPI.begin();
   initCan();
-  randomSeed(analogRead(A7));
+  randomSeed(micros());
   digitalWrite(PIN_LED, HIGH);
 }
 
@@ -729,6 +793,9 @@ void loop() {
   pollSerial();
 #if GPS_ENABLED
   pollGps();
+#endif
+#if INPUT_EXPANDER
+  pollExpander();
 #endif
   pollInputs();
   if (now - lastAnalog >= ANALOG_INTERVAL_MS) {

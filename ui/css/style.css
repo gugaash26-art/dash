@@ -431,7 +431,7 @@ input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius
 .mil-badge { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; font-weight: 600; background: rgba(46,230,168,.12); border: 1px solid rgba(46,230,168,.4); color: var(--green); }
 .mil-badge.bad { background: rgba(227,61,67,.14); border-color: rgba(227,61,67,.5); color: var(--red-2); animation: blink 1.4s steps(2, start) infinite; }
 .diag-status b { display: block; font-size: 16px; }
-.diag-status small { color: var(--muted); font-size: 12px; }
+.diag-status small { display: block; color: var(--muted); font-size: 12px; }
 .btn-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .btn { padding: 11px 18px; border-radius: var(--radius-s); border: 1px solid var(--line-2); background: var(--panel-3); color: #fff; font-size: 13px; font-weight: 500; letter-spacing: .3px; }
 .btn:active { transform: scale(.97); }

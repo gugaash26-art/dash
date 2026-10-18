@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1033" height="849" viewBox="0 0 1033 849">
 <rect width="1033" height="849" fill="#f7f9fc"/>
-<text x="60.0" y="40.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="22" font-weight="bold" fill="#0b2545" text-anchor="start">OpenDash — Placa de junção (shield Arduino Mega 2560)</text>
+<text x="60.0" y="40.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="22" font-weight="bold" fill="#0b2545" text-anchor="start">OpenDash — Placa de junção (shield ESP32)</text>
 <text x="60.0" y="66.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="normal" fill="#555555" text-anchor="start">Desenho mecânico · vista superior · escala 9 px/mm (101,5 × 53,3 mm)</text>
 <rect x="60.0" y="100.0" width="913.5" height="479.7" rx="6" fill="#1f7a4d" stroke="#08351f" stroke-width="2"/>
 <rect x="114.0" y="136.0" width="810.0" height="22.5" rx="2" fill="#1a1a1a" stroke="#000" stroke-width="2"/>
-<text x="132.0" y="131.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="8" font-weight="normal" fill="#dff5e6" text-anchor="start">headers do Arduino Mega (encaixe)</text>
+<text x="132.0" y="131.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="8" font-weight="normal" fill="#dff5e6" text-anchor="start">headers do ESP32 (encaixe)</text>
 <rect x="114.0" y="523.0" width="810.0" height="22.5" rx="2" fill="#1a1a1a" stroke="#000" stroke-width="2"/>
 <rect x="726.0" y="136.0" width="198.0" height="22.5" rx="2" fill="#1a1a1a" stroke="#000" stroke-width="2"/>
 <rect x="330.0" y="172.0" width="252.0" height="81.0" rx="4" fill="#eef4ff" stroke="#0b2545" stroke-width="1.6"/>

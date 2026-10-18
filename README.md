@@ -12,7 +12,7 @@ Raspberry Pi OS ou DietPi com `./install.sh` (instalação manual).
 
 ```
 ┌────────────────────┐   USB serial    ┌──────────────────────────┐   WebSocket   ┌──────────────┐
-│  Arduino Mega      │  (JSON @115200) │  Orange Pi               │  (10 Hz)      │  Tela touch  │
+│  ESP32            │  (JSON @115200) │  Orange Pi               │  (10 Hz)      │  Tela touch  │
 │  OBD‑II (MCP2515)  │ ───────────────▶│  server Python (stdlib)  │ ─────────────▶│  Chromium    │
 │  sensores analóg.  │ ◀─────────────── │  SQLite (viagens, DTC)   │  REST + WS    │  kiosk       │
 │  entradas digitais │   comandos      │  simulação embutida      │               │  UI web      │
@@ -42,7 +42,8 @@ sozinha no painel.
 **Antes do primeiro boot** edite os arquivos da partição de configuração (FAT,
 visível no PC):
 
-- `dietpi-wifi.txt`: SSID e senha do Wi‑Fi;
+- `dietpi-wifi.txt`: SSID e senha do Wi‑Fi (se deixar em branco, o primeiro
+  boot abre o assistente de Wi‑Fi do DietPi no console);
 - `dietpi.txt`: mude `AUTO_SETUP_NET_WIFI_ENABLED=1` e ajuste o modo em
   `OPENDASH_MODE` (`kiosk`, `duo`, `cluster`, `bar`, `cluster-only`),
   `OPENDASH_BAR_SIZE`, `OPENDASH_CAR_NAME`, etc.
@@ -179,18 +180,22 @@ Guia completo, arquitetura e solução de problemas:
 | Computador de bordo | Orange Pi Zero 3 / Zero 3W / 3 / 5, **Raspberry Pi 4/5** ou PC (Debian/DietPi/Raspberry Pi OS/Armbian) |
 | Tela | HDMI touch (1024×600 ou 800×480) — o painel se adapta a **qualquer resolução/polegadas** |
 | Câmera | opcional: webcam USB ou câmera CSI (Raspberry Pi) para a **câmera de ré** |
-| Microcontrolador | Arduino Mega 2560 (**recomendado** — pinos suficientes) |
-| CAN bus | Módulo MCP2515 (TJA1050) 5 V com cristal 8 ou 16 MHz |
+| Microcontrolador | ESP32 (ESP32 Dev Module, etc.), ESP32/S3/C3, Raspberry Pi Pico/RP2040, Teensy 4.x ou Uno/Nano/Leonardo com expansor PCF8574 |
+| CAN bus | Módulo MCP2515 (TJA1050) 5 V (Mega) ou 3,3 V/level shifter (ESP32/RP2040) com cristal 8 ou 16 MHz |
 | Sensores | Pressão de óleo 0,5–4,5 V, nível de combustível (boia), temperatura de óleo |
 | Alimentação | Conversor DC‑DC 12 V → 5 V 3 A (**com fusível** de 2–3 A) |
 
-> O Arduino Uno funciona apenas com conjunto reduzido (ver seção 8 – FAQ).
+> O Arduino Uno/Nano/Leonardo funciona com um expansor **PCF8574** para as entradas
+> digitais e GPS por SoftwareSerial; no ESP32 clássico/S3 os sinais são
+> diretos (o ESP32-C3 também usa expansor).
+> Placas de 3,3 V exigem divisores nos sensores de 5 V. Veja
+> [`arduino/README.md`](arduino/README.md) para a pinagem de cada placa.
 
-### 2.1 Ligação do Arduino Mega
+### 2.1 Ligação do ESP32
 
 **Barramento CAN / tomada OBD‑II**
 
-| MCP2515 | Arduino Mega | OBD‑II |
+| MCP2515 | ESP32 | OBD‑II |
 |---|---|---|
 | VCC | 5V | 16 (+12 V, opcional) |
 | GND | GND | 4/5 |
@@ -245,8 +250,8 @@ polaridade reversa, TVS, zeners e filtros.
 - [`hardware/out/netlist.csv`](hardware/out/netlist.csv) — todas as conexões
 - [`hardware/README.md`](hardware/README.md) — montagem, solda, jumpers e testes
 
-O esquema é **gerado por código** (`hardware/generate.py`) a partir da pinagem de
-`arduino/car_dash/config.h`. A placa pode ser feita em perfboard seguindo a netlist
+O esquema é **gerado por código** (`hardware/generate.py`) a partir da pinagem do
+perfil Mega em `arduino/car_dash/board_config.h`. A placa pode ser feita em perfboard seguindo a netlist
 ou fabricada (o desenho mecânico não inclui trilhas/Gerbers).
 
 ---
@@ -255,16 +260,19 @@ ou fabricada (o desenho mecânico não inclui trilhas/Gerbers).
 
 1. Instale a IDE do Arduino e a biblioteca **MCP_CAN** (Library Manager →
    “mcp_can by coryjfowler”) ou Seeed “CAN_BUS_Shield”.
-2. Abra `arduino/car_dash/car_dash.ino` (ajuste `config.h` se necessário:
-   pinos, cristal do MCP2515, calibração dos sensores).
-3. Selecione **Arduino Mega 2560** e grave.
+2. Abra `arduino/car_dash/car_dash.ino` (ajuste `config.h` para calibrar os
+   sensores; a pinagem fica em `board_config.h`).
+3. Selecione a placa: **ESP32 2560**, **ESP32 Dev Module**, **ESP32S3**,
+   **ESP32C3**, **Raspberry Pi Pico**, **Teensy 4.x**, **Arduino Uno/Nano** ou **Leonardo/Micro**.
+   O perfil é detectado automaticamente; veja [`arduino/README.md`](arduino/README.md)
+   para a pinagem e o expansor PCF8574 do Uno/Nano.
 4. Sem CAN conectado o firmware entra em **modo demo** e envia dados sintéticos
    (útil para testes de bancada). Desative com `DEMO_WITHOUT_CAN 0`.
 
 Formato enviado pela serial (1 linha JSON a cada 100 ms):
 
 ```json
-{"v":1,"ms":12345,"obd":1,"mil":0,"dtcn":0,"speed":64,"rpm":2340,"coolant":88,
+{"v":2,"board":"esp32","adc":10,"ms":12345,"obd":1,"mil":0,"dtcn":0,"speed":64,"rpm":2340,"coolant":88,
  "iat":30,"oilt":90,"throttle":12,"fuel":61,"volt":14.12,"oilp":42.0,"batt":14.0,
  "runtime":900,"load":34,"hl":1,"hb":0,"lt":0,"rt":0,"hz":0,"brk":0,"sbl":0,
  "door":0,"ign":1,"fan":0,"ac":0,"dtc":[]}
@@ -617,7 +625,7 @@ car-dash/
 │   ├── build-image.sh     injeta payload/config e gera .img.xz
 │   ├── firstboot.sh       instalação automática no primeiro boot
 │   └── make-runtime.sh    tarball mínimo do OpenDash
-├── arduino/car_dash/      sketch + config.h do Arduino Mega
+├── arduino/car_dash/      sketch + board_config.h + config.h (Mega/ESP32/Uno etc.)
 ├── hardware/              placa de junção (esquema, BOM, netlist, desenho)
 ├── server/               servidor (biblioteca padrão do Python)
 │   ├── main.py           HTTP + WebSocket + rotas REST
@@ -1029,7 +1037,7 @@ Uma **webcam USB** (V4L2, capturada com `ffmpeg`) ou a **câmera CSI do Raspberr
   `sempre`, `desligado`), dispositivo, backend, resolução, FPS, linhas guia e espelhamento.
 - Um botão de câmera aparece no topo do painel (dispara/para o stream) e permite abrir
   a câmera quando o disparo é `manual`.
-- Pelo Arduino, o sinal de ré entra em `PIN_REVERSE` (`config.h`) e vira o campo `rev` no
+- Pelo microcontrolador, o sinal de ré entra em `PIN_REVERSE` (`board_config.h`) e vira o campo `rev` no
   JSON; no modo simulação use `POST /api/command {"cmd":"reverse","on":true}`.
 
 Dependências: `./install.sh --camera` (instala `ffmpeg` + `v4l-utils`; e `rpicam-apps`/

@@ -97,12 +97,12 @@ SCENES = [
         "kicker": "HARDWARE", "title": "O que você precisa",
         "body": ["Orange Pi 3, 5 ou Zero 3 com Armbian",
                  "Tela HDMI touch, 1024 por 600",
-                 "Arduino Mega 2560",
+                 "ESP32",
                  "Módulo MCP2515 para CAN bus",
                  "Conversor 12V para 5V, com fusível"],
         "narration": (
             "Para o hardware você vai precisar de um Orange Pi com Armbian, uma tela HDMI touch, "
-            "um Arduino Mega, um módulo MCP vinte e cinco quinze para o CAN bus e um conversor "
+            "um ESP32, um módulo MCP vinte e cinco quinze para o CAN bus e um conversor "
             "de doze para cinco volts com fusível. Muito importante: alimente tudo pelo conversor, "
             "com fusível, e nunca ligue direto na tomada do carro."),
     },
@@ -146,11 +146,11 @@ SCENES = [
         "kicker": "ARDUINO", "title": "Gravar o Arduino",
         "body": ["1. Instale a biblioteca mcp_can",
                  "2. Abra o arquivo car_dash.ino",
-                 "3. Selecione a placa Arduino Mega 2560",
+                 "3. Selecione a placa ESP32",
                  "4. Grave — sem CAN entra em modo demo"],
         "narration": (
             "Para gravar o Arduino: na IDE, instale a biblioteca mcp_can, abra o arquivo car dash ponto ino, "
-            "selecione a placa Arduino Mega 2560 e grave. Se o CAN ainda não estiver conectado, "
+            "selecione a placa ESP32 e grave. Se o CAN ainda não estiver conectado, "
             "o firmware entra em modo demonstração, então você pode testar na bancada pelo monitor serial."),
     },
     {

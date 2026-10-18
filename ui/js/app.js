@@ -480,6 +480,7 @@
     mil.textContent = d.mil ? "FALHA" : "OK";
     $("#diagConn").textContent = d.conn === "serial" ? "Conectado via serial" : d.conn === "sim" ? "Simulação ativa" : "Sem comunicação";
     $("#diagPort").textContent = (d.mode && d.mode.port) || (d.conn === "sim" ? "modo bancada" : "verifique o cabo USB");
+    $("#diagBoard").textContent = d.board ? `Placa: ${d.board} · ADC ${d.adc || "?"} bits` : "Placa não informada";
     const list = $("#dtcList");
     const codes = d.dtc || [];
     if (!codes.length && !list.dataset.filled) {

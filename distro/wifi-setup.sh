@@ -4,7 +4,11 @@ set -u
 
 LOG=/var/lib/opendash/wifi_setup.log
 mkdir -p /var/lib/opendash
-exec >>"$LOG" 2>&1
+if [ "${WIFI_TTY:-0}" = 1 ] && [ -c /dev/tty1 ]; then
+  exec </dev/tty1 >/dev/tty1 2>&1
+else
+  exec >>"$LOG" 2>&1
+fi
 
 CFG=/boot/dietpi.txt
 [ -f "$CFG" ] || CFG=/boot/firmware/dietpi.txt
@@ -42,7 +46,16 @@ elif command -v nmcli >/dev/null 2>&1; then
   read -p "SSID: " ssid
   read -s -p "Senha: " key; echo
   nmcli device wifi connect "$ssid" password "$key" || true
+elif command -v dietpi-config >/dev/null 2>&1 || [ -x /boot/dietpi/dietpi-config ]; then
+  clear
+  echo "Configure o Wi-Fi em: Network Options: Adapters > WiFi"
+  echo "Depois volte e selecione 'Apply'."
+  if command -v dietpi-config >/dev/null 2>&1; then
+    dietpi-config
+  else
+    /boot/dietpi/dietpi-config
+  fi
 else
-  echo "Nenhuma ferramenta interativa encontrada; preencha $WIFI"
+  echo "Nenhuma ferramenta interativa encontrada; preencha $WIFI e reinicie."
 fi
 echo "=== fim ==="

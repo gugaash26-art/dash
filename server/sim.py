@@ -127,6 +127,8 @@ class Simulator:
 
         return {
             "v": 1,
+            "board": "sim",
+            "adc": 10,
             "ms": int(self.t * 1000),
             "obd": 1,
             "mil": self.mil,
