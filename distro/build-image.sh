@@ -184,7 +184,7 @@ OUT="$OUT_DIR/OpenDash-OS-${VERSION}-${ID}-${ARCH}.img.xz"
 echo "-- comprimindo $OUT"
 xz -T0 -6 -c "$IMG" > "$OUT"
 xz -t "$OUT"
-sha256sum "$OUT" > "$OUT.sha256"
+( cd "$OUT_DIR" && sha256sum "$(basename "$OUT")" > "$(basename "$OUT").sha256" )
 
 cat > "$OUT.info" <<EOF
 board=$ID
