@@ -120,7 +120,7 @@ tema escuro estilo Tesla, animações suaves e alertas em tempo real.
 
 | Item | Sugestão |
 |---|---|
-| Computador de bordo | Orange Pi Zero 3 / 3 / 5, **Raspberry Pi 4/5** ou PC (Debian/Raspberry Pi OS/Armbian) |
+| Computador de bordo | Orange Pi Zero 3 / Zero 3W / 3 / 5, **Raspberry Pi 4/5** ou PC (Debian/DietPi/Raspberry Pi OS/Armbian) |
 | Tela | HDMI touch (1024×600 ou 800×480) — o painel se adapta a **qualquer resolução/polegadas** |
 | Câmera | opcional: webcam USB ou câmera CSI (Raspberry Pi) para a **câmera de ré** |
 | Microcontrolador | Arduino Mega 2560 (**recomendado** — pinos suficientes) |
@@ -230,9 +230,10 @@ python3 tools/serial_monitor.py --port /dev/ttyUSB0 --baud 115200
 
 ---
 
-## 4. Instalação no Orange Pi
+## 4. Instalação no Orange Pi (Armbian, Debian ou DietPi)
 
-Pré‑requisitos: Armbian/Debian com acesso à internet e um usuário com `sudo`.
+Pré‑requisitos: Armbian, Debian ou **DietPi** com acesso à internet e um usuário
+com `sudo` (no DietPi o login padrão é `root`).
 
 ```bash
 git clone <este-repositorio> car-dash      # ou copie a pasta
@@ -247,9 +248,16 @@ cd car-dash
 
 O instalador:
 - instala `python3-venv`, `python3-pip` e o navegador (`chromium`) via apt;
+- no **DietPi**, instala X11/Chromium com `dietpi-software` (6/113), grava o
+  script custom e ativa o **`dietpi-autostart 17`** (sem precisar de desktop);
 - cria o virtualenv `.venv` e instala `pyserial` e `PyYAML`;
 - adiciona seu usuário ao grupo `dialout` (acesso à serial);
 - registra o serviço **`cardash.service`** (inicia no boot) e o habilita.
+
+> **DietPi (Orange Pi Zero 3, Zero 3W, Zero 2W, Orange Pi 3/4/5…).** O suporte é
+> detectado automaticamente: o kiosk sobe X11 e usa `dietpi-autostart 17`, sem
+> desktop e funcionando também em duas telas. Guia completo (Wi‑Fi, UART,
+> desempenho e solução de problemas): [`docs/dietpi.md`](docs/dietpi.md).
 
 > **Raspberry Pi.** O instalador detecta a placa e aplica os ajustes de boot
 > (UART, câmera CSI, HDMI). Veja o guia dedicado em
@@ -296,7 +304,9 @@ simulation:
 ./kiosk/kiosk.sh          # abre o navegador em tela cheia já apontando ao painel
 ```
 O `install.sh --kiosk` cria o autostart em `~/.config/autostart/cardash-kiosk.desktop`
-para abrir sozinho após o login automático do desktop.
+para abrir sozinho após o login automático do desktop. **No DietPi** o autostart é
+feito por `dietpi-autostart 17` + `custom.sh` (sem desktop); veja
+[`docs/dietpi.md`](docs/dietpi.md).
 
 ### Aplicativo nativo (sem navegador)
 
@@ -313,8 +323,9 @@ sudo ./install.sh --app --kiosk      # app nativo em uma tela só (painel comple
 
 Isso instala as dependências (`python3-gi`, `gir1.2-gtk-3.0` e `gir1.2-webkit2-4.1`),
 registra o atalho `/usr/share/applications/opendash.desktop` e faz os serviços do kiosk
-usarem a janela nativa (`CARDASH_APP=1`) em vez do navegador. O lançador é
-`kiosk/opendash.py` e aceita as mesmas variáveis do kiosk:
+usarem a janela nativa (`CARDASH_APP=1`) em vez do navegador. No DietPi o mesmo modo
+é aberto pela sessão X do `dietpi-autostart` (veja [`docs/dietpi.md`](docs/dietpi.md)).
+O lançador é `kiosk/opendash.py` e aceita as mesmas variáveis do kiosk:
 
 ```bash
 CARDASH_SCREEN=cluster CARDASH_CLUSTER_SIZE=1280,400 CARDASH_CLUSTER_POS=1024,0 \
@@ -540,6 +551,7 @@ Variáveis de ambiente:
 ```
 car-dash/
 ├── docs/tutorial/         vídeo-tutorial (slides narrados) + gerador
+├── docs/dietpi.md         guia do DietPi (Orange Pi Zero 3 em diante)
 ├── arduino/car_dash/      sketch + config.h do Arduino Mega
 ├── hardware/              placa de junção (esquema, BOM, netlist, desenho)
 ├── server/               servidor (biblioteca padrão do Python)
@@ -566,6 +578,8 @@ car-dash/
 │   └── react/            DashboardMcLaren.jsx (variante React, opcional)
 ├── systemd/              cardash.service, kiosk, kiosk-bar e kiosk-cluster
 ├── kiosk/kiosk.sh        lançador do navegador em tela cheia (ou do app nativo)
+├── kiosk/dietpi-kiosk.sh autostart do DietPi (X11 + sessão)
+├── kiosk/dietpi-session.sh  abre 1 ou 2 telas no DietPi
 ├── kiosk/opendash.py     aplicativo nativo (WebKitGTK, sem navegador)
 ├── kiosk/opendash.desktop  atalho do aplicativo (menu/autostart)
 ├── tools/                utilitários (monitor serial, setup do assistente, GNOME Maps)

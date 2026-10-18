@@ -2,7 +2,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-USER_NAME="${SUDO_USER:-$(id -un)}"
+USER_NAME="${CARDASH_USER:-${SUDO_USER:-$(id -un)}}"
 INSTALL_KIOSK=0
 INSTALL_KIOSK_BAR=0
 INSTALL_KIOSK_CLUSTER=0
@@ -13,6 +13,31 @@ INSTALL_MEDIA=0
 INSTALL_CAMERA=0
 INSTALL_SCREEN=""
 SETUP_RPI=1
+
+# DietPi é Debian otimizado para SBCs e usa ferramentas próprias
+# (dietpi-software / dietpi-autostart). Detecta pela pasta /boot/dietpi.
+DISTRO="linux"
+if [ -d /boot/dietpi ] || [ -x /boot/dietpi/dietpi-autostart ] \
+   || command -v dietpi-autostart >/dev/null 2>&1; then
+  DISTRO="dietpi"
+fi
+
+# Em DietPi o login padrão é root e "sudo" pode não existir. A função abaixo
+# executa direto como root e mantém "sudo -u usuário" funcionando via runuser.
+if [ "$(id -u)" -eq 0 ]; then
+  sudo() {
+    if [ "${1:-}" = "-u" ] && [ -n "${2:-}" ]; then
+      local u="$2"; shift 2
+      if command -v runuser >/dev/null 2>&1; then
+        runuser -u "$u" -- "$@"
+      else
+        su -s /bin/sh "$u" -c "$*"
+      fi
+    else
+      "$@"
+    fi
+  }
+fi
 
 # Plataforma: Raspberry Pi, Orange Pi ou PC. Detectada pelo device-tree.
 PLATFORM="linux"
@@ -41,6 +66,9 @@ for arg in "$@"; do
     --screen=*) INSTALL_SCREEN="${arg#*=}" ;;
     -h|--help)
       echo "uso: ./install.sh [--check] [--kiosk] [--duo] [--cluster] [--kiosk-bar] [--kiosk-cluster] [--app] [--media-apps] [--camera] [--no-apt] [--no-rpi] [--screen=WxH]"
+      echo "  Detecta Raspberry Pi, Orange Pi (Zero 3 em diante) e DietPi automaticamente."
+      echo "  No DietPi o kiosk usa X11 + dietpi-autostart 17 (script custom com autologin)."
+      echo "  Use CARDASH_USER=usuario para escolher o dono do kiosk (padrão: sudo/atual)."
       echo "  --check           só diagnóstico: verifica dependências e recursos (não instala)"
       echo "  --kiosk           autostart do painel completo (uma tela, com menus)"
       echo "  --duo             duas telas: painel completo + cluster em barra"
@@ -169,8 +197,14 @@ m_opt()  { m_tag 33 OPC "$@";   HAVE_OPT=$((HAVE_OPT+1)); }
 m_req()  { m_tag 31 FALTA "$@"; MISS_REQ=$((MISS_REQ+1)); }
 have()   { command -v "$1" >/dev/null 2>&1; }
 
+# dietpi-software só funciona em modo CLI depois do primeiro boot completo.
+dietpi_software_ready() {
+  [ -x /boot/dietpi/dietpi-software ] \
+    && [ "$(cat /boot/dietpi/.install_stage 2>/dev/null || true)" = "2" ]
+}
+
 diagnose() {
-  local port native_ok=0 browser_ok=0 browser="" sdeb="" screen=""
+  local port native_ok=0 browser_ok=0 browser="" sdeb="" screen="" osdesc="" idx=""
   printf '\n\033[1;31m[OpenDash]\033[0m diagnóstico (--check): nada será alterado\n\n'
 
   if [ -n "${TERMUX_VERSION:-}" ] \
@@ -180,10 +214,11 @@ diagnose() {
   fi
   printf "  arquitetura: %s  |  SO: %s %s\n\n" "$(uname -m)" "$(uname -s)" "$(uname -r)"
 
+  [ "$DISTRO" = "dietpi" ] && osdesc=" — DietPi"
   case "$PLATFORM" in
-    raspberrypi) m_ok "plataforma: Raspberry Pi ($(tr -d '\0' < /proc/device-tree/model 2>/dev/null))" ;;
-    orangepi)    m_ok "plataforma: Orange Pi (ARM)";;
-    *)           printf "  [\033[33m%-5s\033[0m] plataforma: PC/Linux genérico\n" OPC;;
+    raspberrypi) m_ok "plataforma: Raspberry Pi ($(tr -d '\0' < /proc/device-tree/model 2>/dev/null))${osdesc}" ;;
+    orangepi)    m_ok "plataforma: Orange Pi (ARM)${osdesc}";;
+    *)           printf "  [\033[33m%-5s\033[0m] plataforma: PC/Linux genérico%s\n" OPC "$osdesc";;
   esac
 
   # --- essenciais (núcleo servidor) ---
@@ -227,6 +262,37 @@ diagnose() {
   else
     m_req "kiosk precisa do app nativo OU de um navegador (instale um dos dois)"
   fi
+  if [ "$DISTRO" = "dietpi" ]; then
+    if have xinit || have Xorg; then
+      m_ok "DietPi: X11 (Xorg/xinit)"
+    else
+      m_opt "DietPi: X11 ausente (sudo dietpi-software install 6)"
+    fi
+    if dietpi_software_ready; then
+      m_ok "DietPi: dietpi-software (pronto)"
+    elif [ -x /boot/dietpi/dietpi-software ]; then
+      m_opt "DietPi: dietpi-software presente, mas o 1º boot não foi concluído"
+    else
+      m_opt "DietPi: dietpi-software ausente"
+    fi
+    idx="$(cat /boot/dietpi/.dietpi-autostart_index 2>/dev/null || true)"
+    if [ "$idx" = "17" ]; then
+      m_ok "DietPi: autostart 17 (script custom com autologin)"
+    else
+      m_opt "DietPi: autostart ${idx:-0} (esperado 17 — rode ./install.sh --kiosk)"
+    fi
+    if [ -f /var/lib/dietpi/dietpi-autostart/custom.sh ] \
+       && grep -q 'dietpi-kiosk' /var/lib/dietpi/dietpi-autostart/custom.sh 2>/dev/null; then
+      m_ok "DietPi: script custom do OpenDash instalado"
+    else
+      m_opt "DietPi: script custom do OpenDash ausente (./install.sh --kiosk)"
+    fi
+    if [ -f "$HERE/data/dietpi.env" ]; then
+      m_ok "DietPi: modo do kiosk em data/dietpi.env"
+    else
+      m_opt "DietPi: data/dietpi.env ausente (rode ./install.sh --kiosk)"
+    fi
+  fi
   if have systemctl; then m_ok "systemd (autostart do kiosk/serviço)"
   else m_opt "systemctl ausente (sem autostart por serviço)"; fi
   for h in xset unclutter; do
@@ -245,7 +311,9 @@ diagnose() {
   fi
 
   # --- integrações (desativam recursos se faltar) ---
-  if have nmcli; then m_ok "Wi-Fi: nmcli"; else m_opt "Wi-Fi: nmcli ausente (Ajustes desativa a aba)"; fi
+  if have nmcli; then m_ok "Wi-Fi: nmcli"
+  elif [ "$DISTRO" = "dietpi" ]; then m_opt "Wi-Fi: use dietpi-config (nmcli ausente; aba Wi-Fi desativada)"
+  else m_opt "Wi-Fi: nmcli ausente (Ajustes desativa a aba)"; fi
   if have bluetoothctl; then m_ok "Bluetooth: bluetoothctl"; else m_opt "Bluetooth: bluetoothctl ausente"; fi
   if have gnome-maps || have flatpak; then m_ok "mapa nativo: gnome-maps/flatpak"
   else m_opt "mapa nativo ausente (sudo apt install gnome-maps) — a Navegação web continua"; fi
@@ -333,6 +401,118 @@ register_unit() { # tpl dest touch_size touch_pos bar_size bar_pos
   rm -f "$tmp"
 }
 
+# Grava a geometria das duas telas (usada pelo systemd e pelo kiosk no DietPi).
+write_screens_env() {
+  TOUCH_SIZE="${CARDASH_TOUCH_SIZE:-${INSTALL_SCREEN//x/,}}"
+  if [ -z "$TOUCH_SIZE" ]; then
+    TOUCH_SIZE="$(detect_screen || true)"
+    TOUCH_SIZE="${TOUCH_SIZE//x/,}"
+  fi
+  TOUCH_SIZE="${TOUCH_SIZE:-1024,600}"
+  BAR_SIZE="${CARDASH_BAR_SIZE:-1920,480}"
+  TOUCH_POS="${CARDASH_TOUCH_POS:-0,0}"
+  TOUCH_W="${TOUCH_SIZE%%,*}"
+  BAR_POS="${CARDASH_BAR_POS:-${TOUCH_W},0}"
+
+  mkdir -p "$HERE/data"
+  cat > "$HERE/data/screens.env" <<EOF
+CARDASH_TOUCH_SIZE=$TOUCH_SIZE
+CARDASH_TOUCH_POS=$TOUCH_POS
+CARDASH_BAR_SIZE=$BAR_SIZE
+CARDASH_BAR_POS=$BAR_POS
+EOF
+}
+
+# Dependências do kiosk: X11 + Chromium ou app nativo. No DietPi usa
+# dietpi-software (6 = X11, 113 = Chromium), que já configura KMS/DPMS da placa.
+kiosk_deps() {
+  [ "$SKIP_APT" -eq 0 ] || return 0
+  if [ "$USE_APP" -eq 1 ]; then
+    if [ "$DISTRO" = "dietpi" ]; then
+      if dietpi_software_ready; then
+        sudo /boot/dietpi/dietpi-software install 6 || \
+          sudo apt-get install -y xserver-xorg-core xserver-xorg-input-libinput xinit \
+            dbus-user-session xfonts-base x11-xserver-utils x11-utils || true
+      else
+        sudo apt-get install -y xserver-xorg-core xserver-xorg-input-libinput xinit \
+          dbus-user-session xfonts-base x11-xserver-utils x11-utils || true
+      fi
+    fi
+    app_deps
+    # startx como usuário comum precisa do systemd-logind (libpam-systemd).
+    if [ "$(id -u)" -ne 0 ]; then
+      sudo apt-get install -y libpam-systemd || true
+    fi
+  else
+    if [ "$DISTRO" = "dietpi" ] && dietpi_software_ready; then
+      sudo /boot/dietpi/dietpi-software install 6 113 || \
+        sudo apt-get install -y chromium x11-xserver-utils || \
+        sudo apt-get install -y chromium-browser || true
+    else
+      sudo apt-get install -y chromium x11-xserver-utils || \
+        sudo apt-get install -y chromium-browser || true
+    fi
+  fi
+  [ "$DISTRO" = "dietpi" ] && sudo apt-get install -y unclutter xauth || true
+}
+
+# Autostart do DietPi sem desktop: X11 + dietpi-autostart 17 (script custom
+# com autologin). Funciona para uma tela e para duas telas (painel + cluster).
+dietpi_kiosk_setup() {
+  local second="" full=0
+  local txt=/boot/dietpi.txt
+  local custom=/var/lib/dietpi/dietpi-autostart/custom.sh
+
+  [ "$INSTALL_KIOSK" -eq 1 ] && full=1
+  if [ "$INSTALL_KIOSK_CLUSTER" -eq 1 ]; then
+    second="cluster"
+  elif [ "$INSTALL_KIOSK_BAR" -eq 1 ]; then
+    second="bar"
+  fi
+
+  if [ -n "$second" ]; then
+    write_screens_env
+    say "telas: painel ${TOUCH_SIZE}@${TOUCH_POS}  |  $second ${BAR_SIZE}@${BAR_POS}"
+  else
+    # Modo uma tela: remove geometria antiga para abrir em tela cheia.
+    rm -f "$HERE/data/screens.env"
+  fi
+
+  cat > "$HERE/data/dietpi.env" <<EOF
+CARDASH_APP=$USE_APP
+CARDASH_DIETPI_FULL=$full
+CARDASH_DIETPI_SECOND=$second
+EOF
+  if [ "$(id -u)" -eq 0 ] && [ "$USER_NAME" != "root" ]; then
+    chown -R "$USER_NAME:" "$HERE/data" 2>/dev/null || true
+  fi
+
+  if [ -f "$txt" ]; then
+    [ -f "$txt.opendash.bak" ] || sudo cp "$txt" "$txt.opendash.bak" 2>/dev/null || true
+    if grep -q '^[[:blank:]]*AUTO_SETUP_AUTOSTART_LOGIN_USER=' "$txt"; then
+      sudo sed -i "s|^[[:blank:]]*AUTO_SETUP_AUTOSTART_LOGIN_USER=.*|AUTO_SETUP_AUTOSTART_LOGIN_USER=$USER_NAME|" "$txt" \
+        || say "DietPi: falha ao gravar o autologin em $txt"
+    else
+      printf 'AUTO_SETUP_AUTOSTART_LOGIN_USER=%s\n' "$USER_NAME" | sudo tee -a "$txt" >/dev/null \
+        || say "DietPi: falha ao gravar o autologin em $txt"
+    fi
+  else
+    say "DietPi: $txt não encontrado; ajuste o autologin manualmente"
+  fi
+
+  sudo install -d /var/lib/dietpi/dietpi-autostart
+  printf '#!/bin/bash\n# OpenDash: gerado por install.sh\nexec "%s/kiosk/dietpi-kiosk.sh"\n' "$HERE" \
+    | sudo tee "$custom" >/dev/null || say "DietPi: falha ao gravar $custom"
+  sudo chmod +x "$custom" "$HERE/kiosk/dietpi-kiosk.sh" "$HERE/kiosk/dietpi-session.sh" || true
+
+  if [ -x /boot/dietpi/dietpi-autostart ]; then
+    sudo /boot/dietpi/dietpi-autostart 17 || say "DietPi: rode 'sudo dietpi-autostart 17' depois"
+  else
+    say "DietPi: dietpi-autostart ausente; rode 'sudo dietpi-autostart 17'"
+  fi
+  say "DietPi: autostart 17 configurado (login: $USER_NAME); reinicie para aplicar"
+}
+
 if [ "$SKIP_APT" -eq 0 ]; then
   say "instalando dependencias do sistema (apt)"
   sudo apt-get update -y
@@ -351,7 +531,11 @@ if ! "$HERE/.venv/bin/pip" install -q -r "$HERE/requirements.txt"; then
 fi
 
 mkdir -p "$HERE/data"
-chmod +x "$HERE/kiosk/kiosk.sh" 2>/dev/null || true
+# O servico roda como $USER_NAME; garante que data/ seja gravavel por ele.
+if [ "$(id -u)" -eq 0 ] && [ "$USER_NAME" != "root" ]; then
+  chown -R "$USER_NAME:" "$HERE/data" 2>/dev/null || true
+fi
+chmod +x "$HERE/kiosk/kiosk.sh" "$HERE/kiosk/dietpi-kiosk.sh" "$HERE/kiosk/dietpi-session.sh" 2>/dev/null || true
 
 if [ "$SKIP_APT" -eq 0 ]; then
   say "adicionando $USER_NAME ao grupo dialout (acesso serial)"
@@ -372,15 +556,22 @@ sudo systemctl daemon-reload
 sudo systemctl enable cardash.service
 sudo systemctl restart cardash.service
 
-if [ "$INSTALL_KIOSK" -eq 1 ]; then
-  say "configurando autostart do kiosk para $USER_NAME"
-  if [ "$SKIP_APT" -eq 0 ]; then
-    if [ "$USE_APP" -eq 1 ]; then app_deps
-    else sudo apt-get install -y chromium x11-xserver-utils || sudo apt-get install -y chromium-browser || true; fi
-  fi
-  AUTFILE="/home/$USER_NAME/.config/autostart/cardash-kiosk.desktop"
-  sudo -u "$USER_NAME" mkdir -p "$(dirname "$AUTFILE")"
-  cat > "$AUTFILE" <<EOF
+KIOSK_ANY=0
+if [ "$INSTALL_KIOSK" -eq 1 ] || [ "$INSTALL_KIOSK_BAR" -eq 1 ] || [ "$INSTALL_KIOSK_CLUSTER" -eq 1 ]; then
+  KIOSK_ANY=1
+  say "preparando kiosk (X11 + navegador ou app nativo)"
+  kiosk_deps
+fi
+
+if [ "$DISTRO" != "dietpi" ]; then
+  if [ "$INSTALL_KIOSK" -eq 1 ]; then
+    say "configurando autostart do kiosk para $USER_NAME"
+    if [ "$INSTALL_KIOSK_BAR" -eq 0 ] && [ "$INSTALL_KIOSK_CLUSTER" -eq 0 ]; then
+      rm -f "$HERE/data/screens.env"
+    fi
+    AUTFILE="/home/$USER_NAME/.config/autostart/cardash-kiosk.desktop"
+    sudo -u "$USER_NAME" mkdir -p "$(dirname "$AUTFILE")"
+    cat > "$AUTFILE" <<EOF
 [Desktop Entry]
 Type=Application
 Name=OpenDash Kiosk
@@ -389,51 +580,36 @@ Exec=env CARDASH_APP=$USE_APP $HERE/kiosk/kiosk.sh
 X-GNOME-Autostart-enabled=true
 Terminal=false
 EOF
-  say "autostart criado: $AUTFILE"
+    say "autostart criado: $AUTFILE"
+  fi
+
+  if [ "$INSTALL_KIOSK_BAR" -eq 1 ] || [ "$INSTALL_KIOSK_CLUSTER" -eq 1 ]; then
+    if [ "$INSTALL_KIOSK_CLUSTER" -eq 1 ]; then
+      SECOND_UNIT="cardash-kiosk-cluster.service"
+      SECOND_SRC="$HERE/systemd/cardash-kiosk-cluster.service"
+      SECOND_DESC="painel de velocidade (velocimetro, sem menus)"
+    else
+      SECOND_UNIT="cardash-kiosk-bar.service"
+      SECOND_SRC="$HERE/systemd/cardash-kiosk-bar.service"
+      SECOND_DESC="cluster em barra"
+    fi
+    say "configurando duas telas (painel completo + $SECOND_DESC)"
+    write_screens_env
+
+    register_unit "$HERE/systemd/cardash-kiosk.service" cardash-kiosk.service \
+      "$TOUCH_SIZE" "$TOUCH_POS" "$BAR_SIZE" "$BAR_POS"
+    register_unit "$SECOND_SRC" "$SECOND_UNIT" \
+      "$TOUCH_SIZE" "$TOUCH_POS" "$BAR_SIZE" "$BAR_POS"
+    sudo systemctl daemon-reload
+    sudo systemctl enable cardash-kiosk.service "$SECOND_UNIT"
+    sudo systemctl restart cardash-kiosk.service "$SECOND_UNIT"
+    say "telas: painel ${TOUCH_SIZE}@${TOUCH_POS}  |  $SECOND_DESC ${BAR_SIZE}@${BAR_POS}"
+    say "ajuste com CARDASH_TOUCH_SIZE/POS e CARDASH_BAR_SIZE/POS se necessario"
+  fi
 fi
 
-if [ "$INSTALL_KIOSK_BAR" -eq 1 ] || [ "$INSTALL_KIOSK_CLUSTER" -eq 1 ]; then
-  if [ "$INSTALL_KIOSK_CLUSTER" -eq 1 ]; then
-    SECOND_UNIT="cardash-kiosk-cluster.service"
-    SECOND_SRC="$HERE/systemd/cardash-kiosk-cluster.service"
-    SECOND_DESC="painel de velocidade (velocimetro, sem menus)"
-  else
-    SECOND_UNIT="cardash-kiosk-bar.service"
-    SECOND_SRC="$HERE/systemd/cardash-kiosk-bar.service"
-    SECOND_DESC="cluster em barra"
-  fi
-  say "configurando duas telas (painel completo + $SECOND_DESC)"
-  if [ "$SKIP_APT" -eq 0 ]; then
-    if [ "$USE_APP" -eq 1 ]; then app_deps
-    else sudo apt-get install -y chromium x11-xserver-utils || sudo apt-get install -y chromium-browser || true; fi
-  fi
-  TOUCH_SIZE="${CARDASH_TOUCH_SIZE:-${INSTALL_SCREEN//x/,}}"
-  if [ -z "$TOUCH_SIZE" ]; then
-    TOUCH_SIZE="$(detect_screen || true)"
-    TOUCH_SIZE="${TOUCH_SIZE//x/,}"
-  fi
-  TOUCH_SIZE="${TOUCH_SIZE:-1024,600}"
-  BAR_SIZE="${CARDASH_BAR_SIZE:-1920,480}"
-  TOUCH_POS="${CARDASH_TOUCH_POS:-0,0}"
-  TOUCH_W="${TOUCH_SIZE%%,*}"
-  BAR_POS="${CARDASH_BAR_POS:-${TOUCH_W},0}"
-
-  cat > "$HERE/data/screens.env" <<EOF
-CARDASH_TOUCH_SIZE=$TOUCH_SIZE
-CARDASH_TOUCH_POS=$TOUCH_POS
-CARDASH_BAR_SIZE=$BAR_SIZE
-CARDASH_BAR_POS=$BAR_POS
-EOF
-
-  register_unit "$HERE/systemd/cardash-kiosk.service" cardash-kiosk.service \
-    "$TOUCH_SIZE" "$TOUCH_POS" "$BAR_SIZE" "$BAR_POS"
-  register_unit "$SECOND_SRC" "$SECOND_UNIT" \
-    "$TOUCH_SIZE" "$TOUCH_POS" "$BAR_SIZE" "$BAR_POS"
-  sudo systemctl daemon-reload
-  sudo systemctl enable cardash-kiosk.service "$SECOND_UNIT"
-  sudo systemctl restart cardash-kiosk.service "$SECOND_UNIT"
-  say "telas: painel ${TOUCH_SIZE}@${TOUCH_POS}  |  $SECOND_DESC ${BAR_SIZE}@${BAR_POS}"
-  say "ajuste com CARDASH_TOUCH_SIZE/POS e CARDASH_BAR_SIZE/POS se necessario"
+if [ "$DISTRO" = "dietpi" ] && [ "$KIOSK_ANY" -eq 1 ]; then
+  dietpi_kiosk_setup
 fi
 
 if [ "$USE_APP" -eq 1 ]; then
@@ -452,6 +628,13 @@ if [ "$INSTALL_CAMERA" -eq 1 ]; then camera_deps; fi
 
 IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
 say "pronto! abra o painel em http://${IP:-localhost}:8080"
-say "servico: sudo systemctl status cardash"
+if [ "$(id -u)" -eq 0 ]; then
+  say "servico: systemctl status cardash"
+else
+  say "servico: sudo systemctl status cardash"
+fi
 say "logs:    journalctl -u cardash -f"
 say "Para modo simulacao: Ajustes > Conexao e modo > Modo simulacao"
+if [ "$DISTRO" = "dietpi" ] && [ "$KIOSK_ANY" -eq 1 ]; then
+  say "DietPi: reinicie para o autostart 17 abrir o painel (sudo reboot)"
+fi

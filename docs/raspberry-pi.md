@@ -1,7 +1,8 @@
 # OpenDash no Raspberry Pi
 
-O painel roda igual em **Orange Pi** e **Raspberry Pi**. Este guia cobre o que muda
-no Raspberry Pi: sistema, serial (Arduino/GPS), câmera CSI de ré e tela HDMI.
+O painel roda igual em **Orange Pi**, **Raspberry Pi** e **DietPi**. Este guia cobre
+o que muda no Raspberry Pi: sistema, serial (Arduino/GPS), câmera CSI de ré e tela
+HDMI. Em DietPi (qualquer placa), veja também [`dietpi.md`](dietpi.md).
 
 Testado em **Raspberry Pi 4 / 5** com **Raspberry Pi OS (Bookworm, 64 bits)**. Funciona
 também em Pi 3 (mais lento) e no **Pi Zero 2 W** (use resolução modesta, ex. 1024×600).
@@ -27,6 +28,10 @@ O instalador **detecta o Raspberry Pi** e aplica sozinho (com backup do `config.
 - `hdmi_force_hotplug=1` — mantém a saída HDMI ativa mesmo sem detectar a tela na hora.
 
 Para **não** aplicar isso, use `--no-rpi`. Depois, **reinicie** para valer.
+
+> **DietPi no Raspberry Pi.** O instalador detecta o DietPi e configura o kiosk
+> por `dietpi-autostart 17` (sem depender do desktop). O guia completo está em
+> [`dietpi.md`](dietpi.md).
 
 ## 2. Arduino (serial)
 

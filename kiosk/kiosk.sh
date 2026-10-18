@@ -52,6 +52,10 @@ fi
 # CARDASH_APP=1 (ou CARDASH_BROWSER=webkit) abre a janela nativa do OpenDash.
 if [ "${CARDASH_APP:-0}" = "1" ] || [ "${CARDASH_BROWSER:-chromium}" = "webkit" ]; then
   PY="${CARDASH_PYTHON:-python3}"
+  # WebKitGTK como root (comum no DietPi) nao consegue usar o sandbox.
+  if [ "$(id -u)" -eq 0 ]; then
+    export WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1
+  fi
   if ! "$PY" -c "import gi" >/dev/null 2>&1; then
     echo "OpenDash: PyGObject ausente; instale python3-gi gir1.2-gtk-3.0 gir1.2-webkit2-4.1" >&2
     exit 3
@@ -71,6 +75,11 @@ COMMON_FLAGS=(
   "--check-for-update-interval=31536000"
   "--user-data-dir=/tmp/${NAME}"
 )
+
+# Chromium como root (login padrao do DietPi) exige --no-sandbox.
+if [ "$(id -u)" -eq 0 ]; then
+  COMMON_FLAGS+=( "--no-sandbox" "--test-type" )
+fi
 
 POS_FLAGS=()
 if [ -n "${WIN_SIZE:-}" ]; then
