@@ -119,7 +119,7 @@ python3 "$HERE/patch-dietpi.py" "$WORK/dietpi.txt" "$WORK/dietpi.new" \
   --set "AUTO_SETUP_GLOBAL_PASSWORD=opendash" \
   --set "AUTO_SETUP_NET_HOSTNAME=OpenDash" \
   --set "AUTO_SETUP_NET_ETHERNET_ENABLED=1" \
-  --set "AUTO_SETUP_NET_WIFI_ENABLED=0" \
+  --set "AUTO_SETUP_NET_WIFI_ENABLED=1" \
   --set "AUTO_SETUP_NET_WIFI_COUNTRY_CODE=BR" \
   --set "AUTO_SETUP_BOOT_WAIT_FOR_NETWORK=1" \
   --set "AUTO_SETUP_LOCALE=pt_BR.UTF-8" \
