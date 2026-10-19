@@ -26,12 +26,6 @@
     return (Math.PI * r * deg) / 180;
   }
 
-  function makeGradient(defs, id, stops) {
-    const g = el("linearGradient", { id, x1: "0", y1: "1", x2: "1", y2: "0" });
-    stops.forEach((s) => g.appendChild(el("stop", { offset: s[0], "stop-color": s[1] })));
-    defs.appendChild(g);
-  }
-
   const COLOR = {
     amber: "#ffb020",
     blue: "#4aa8ff",
@@ -42,49 +36,111 @@
 
   function mainGauge(svg) {
     svg.innerHTML = "";
-    const cx = 160, cy = 160, r = 122;
-    const defs = el("defs", {});
-    makeGradient(defs, "gaugeGrad", [
-      ["0%", "#7a7f87"],
-      ["60%", "#cfd3d9"],
-      ["100%", "#ffffff"],
-    ]);
-    svg.appendChild(defs);
+    const cx = 160, cy = 160, r = 124;
+    const rs = r - 4;
+    const max0 = 220;
 
-    svg.appendChild(el("circle", { cx, cy, r: r - 26, fill: "none", stroke: "rgba(255,255,255,0.04)", "stroke-width": 1 }));
-
+    // trilho do velocimetro
     svg.appendChild(el("path", {
-      d: arcPath(cx, cy, r, START, START + SWEEP),
-      fill: "none", stroke: "rgba(255,255,255,0.06)", "stroke-width": 10, "stroke-linecap": "round",
+      d: arcPath(cx, cy, rs, START, START + SWEEP),
+      fill: "none", "stroke-width": 13, "stroke-linecap": "round",
+      class: "g-track",
     }));
-
+    // zona vermelha (ultimos 18%)
+    const rz0 = START + SWEEP * 0.82;
+    svg.appendChild(el("path", {
+      d: arcPath(cx, cy, rs, rz0, START + SWEEP),
+      fill: "none", stroke: "rgba(232,33,39,0.38)", "stroke-width": 13, "stroke-linecap": "round",
+    }));
+    // progresso: halo + nucleo
+    const total = arcLen(rs, SWEEP);
+    const glow = el("path", {
+      d: arcPath(cx, cy, rs, START, START + SWEEP),
+      fill: "none", "stroke-width": 20, "stroke-linecap": "round",
+      class: "g-glow",
+      "stroke-dasharray": total, "stroke-dashoffset": total,
+    });
+    svg.appendChild(glow);
     const progress = el("path", {
-      d: arcPath(cx, cy, r, START, START + SWEEP),
-      fill: "none", stroke: "url(#gaugeGrad)", "stroke-width": 10, "stroke-linecap": "round",
-      "stroke-dasharray": arcLen(r, SWEEP), "stroke-dashoffset": arcLen(r, SWEEP),
+      d: arcPath(cx, cy, rs, START, START + SWEEP),
+      fill: "none", "stroke-width": 9, "stroke-linecap": "round",
+      class: "g-core",
+      "stroke-dasharray": total, "stroke-dashoffset": total,
     });
     svg.appendChild(progress);
 
-    const ticks = el("g", {});
+    // marcas + rotulos do velocimetro
+    const ticks = el("g", { class: "g-ticks" });
+    const nums = el("g", { class: "g-nums" });
     for (let i = 0; i <= 10; i++) {
       const a = START + (SWEEP * i) / 10;
-      const [x0, y0] = polar(cx, cy, r - 18, a);
-      const [x1, y1] = polar(cx, cy, r - 27, a);
+      const major = i % 2 === 0;
+      const [x0, y0] = polar(cx, cy, r - 20, a);
+      const [x1, y1] = polar(cx, cy, r - (major ? 36 : 30), a);
+      const red = i >= 9;
       ticks.appendChild(el("line", {
         x1: x0, y1: y0, x2: x1, y2: y1,
-        stroke: i >= 8 ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.16)",
-        "stroke-width": i % 5 === 0 ? 3 : 2, "stroke-linecap": "round",
+        "stroke-width": major ? 3 : 1.6, "stroke-linecap": "round",
+        class: red ? "g-tick-red" : "g-tick",
       }));
+      if (major) {
+        const [tx, ty] = polar(cx, cy, r - 50, a);
+        const t = el("text", { x: tx, y: ty, "text-anchor": "middle", "dominant-baseline": "middle" });
+        t.textContent = Math.round(max0 * (i / 10));
+        if (red) t.setAttribute("class", "g-red");
+        nums.appendChild(t);
+      }
     }
     svg.appendChild(ticks);
+    svg.appendChild(nums);
 
-    const total = arcLen(r, SWEEP);
+    // counterno interno: taquimetro (rpm x1000)
+    const rr = r - 66;
+    const rt0 = START + (SWEEP - 250) / 2, rsweep = 250;
+    const rtotal = arcLen(rr, rsweep);
+    svg.appendChild(el("path", {
+      d: arcPath(cx, cy, rr, rt0, rt0 + rsweep),
+      fill: "none", "stroke-width": 7, "stroke-linecap": "round",
+      class: "g-rpm-track",
+    }));
+    svg.appendChild(el("path", {
+      d: arcPath(cx, cy, rr, rt0 + rsweep * 0.85, rt0 + rsweep),
+      fill: "none", stroke: "rgba(232,33,39,0.45)", "stroke-width": 7, "stroke-linecap": "round",
+    }));
+    const rglow = el("path", {
+      d: arcPath(cx, cy, rr, rt0, rt0 + rsweep),
+      fill: "none", "stroke-width": 14, "stroke-linecap": "round",
+      class: "g-glow g-glow-rpm",
+      "stroke-dasharray": rtotal, "stroke-dashoffset": rtotal,
+    });
+    svg.appendChild(rglow);
+    const rprog = el("path", {
+      d: arcPath(cx, cy, rr, rt0, rt0 + rsweep),
+      fill: "none", "stroke-width": 5, "stroke-linecap": "round",
+      class: "g-core g-core-rpm",
+      "stroke-dasharray": rtotal, "stroke-dashoffset": rtotal,
+    });
+    svg.appendChild(rprog);
+
     let max = 220;
     return {
       set(value, newMax) {
-        if (newMax && newMax !== max) max = newMax;
+        if (newMax && newMax !== max) {
+          max = newMax;
+          nums.querySelectorAll("text").forEach((t, i) => {
+            t.textContent = Math.round((max * ((i * 2) / 10)) * 10) / 10;
+          });
+        }
         const frac = Math.max(0, Math.min(1, value / max));
-        progress.setAttribute("stroke-dashoffset", (total * (1 - frac)).toFixed(2));
+        const off = (total * (1 - frac)).toFixed(2);
+        glow.setAttribute("stroke-dashoffset", off);
+        progress.setAttribute("stroke-dashoffset", off);
+      },
+      setRpm(frac) {
+        frac = Math.max(0, Math.min(1, frac || 0));
+        const off = (rtotal * (1 - frac)).toFixed(2);
+        rglow.setAttribute("stroke-dashoffset", off);
+        rprog.setAttribute("stroke-dashoffset", off);
       },
     };
   }
@@ -128,9 +184,10 @@
       set(frac) {
         const active = Math.round(Math.max(0, Math.min(1, frac)) * count);
         segs.forEach((s, i) => {
-          s.classList.toggle("on", i < active);
-          s.classList.toggle("warn", i >= count * 0.7 && i < count * 0.85);
-          s.classList.toggle("red", i >= count * 0.85);
+          const on = i < active;
+          s.classList.toggle("on", on);
+          s.classList.toggle("warn", on && i >= count * 0.7 && i < count * 0.85);
+          s.classList.toggle("red", on && i >= count * 0.85);
         });
       },
     };

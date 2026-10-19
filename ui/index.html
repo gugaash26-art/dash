@@ -86,6 +86,18 @@
               <svg viewBox="0 0 24 24"><path d="M4 17h16M5 17v-5l2-1 2-4h4l2 3h3v7" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="9" cy="18.5" r="1.6" fill="currentColor"/></svg>
               <span>Motor</span>
             </div>
+            <div class="chip" data-flag="ign">
+              <svg viewBox="0 0 24 24"><path d="M12 2v9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6.3 6.6a8 8 0 1 0 11.4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <span>Ign</span>
+            </div>
+            <div class="chip" data-flag="fan">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 10c0-4-1.6-6-4-6-2 0-3 1.4-3 3 0 2 2 3 7 3zM14 12c4 0 6-1.6 6-4 0-2-1.4-3-3-3-2 0-3 2-3 7zM12 14c0 4 1.6 6 4 6 2 0 3-1.4 3-3 0-2-2-3-7-3zM10 12c-4 0-6 1.6-6 4 0 2 1.4 3 3 3 2 0 3-2 3-7z" fill="currentColor" opacity=".85"/></svg>
+              <span>Vent</span>
+            </div>
+            <div class="chip" data-flag="ac">
+              <svg viewBox="0 0 24 24"><path d="M12 2v20M4 6l16 12M20 6 4 18M12 2l-2 3h4l-2-3zM12 22l-2-3h4l-2 3z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              <span>Ar</span>
+            </div>
           </div>
 
           <div class="fuel card">
@@ -115,13 +127,14 @@
             <div class="odo"><small>Odômetro</small><b id="odoTotal">--</b></div>
             <div class="odo"><small>Viagem</small><b id="odoTrip">--</b></div>
           </div>
-          <div class="cluster-nav" id="clusterNav" hidden>
-            <div id="clusterMap" class="cluster-map"></div>
-            <div class="cluster-nav-info" id="clusterNavInfo"></div>
-          </div>
         </div>
 
         <aside class="rail rail-right">
+          <div class="cluster-nav" id="clusterNav" data-page-go="nav">
+            <div id="clusterMap" class="cluster-map"></div>
+            <div class="cluster-nav-info" id="clusterNavInfo"></div>
+          </div>
+
           <div class="card rpm-card">
             <div class="card-head"><span>Rotação</span><b id="rpmValue">0</b><small>rpm</small></div>
             <div class="segs" id="rpmSegs"></div>
@@ -138,6 +151,16 @@
               <svg class="mini-svg" data-gauge="oilp" data-min="0" data-max="100" data-color="blue"></svg>
               <div class="mini-val"><b id="oilVal">--</b><small id="oilUnit">psi</small></div>
               <div class="mini-label">Óleo</div>
+            </div>
+            <div class="card mini" id="miniIat">
+              <svg class="mini-svg" data-gauge="iat" data-min="0" data-max="80" data-color="cyan"></svg>
+              <div class="mini-val"><b data-bind="iat" data-fmt="temp">--</b></div>
+              <div class="mini-label">Admissão</div>
+            </div>
+            <div class="card mini" id="miniOilt">
+              <svg class="mini-svg" data-gauge="oilt" data-min="40" data-max="160" data-color="red"></svg>
+              <div class="mini-val"><b data-bind="oilt" data-fmt="temp">--</b></div>
+              <div class="mini-label">Óleo T°</div>
             </div>
             <div class="card mini" id="miniBatt">
               <svg class="mini-svg" data-gauge="batt" data-min="10" data-max="16" data-color="green"></svg>

@@ -273,6 +273,7 @@
   function renderCluster(d, dp) {
     const maxSpeed = ctx.units.speed === "mph" ? 140 : 220;
     speedGauge.set(U.speed(dp.speed), maxSpeed);
+    speedGauge.setRpm(dp.rpm / 7000);
     rpmSegs.set(dp.rpm / 7000);
     $("#speedUnit").textContent = U.speedUnit();
     $("#speedValue").textContent = U.speed(dp.speed);

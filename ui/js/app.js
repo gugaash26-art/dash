@@ -36,7 +36,7 @@
     turn: { lt: 0, rt: 0, next: 0, phase: 1 },
     climate: { fan: 0, ac: 0, defrost: 0, recirc: 0, temp: 22 },
     media: { playing: false, pos: 0, source: "Rádio FM", t: 0 },
-    disp: { speed: 0, rpm: 0, coolant: 20, fuel: 50, throttle: 0, load: 0, volt: 12.4, oilp: 0, batt: 12.4 },
+    disp: { speed: 0, rpm: 0, coolant: 20, iat: 20, oilt: 20, fuel: 50, throttle: 0, load: 0, volt: 12.4, oilp: 0, batt: 12.4 },
   };
 
   const savedClimate = (() => {
@@ -317,12 +317,14 @@
       dp.throttle = ease(dp.throttle, Number(d.throttle) || 0, k);
       dp.load = ease(dp.load, Number(d.load) || 0, k);
       dp.coolant = ease(dp.coolant, Number(d.coolant) || 0, k * 0.5);
+      dp.iat = ease(dp.iat, Number(d.iat) || 0, k * 0.5);
+      dp.oilt = ease(dp.oilt, Number(d.oilt) || 0, k * 0.5);
       dp.fuel = ease(dp.fuel, Number(d.fuel) || 0, k * 0.5);
       dp.volt = ease(dp.volt, Number(d.volt) || 0, k);
       dp.oilp = ease(dp.oilp, Number(d.oilp) || 0, k);
 
       renderCluster(d, dp);
-      if (CLUSTER) renderClusterNav(d);
+      renderClusterNav(d);
       bindings.forEach((b) => {
         const v = pick(b.path, d);
         if (v === null || v === undefined) return;
@@ -340,6 +342,7 @@
   function renderCluster(d, dp) {
     const maxSpeed = ctx.units.speed === "mph" ? 140 : 220;
     speedGauge.set(U.speed(dp.speed), maxSpeed);
+    speedGauge.setRpm(dp.rpm / 7000);
     rpmSegs.set(dp.rpm / 7000);
     $("#speedUnit").textContent = U.speedUnit();
     $("#speedValue").textContent = U.speed(dp.speed);
@@ -377,7 +380,7 @@
     });
 
     miniGauges.forEach(({ key, g }) => {
-      const val = key === "batt" ? dp.volt : dp[key];
+      const val = key === "batt" ? dp.volt : (dp[key] != null ? dp[key] : d[key]);
       g.set(Number(val) || 0);
     });
     $("#oilVal").textContent = n(dp.oilp, 0);
@@ -1397,7 +1400,7 @@
   // Navegacao, mostramos o mapa com o carro e a linha da rota (estilo cluster
   // de carro esportivo). O estado vem do servidor, entao vale mesmo com o
   // painel principal e o cluster em telas/paginas diferentes.
-  const cn = { map: null, routeLine: null, marker: null, destMarker: null,
+  const cn = { map: null, tileLayer: null, routeLine: null, marker: null, destMarker: null,
                ready: false, updated: 0, active: false, follow: true };
 
   function initClusterMap() {
@@ -1405,24 +1408,23 @@
     const el = $("#clusterMap");
     if (!el) return;
     try {
-      cn.map = L.map(el, { zoomControl: false, attributionControl: false })
-        .setView([-23.5613, -46.6565], 14);
-      cn.map.on("dragstart", () => { cn.follow = false; });
-      tileLayer(ctx.mapsCfg).addTo(cn.map);
-    } catch (e) { cn.map = null; }
+      cn.map = L.map(el, {
+        zoomControl: false, attributionControl: false,
+        dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
+        touchZoom: false, keyboard: false, tap: false,
+      }).setView([-23.5613, -46.6565], 14);
+      cn.tileLayer = tileLayer(ctx.mapsCfg).addTo(cn.map);
+    } catch (e) { cn.map = null; return; }
     setTimeout(() => { if (cn.map) cn.map.invalidateSize(); }, 80);
   }
 
-  function cnSetActive(on) {
+  function cnSetIdle(on) {
     if (on === cn.active) return;
     cn.active = on;
-    const box = $("#clusterNav");
-    if (box) box.hidden = !on;
     document.body.classList.toggle("is-nav", on);
-    if (on) {
-      initClusterMap();
-      if (cn.map) setTimeout(() => cn.map.invalidateSize(), 120);
-    }
+    const box = $("#clusterNav");
+    if (box) box.classList.toggle("idle", !on);
+    if (on && cn.map) setTimeout(() => cn.map.invalidateSize(), 120);
   }
 
   function cnLoadRoute() {
@@ -1447,20 +1449,22 @@
   }
 
   function renderClusterNav(d) {
-    if (!CLUSTER) return;
     const n = d && d.nav;
-    const on = !!(n && n.active);
-    cnSetActive(on);
-    if (!on) return;
-    if (n.updated && n.updated !== cn.updated) { cn.updated = n.updated; cnLoadRoute(); }
     const g = (d && d.gps) || {};
+    if (!cn.map) initClusterMap();
+    if (!cn.map) return;
+    const on = !!(n && n.active);
+    cnSetIdle(!on);
+    if (on && n.updated && n.updated !== cn.updated) { cn.updated = n.updated; cnLoadRoute(); }
     if (g.has && g.lat != null && g.lon != null && cn.map) {
       const pos = [Number(g.lat), Number(g.lon)];
-      if (!cn.marker) cn.marker = L.marker(pos, { icon: carIcon(g.heading) }).addTo(cn.map);
+      if (!cn.marker) cn.marker = L.marker(pos, { icon: carIcon(g.heading), interactive: false }).addTo(cn.map);
       else { cn.marker.setLatLng(pos); cn.marker.setIcon(carIcon(g.heading)); }
-      if (!cn.ready) cn.map.setView(pos, 16);
-      else if (cn.follow) cn.map.panTo(pos, { animate: true, duration: 0.5 });
+      if (!cn.ready && !cn.active) cn.map.setView(pos, 16);
+      else if (cn.follow && cn.active) cn.map.panTo(pos, { animate: true, duration: 0.5 });
     }
+    const info = $("#clusterNavInfo");
+    if (info && !on) info.textContent = "Toque para navegar";
   }
 
    // ---------------------------------------------- GNOME Maps (app nativo)
@@ -1650,6 +1654,10 @@
     if (!nav.map || mapCfgLoaded) return;
     mapCfgLoaded = true;
     tileLayer(cfg).addTo(nav.map);
+    if (cn.map) {
+      if (cn.tileLayer) cn.map.removeLayer(cn.tileLayer);
+      cn.tileLayer = tileLayer(cfg).addTo(cn.map);
+    }
   }
 
   function renderApps(list) {
