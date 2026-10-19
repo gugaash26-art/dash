@@ -94,6 +94,16 @@
     svg.appendChild(ticks);
     svg.appendChild(nums);
 
+    // ponteiro do velocimetro (agulha)
+    const needle = el("line", {
+      x1: cx, y1: cy, x2: cx, y2: cy - (r - 30),
+      class: "g-needle",
+    });
+    needle.setAttribute("transform", `rotate(${START} ${cx} ${cy})`);
+    svg.appendChild(needle);
+    const nHub = el("circle", { cx, cy, r: 7, class: "g-needle-hub", fill: "var(--accent)" });
+    svg.appendChild(nHub);
+
     // counterno interno: taquimetro (rpm x1000)
     const rr = r - 66;
     const rt0 = START + (SWEEP - 250) / 2, rsweep = 250;
@@ -135,6 +145,8 @@
         const off = (total * (1 - frac)).toFixed(2);
         glow.setAttribute("stroke-dashoffset", off);
         progress.setAttribute("stroke-dashoffset", off);
+        const deg = START + SWEEP * frac;
+        needle.setAttribute("transform", `rotate(${deg.toFixed(2)} ${cx} ${cy})`);
       },
       setRpm(frac) {
         frac = Math.max(0, Math.min(1, frac || 0));

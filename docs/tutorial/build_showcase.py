@@ -70,30 +70,50 @@ SCENES = [
     {
         "kind": "grid", "kicker": "VISÃO GERAL",
         "title": "Tudo em um só lugar",
-        "items": ["Painel e instrumentos", "Navegação com GPS",
-                  "Mapa no painel de velocidade", "Câmera de ré ao engatar",
-                  "Mídia e papel de parede", "Ar-condicionado (clima)",
-                  "Diagnóstico do motor", "Aplicativos e mapas",
-                  "Qualquer tela e resolução", "Assistente de voz"],
+        "items": ["Painel esportivo", "Navegação com GPS",
+                  "Trânsito ao vivo", "Mini mapa no painel",
+                  "Câmera de ré ao engatar", "Mídia e papel de parede",
+                  "Ar-condicionado (clima)", "Diagnóstico do motor",
+                  "Aplicativos e mapas", "Dez temas de marcas"],
         "color": BLUE,
         "narration": (
-            "Um só sistema reúne tudo o que você precisa na estrada: instrumentos, navegação, "
-            "mapa no painel de velocidade, câmera de ré, mídia, climatização, diagnóstico, "
-            "aplicativos e até um assistente de voz."),
+            "Um só sistema reúne tudo o que você precisa na estrada: instrumentos, navegação "
+            "com trânsito ao vivo, mini mapa no painel, câmera de ré, mídia, climatização, "
+            "diagnóstico, aplicativos e dez temas inspirados em marcas para deixar o visual com a "
+            "sua cara."),
     },
     # -------------------------------------------------------------- feature: painel
     {
         "kind": "feature", "image": "page_drive.png", "kicker": "PAINEL",
-        "title": "Instrumentos ao vivo",
-        "caption": "Velocidade, giro, marcha, combustível e indicadores",
+        "title": "Visual esportivo",
+        "caption": "Setas e lâmpadas, velocímetro com arco de RPM, mini mapa e sensores OBD-II",
         "callouts": [
-            {"x": 300, "y": 250, "w": 210, "h": 210, "at": 1.0, "color": RED, "label": "Velocímetro"},
-            {"x": 930, "y": 250, "w": 250, "h": 150, "at": 1.6, "color": GREEN, "label": "Conta-giros"},
+            {"x": 75, "y": 165, "w": 305, "h": 395, "at": 1.0, "color": AMBER, "label": "Setas e lâmpadas"},
+            {"x": 470, "y": 112, "w": 305, "h": 305, "at": 1.5, "color": RED, "label": "Velocímetro e RPM"},
+            {"x": 450, "y": 420, "w": 348, "h": 112, "at": 2.1, "color": GREEN, "label": "Mini mapa"},
+            {"x": 870, "y": 340, "w": 325, "h": 240, "at": 2.6, "color": CYAN, "label": "Sensores do motor"},
         ],
         "color": RED,
         "narration": (
-            "Comece pelo Painel. Velocímetro redondo, conta-giros, marcha, combustível e todos os "
-            "indicadores atualizando em tempo real, com animações suaves."),
+            "Comece pelo Painel, agora com visual esportivo. À esquerda, setas, lâmpadas e o "
+            "combustível. No centro, o velocímetro com arco de RPM, a marcha e o computador de "
+            "viagem, com o mini mapa logo abaixo do velocímetro. À direita, seis sensores do "
+            "motor: água, óleo, admissão, temperatura, bateria e carga."),
+    },
+    # ---------------------------------------------------------------- feature: temas
+    {
+        "kind": "feature", "image": "page_temas.png", "kicker": "TEMAS",
+        "title": "Do seu jeito",
+        "caption": "Dez temas inspirados em marcas: Ferrari, Porsche, BMW, AMG e mais",
+        "callouts": [
+            {"x": 640, "y": 372, "w": 560, "h": 250, "at": 1.0, "color": PURPLE, "label": "Troca na hora"},
+        ],
+        "color": PURPLE,
+        "narration": (
+            "E o visual muda quando você quiser: são dez temas inspirados nas maiores marcas, "
+            "da Ferrari ao Porsche, passando por BMW, AMG e Lamborghini. Cada tema troca fundo, "
+            "brilho, tipografia, velocímetro e ícones. A troca é instantânea e o estilo da página "
+            "Mídia continua igual."),
     },
     # ------------------------------------------------------------ feature: navegacao
     {
@@ -109,18 +129,33 @@ SCENES = [
             "A Navegação traz o mapa do OpenStreetMap, mostra a posição do GPS, o rastro do "
             "percurso e a busca de destino."),
     },
+    # ------------------------------------------------------------ feature: transito
+    {
+        "kind": "feature", "image": "page_traffic.png", "kicker": "TRÂNSITO AO VIVO",
+        "title": "Ônibus em tempo real",
+        "caption": "Posições dos ônibus da SPTrans (Olho Vivo) desenhadas no mapa",
+        "callouts": [
+            {"x": 355, "y": 432, "w": 145, "h": 138, "at": 1.0, "color": GREEN, "label": "ônibus ao vivo"},
+        ],
+        "color": GREEN,
+        "narration": (
+            "E tem trânsito ao vivo: o OpenDash consulta o Olho Vivo, da SPTrans, e desenha no mapa "
+            "as posições dos ônibus perto do carro. Basta ativar a camada na Navegação e informar a "
+            "credencial gratuita da API."),
+    },
     # --------------------------------------------------- feature: mapa no cluster
     {
         "kind": "feature", "image": "page_cluster_nav.png", "kicker": "PAINEL DE VELOCIDADE",
-        "title": "A rota no seu campo de visão",
-        "caption": "Com uma rota ativa, o mapa com o carro aparece no painel de velocidade",
+        "title": "A rota à vista",
+        "caption": "O mini mapa fica sempre visível no painel, com a rota e o carro",
         "callouts": [
-            {"x": 392, "y": 432, "w": 470, "h": 176, "at": 1.0, "color": RED, "label": "Mapa na rota"},
+            {"x": 450, "y": 452, "w": 348, "h": 112, "at": 1.0, "color": RED, "label": "Mapa na rota"},
         ],
         "color": RED,
         "narration": (
-            "E o melhor: com uma rota ativa, o painel de velocidade mostra o mapa com o carro e o "
-            "caminho até o destino, bem no seu campo de visão. Como num carro esportivo."),
+            "E o melhor: o mini mapa fica logo abaixo do velocímetro, sempre visível, mostrando a "
+            "rota, o carro e as ruas por onde você vai passar, bem no seu campo de visão. Como num "
+            "carro esportivo."),
     },
     # --------------------------------------------------------- feature: camera de re
     {
@@ -142,8 +177,8 @@ SCENES = [
         "title": "Do tamanho que precisar",
         "caption": "Detecta a resolução e ajusta a escala da interface automaticamente",
         "callouts": [
-            {"x": 640, "y": 158, "w": 366, "h": 362, "at": 1.0, "color": BLUE, "label": "Escala automática"},
-            {"x": 640, "y": 520, "w": 366, "h": 62, "at": 1.7, "color": GREEN, "label": "Resolução detectada"},
+            {"x": 647, "y": 175, "w": 534, "h": 290, "at": 1.0, "color": BLUE, "label": "Escala automática"},
+            {"x": 655, "y": 558, "w": 215, "h": 44, "at": 1.7, "color": GREEN, "label": "Resolução detectada"},
         ],
         "color": BLUE,
         "narration": (
@@ -225,8 +260,8 @@ SCENES = [
         "caption": "Veja o OpenDash em uso, trocando de página pelo toque",
         "color": RED,
         "narration": (
-            "E aqui está o OpenDash rodando ao vivo. Repare nas animações dos instrumentos e na "
-            "troca de páginas pelo toque. É assim, no seu carro."),
+            "E aqui está o OpenDash rodando ao vivo. Repare no arco de RPM, no mini mapa e nos "
+            "sensores se atualizando, além da troca de páginas pelo toque. É assim, no seu carro."),
     },
     # ------------------------------------------------------------------- encerramento
     {

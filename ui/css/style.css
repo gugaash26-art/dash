@@ -301,8 +301,8 @@ button.pill { cursor: pointer; }
 /* autonomia aparece no odometro central (odo-row); duplicada aqui */
 .fuel-meta small.muted { display: none; }
 
-.center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
-.speed-wrap { position: relative; width: min(50vh, 100%); max-width: 380px; aspect-ratio: 1; }
+.center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-width: 0; min-height: 0; }
+.speed-wrap { position: relative; width: min(44vh, 100%); max-width: 340px; aspect-ratio: 1; flex: 0 1 auto; }
 .speed-svg { width: 100%; height: 100%; display: block; }
 .speed-svg .g-glow { stroke: var(--accent); opacity: .3; }
 .speed-svg .g-core { stroke: var(--accent); }
@@ -668,7 +668,6 @@ input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius
   .cluster { grid-template-columns: 1fr; grid-template-rows: auto auto auto; height: auto; }
   .rail-left { flex-direction: row; flex-wrap: wrap; }
   .rail-right { flex-direction: row; flex-wrap: wrap; }
-  .rail-right .cluster-nav { flex: 1 1 100%; height: 180px; }
   .rail-right .mini-grid { flex: 1 1 60%; }
   .media-layout, .climate-layout, .nav-layout { grid-template-columns: 1fr; height: auto; }
   .grid-2 { grid-template-columns: 1fr; }
@@ -684,14 +683,16 @@ body.is-cluster .page[data-page="drive"] { padding: 6px 22px 12px; }
 body.is-cluster .cluster { gap: 22px; }
 body.is-cluster .topbar { padding-top: 10px; }
 
-/* ---- mini mapa transparente na coluna direita do painel ---- */
-/* Sempre visível: mostra o carro (GPS) e a rota quando há navegação ativa.
-   Fora da navegação fica esmaecido (idle) e o toque vai para a página de
-   Navegação (data-page-go="nav"). */
+/* ---- mini mapa transparente, agora abaixo do velocimetro ---- */
+/* Sempre visivel: mostra o carro (GPS) e a rota quando ha navegacao ativa.
+   Fora da navegacao fica esmaecido (idle) e o toque vai para a pagina de
+   Navegacao (data-page-go="nav"). */
 .cluster-nav {
   position: relative;
   flex: 0 0 auto;
-  height: clamp(92px, 13.5vh, 128px);
+  width: min(50vh, 100%);
+  max-width: 380px;
+  height: clamp(88px, 15vh, 150px);
   border-radius: var(--radius);
   overflow: hidden;
   background: transparent;
@@ -754,3 +755,73 @@ body.is-portrait .agent-settings { grid-template-columns: 1fr; }
 .reverse-cam.is-empty #reverseImg { display: none; }
 body.is-reverse .topbar, body.is-reverse .tabbar, body.is-reverse .media-mini { display: none; }
 @keyframes revblink { 50% { opacity: .25; } }
+
+/* ============================================================================
+   Temas de marca: variacoes de design que vao alem da paleta
+   (tipografia, velocimetro/conta-giros, ponteiro, lampadas e sensores)
+   ============================================================================ */
+
+/* --- tipografia por tema (usa --font definido em themes.css) --- */
+:root[data-theme="ferrari"],
+:root[data-theme="lambo"],
+:root[data-theme="corvette"] { --font: "Eurostile", "Michroma", "Rajdhani", "Arial Narrow", Arial, sans-serif; }
+:root[data-theme="porsche"],
+:root[data-theme="bmw"],
+:root[data-theme="amg"],
+:root[data-theme="audi"],
+:root[data-theme="gr"],
+:root[data-theme="mustang"] { --font: "Rajdhani", "Bahnschrift", "DIN", "Arial Narrow", Arial, sans-serif; }
+:root[data-theme="tesla"] { --font: "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+
+:root[data-theme] .brand-name,
+:root[data-theme] .card-title,
+:root[data-theme] .mini-label,
+:root[data-theme] .speed-unit { font-family: var(--font); }
+
+/* --- arco do velocimetro: nucleo + halo por marca --- */
+.speed-svg .g-glow { stroke: var(--accent); opacity: .32; }
+.speed-svg .g-core { stroke: var(--accent); }
+.speed-svg .g-glow-rpm { stroke: var(--gauge, var(--amber, #ffb020)); opacity: .35; }
+.speed-svg .g-core-rpm { stroke: var(--gauge, var(--amber, #ffb020)); }
+.speed-svg .g-track-red { stroke: var(--redline, rgba(232, 33, 39, .38)); }
+
+/* --- BMW: painel claro (tela inversa) — ajustes de contraste --- */
+:root[data-theme="bmw"] .card,
+:root[data-theme="bmw"] .chip,
+:root[data-theme="bmw"] .gear-badge,
+:root[data-theme="bmw"] .turn { border-color: rgba(10, 30, 50, .18); }
+:root[data-theme="bmw"] .topbar,
+:root[data-theme="bmw"] .tabbar { background: transparent; }
+:root[data-theme="bmw"] .chip { color: #3a5169; }
+:root[data-theme="bmw"] .chip span { color: #3a5169; }
+:root[data-theme="bmw"] .speed-svg .g-nums text,
+:root[data-theme="bmw"] .speed-svg .g-ticks line.g-tick { fill: #3a5169; stroke: #3a5169; }
+:root[data-theme="bmw"] .vbar,
+:root[data-theme="bmw"] .tank { background: #b8c3cf; }
+
+/* --- Tesla: minimalista (sem brilho, traco fino) --- */
+:root[data-theme="tesla"] .speed-svg .g-glow { opacity: .1; }
+:root[data-theme="tesla"] .speed-svg .g-core { stroke-width: 7; }
+:root[data-theme="tesla"] .chip { border-radius: 12px; background: #fff; }
+:root[data-theme="tesla"] .card { box-shadow: 0 2px 14px rgba(0, 0, 0, .05); }
+
+/* --- ponteiro/agulha estilizado por tema --- */
+.speed-svg .g-needle { stroke: var(--accent); stroke-width: 5; stroke-linecap: round; }
+.speed-svg .g-rpm-needle { stroke: var(--gauge, var(--amber, #ffb020)); stroke-width: 3; stroke-linecap: round; }
+:root[data-theme="tesla"] .speed-svg .g-needle { stroke-width: 3; }
+
+/* --- lampadas-testoras: variacoes de forma por tema --- */
+:root[data-theme="lambo"] .chip,
+:root[data-theme="corvette"] .chip { border-radius: 6px; }
+:root[data-theme="ferrari"] .chip,
+:root[data-theme="gr"] .chip,
+:root[data-theme="mustang"] .chip { border-radius: 10px; }
+:root[data-theme="bmw"] .chip,
+:root[data-theme="porsche"] .chip,
+:root[data-theme="amg"] .chip,
+:root[data-theme="audi"] .chip { border-radius: 50%; }
+
+/* --- sensores/mini: grade e formato por tema --- */
+:root[data-theme="tesla"] .mini-grid .card { border-radius: 12px; }
+:root[data-theme="lambo"] .mini-grid .card,
+:root[data-theme="ferrari"] .mini-grid .card { border-radius: 4px; }

@@ -163,9 +163,12 @@ Guia completo, arquitetura e solução de problemas:
 
 **Ajustes**
 - Unidades (km/h↔mph, °C↔°F, L↔gal), tema claro/escuro/auto, brilho, animação de boot
-- **Temas do painel (novidade)**: além de escuro/claro/automático há **10 temas novos**
-  (Meia-noite, Oceano, Floresta, Carbono, Vinho, Solar, Tesla, Âmbar, Neon e Aurora).
-  Troque em **Ajustes → Tema do painel** ou em `config.yaml` na seção `temas:` — e
+- **Temas de marcas (novidade)**: além de escuro/claro/automático há **10 temas
+  inspirados nas maiores marcas de carro** (Ferrari, Porsche, BMW, Mercedes-AMG,
+  Lamborghini, Audi, Tesla, Toyota GR, Ford Mustang e Chevrolet Corvette). Cada tema
+  vai além da cor: troca **fundo e brilho, tipografia, o velocímetro/arco de RPM, o
+  ponteiro, as lâmpadas-testoras e o formato dos sensores**. Troque em
+  **Ajustes → Tema do painel** ou em `config.yaml` na seção `temas:` — e
   **a página Mídia continua no seu fundo padrão**, o tema só muda o resto do painel
 - Modo simulação (sem Arduino), porta serial, tanque, consumo nominal, odômetro, nome do carro
 - Reiniciar/desligar (opcional, requer `CARDASH_ALLOW_POWER=1`)
@@ -571,9 +574,9 @@ camera:                                                  # câmera de ré
   flip_v: false
   extra_args: ""                                         # argumentos extras para o ffmpeg/rpicam
 temas:                                                   # tema do painel (NÃO muda a Mídia)
-  ativo: auto                                            # auto | dark | light | meia-noite | oceano |
-                                                         # floresta | carbono | vinho | solar |
-                                                         # tesla | ambar | neon | aurora
+  ativo: auto                                            # auto | dark | light | ferrari | porsche |
+                                                         # bmw | amg | lambo | audi | tesla |
+                                                         # gr | mustang | corvette
 ```
 
 > **GPS.** Com `source: auto` o servidor usa o USB (se presente) e, senão, o GPS do
@@ -753,7 +756,7 @@ painel). A página **Apps** continua sendo a opção leve/instantânea.
 
 ## 11. Tutorial em vídeo
 
-Em `docs/tutorial/` há **cinco** vídeos, com narração neural em português e música:
+Em `docs/tutorial/` há **seis** vídeos, com narração neural em português e música:
 
 ### Tutorial com avatar (novidades do sistema) — `opendash-tutorial-avatar.mp4`
 
@@ -789,10 +792,11 @@ está **ligada no servidor**. O roteiro e o visual ficam em `build_tutorial_avat
 
 ### Tutorial de instalação — `opendash-tutorial.mp4`
 
-Um vídeo de **7m40s** (27 cenas com realces visuais e *callouts*) cobrindo hardware,
+Um vídeo de **9m52s** (31 cenas com realces visuais e *callouts*) cobrindo hardware,
 ligação, gravação do Arduino, instalação no Orange Pi (ou **Raspberry Pi**), configuração,
-kiosk, **telas reais da interface** (incluindo **Navegação**, **Apps**, **câmera de ré** e
-**escala de tela**), a **animação de boot** e uma
+kiosk, **telas reais da interface** (incluindo o **painel esportivo** com arco de RPM, mini
+mapa e sensores, os **temas**, a **Navegação** com **trânsito ao vivo**, **Apps**, **câmera de
+ré** e **escala de tela**), a **animação de boot** e uma
 **demonstração final do sistema rodando em modo simulação**:
 
 ```bash
@@ -807,16 +811,22 @@ Para regerar (requer `ffmpeg` e `edge-tts`, com internet para a voz neural):
 
 As imagens reais da UI ficam em `docs/tutorial/assets/` e são capturadas por
 `docs/tutorial/capture_ui.py` (WebKitGTK + Xvfb, rodando contra o servidor em modo
-simulação); ele gera `page_*.png` (uma por página) e `ui-anim.mp4` (animação).
-Para recapturar:
+simulação); ele gera `page_*.png` (uma por página). O `ui-anim.mp4` (animação usada nas
+cenas `anim`/`demo`) é montado a partir desses `page_*.png` com `ffmpeg` (uma passada
+`concat`+`xfade`, ~1,5 s por página). Para recapturar:
 
 ```bash
 SHOT_URL=http://127.0.0.1:8080/ SHOT_MODE=shots xvfb-run -a -s "-screen 0 1024x600x24" \
   python3 docs/tutorial/capture_ui.py        # screenshots em assets/ (ajuste SHOT_OUT)
-SHOT_MODE=video python3 ... capture_ui.py    # sequência de frames para a animação
 SHOT_URL=http://127.0.0.1:8099/ python3 docs/tutorial/capture_new_ui.py     # telas novas
 SHOT_URL=http://127.0.0.1:8099/ python3 docs/tutorial/capture_reverse.py    # overlay da câmera de ré
+python3 docs/tutorial/capture_temas.py       # grade dos temas (page_temas.png)
+python3 docs/tutorial/capture_traffic.py     # trânsito ao vivo (page_traffic.png, demo)
 ```
+
+> Dica: em Xvfb o WebKit às vezes entrega um quadro "fantasma" (texto duplicado). Se
+> acontecer, force um repinte antes de salvar (redimensionar a janela em 1 px e
+> `queue_draw()`); foi o que resolveu nas capturas novas.
 
 A narração usa a voz neural **pt-BR-ThalitaMultilingualNeural** via `edge-tts` e a
 música é gerada por síntese; o roteiro e o visual ficam em `build_tutorial.py`
@@ -855,12 +865,13 @@ cenas.
 
 ### Vídeo de propaganda (o painel completo em uso) — `opendash-propaganda.mp4`
 
-Um vídeo de **2m14s** (14 cenas) com foco em **apresentar o produto**: mostra o **painel
-completo em uso**, com **animações 2D** — *zoom/pan* (Ken Burns) sobre as telas reais, títulos
+Um vídeo de **2m51s** (16 cenas) com foco em **apresentar o produto**: mostra o **painel
+completo em uso** — agora no **visual esportivo** (setas e lâmpadas, arco de RPM, mini mapa e
+sensores) — com **animações 2D** — *zoom/pan* (Ken Burns) sobre as telas reais, títulos
 e chamadas que entram animados, listas que surgem item a item, o avatar narrando e transições
-em *fade* — além da cena **ao vivo** (o `ui-anim.mp4`), da configuração de **duas telas**
-(multimídia + cluster de velocidade), da **câmera de ré** e da **escala de tela**. É o vídeo
-ideal para divulgação.
+em *fade* — além dos **temas**, do **trânsito ao vivo**, da cena **ao vivo** (o
+`ui-anim.mp4`), da configuração de **duas telas** (multimídia + cluster de velocidade), da
+**câmera de ré** e da **escala de tela**. É o vídeo ideal para divulgação.
 
 ```bash
 mpv docs/tutorial/opendash-propaganda.mp4
@@ -881,11 +892,13 @@ vídeo.
 
 ### Apresentação (sem avatar) — `opendash-apresentacao.mp4`
 
-Um vídeo de **2m15s** (14 cenas) que reúne, em ritmo de *showreel*, **as melhores
-apresentações** do produto — **sem avatar**: só interface, locução e trilha. Destaca o
-**mapa no painel de velocidade** com uma rota ativa (novidade), a **câmera de ré**, a
-**escala de tela**, o **cluster em barra** para duas telas, além de painel, navegação,
-diagnóstico, apps, clima e mídia. Ideal para ver o sistema "de ponta a ponta".
+Um vídeo de **3m06s** (16 cenas) que reúne, em ritmo de *showreel*, **as melhores
+apresentações** do produto — **sem avatar**: só interface, locução e trilha. Começa pelo
+**painel esportivo** (setas e lâmpadas, arco de RPM, **mini mapa** sempre visível e seis
+**sensores OBD-II**) e passa pelos **temas**, pela navegação com **trânsito ao vivo**
+(ônibus da SPTrans), pelo **mini mapa no painel** com rota ativa, pela **câmera de ré**, pela
+**escala de tela**, pelo **cluster em barra** para duas telas, além de diagnóstico, apps,
+clima e mídia. Ideal para ver o sistema "de ponta a ponta".
 
 ```bash
 mpv docs/tutorial/opendash-apresentacao.mp4
@@ -900,17 +913,19 @@ SHOT_URL=http://127.0.0.1:8098/ python3 docs/tutorial/capture_cluster_nav.py
 ```
 
 O roteiro fica em `build_showcase.py` (mesmos tipos de cena do promo, mas **sem avatar**).
-A cena do **mapa no cluster** usa `assets/page_cluster_nav.png`, capturado por
-`capture_cluster_nav.py` com a **navegação ativa** no servidor e **GPS ligado** (para o
-marcador do carro aparecer). Para teste rápido, use `TUT_ONLY=3`.
+As telas de **temas** (`page_temas.png`) e de **trânsito** (`page_traffic.png`) vêm de
+`capture_temas.py` e `capture_traffic.py`. A cena do **mini mapa no painel** usa
+`assets/page_cluster_nav.png`, capturado por `capture_cluster_nav.py` com a **navegação
+ativa** no servidor e **GPS ligado** (para a rota e o marcador do carro aparecerem). Para
+teste rápido, use `TUT_ONLY=3`.
 
-### Temas do painel — `opendash-temas.mp4`
+### Temas de marcas — `opendash-temas.mp4`
 
-Um vídeo de **1m43s** (13 cenas) que apresenta a seção **temas**: a lista dos **10 novos
-temas** (meia-noite, oceano, floresta, carbono, vinho, solar, tesla, ambar, neon e aurora),
-um **dashboard de demonstração** desenhado em cada paleta (velocidade, motor, voltagem,
-carga e o cartão Mídia, que **não acompanha** o tema) e **como trocar** (seletor em
-Ajustes ou `temas: ativo:` no `config.yaml`).
+Um vídeo de **1m59s** (13 cenas) que apresenta a seção **temas**: a lista das **10 marcas**
+(Ferrari, Porsche, BMW, Mercedes-AMG, Lamborghini, Audi, Tesla, Toyota GR, Ford Mustang e
+Chevrolet Corvette), um **dashboard de demonstração** desenhado em cada paleta de marca
+(velocidade, motor, voltagem, carga e o cartão Mídia, que **não acompanha** o tema) e **como
+trocar** (seletor em Ajustes ou `temas: ativo:` no `config.yaml`).
 
 ```bash
 mpv docs/tutorial/opendash-temas.mp4

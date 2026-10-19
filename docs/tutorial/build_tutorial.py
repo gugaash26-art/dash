@@ -233,12 +233,32 @@ SCENES = [
     {
         "kind": "ui", "kicker": "INTERFACE", "title": "Página Drive",
         "image": "page_drive.png",
-        "caption": ["Painel principal: velocímetro, marcha, conta-giros e combustível"],
+        "caption": ["Visual esportivo: setas, arco de RPM, mini mapa e sensores OBD-II"],
+        "callouts": [
+            {"x": 20, "y": 170, "w": 258, "h": 290, "label": "setas e lâmpadas", "color": "0xd29922"},
+            {"x": 348, "y": 190, "w": 266, "h": 150, "label": "velocímetro e RPM", "color": "0xe82127"},
+            {"x": 348, "y": 356, "w": 266, "h": 96, "label": "mini mapa", "color": "0x2ea043"},
+            {"x": 712, "y": 290, "w": 288, "h": 202, "label": "sensores do motor", "color": "0x1f9bd1"},
+        ],
         "narration": (
-            "Agora veja como o sistema realmente é. Esta é a página Drive, o painel principal. "
-            "No centro, o velocímetro com o arco animado e a marcha. Ao redor ficam o conta-giros, "
-            "o nível de combustível, a autonomia, o odômetro e a temperatura. "
-            "E nos ícones do topo: setas, farol, cinto e portas abertas."),
+            "Agora veja como o sistema realmente é. Esta é a página Drive, o painel principal, "
+            "com visual esportivo. À esquerda ficam as setas, as lâmpadas e o combustível. "
+            "No centro, o velocímetro com arco de RPM, a marcha, o computador de viagem e, logo "
+            "abaixo, o mini mapa. À direita, seis sensores do motor: água, óleo, "
+            "admissão, temperatura, bateria e carga."),
+    },
+    {
+        "kind": "ui", "kicker": "INTERFACE", "title": "Temas do painel",
+        "image": "page_temas.png",
+        "caption": ["Dez temas de marcas — a página Mídia não muda"],
+        "callouts": [
+            {"x": 520, "y": 310, "w": 495, "h": 280, "label": "troca na hora", "color": "0x8957e5"},
+        ],
+        "narration": (
+            "E o visual é personalizável: são dez temas inspirados nas maiores marcas, da Ferrari "
+            "ao Porsche, passando por BMW, AMG e Lamborghini. Cada tema troca fundo, brilho, "
+            "tipografia, velocímetro e ícones. A troca é instantânea, pelo cartão Tema nos Ajustes "
+            "ou pelo arquivo de configuração. A página Mídia mantém o mesmo estilo em qualquer tema."),
     },
     {
         "kind": "ui", "kicker": "INTERFACE", "title": "Página Energia",
@@ -269,7 +289,21 @@ SCENES = [
             "Esta é a página Navegação. O mapa usa OpenStreetMap, com a posição do carro em tempo real, "
             "o rastro percorrido e o rumo. Na lateral você vê a velocidade do GPS, os satélites e a altitude. "
             "Você também pode buscar um endereço e traçar a rota até o destino. "
-            "O GPS pode vir do ESP32 ou de um módulo USB ligado ao Orange Pi."),
+            "O GPS pode vir do ESP32 ou de um módulo USB ligado ao Orange Pi. "
+            "E ainda dá para ligar a camada de trânsito ao vivo."),
+    },
+    {
+        "kind": "ui", "kicker": "GPS", "title": "Trânsito ao vivo",
+        "image": "page_traffic.png",
+        "caption": ["Posições dos ônibus da SPTrans (Olho Vivo) no mapa"],
+        "callouts": [
+            {"x": 262, "y": 365, "w": 125, "h": 125, "label": "ônibus ao vivo", "color": "0x2ea043"},
+        ],
+        "narration": (
+            "Na página Navegação você liga o trânsito ao vivo. O OpenDash consulta o Olho Vivo, "
+            "da SPTrans, e mostra no mapa as posições dos ônibus perto do carro. "
+            "Para usar, gere uma credencial gratuita da API no portal da prefeitura e informe no "
+            "arquivo de configuração. A camada se atualiza sozinha enquanto a página está aberta."),
     },
     {
         "kind": "ui", "kicker": "APPS", "title": "Lançador de aplicativos",
@@ -304,9 +338,9 @@ SCENES = [
     {
         "kind": "ui", "kicker": "INTERFACE", "title": "Página Ajustes",
         "image": "page_settings.png",
-        "caption": ["Unidades, tema, brilho, modo simulação e porta serial"],
+        "caption": ["Unidades, tema (dez opções), brilho, modo simulação e porta serial"],
         "narration": (
-            "E em Ajustes você define as unidades, o tema claro ou escuro, o brilho da tela, "
+            "E em Ajustes você define as unidades, o tema entre dez opções, o brilho da tela, "
             "o modo simulação e a porta serial do ESP32."),
     },
     {
@@ -341,9 +375,9 @@ SCENES = [
         "kind": "anim", "kicker": "DEMONSTRAÇÃO", "title": "OpenDash ao vivo",
         "caption": ["O sistema rodando em modo simulação, em tempo real"],
         "narration": (
-            "E aqui está o OpenDash rodando em modo simulação. Repare no velocímetro e no conta-giros "
-            "se movendo em tempo real, no gráfico se atualizando e na troca de páginas pelo toque. "
-            "É exatamente assim que fica na tela do seu carro."),
+            "E aqui está o OpenDash rodando em modo simulação. Repare no velocímetro com arco de RPM, "
+            "no mini mapa e nos sensores se atualizando, no gráfico de energia e na troca de páginas "
+            "pelo toque. É exatamente assim que fica na tela do seu carro."),
     },
     {
         "kicker": "SUPORTE", "title": "Verificação rápida",

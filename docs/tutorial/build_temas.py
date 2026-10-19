@@ -29,98 +29,95 @@ MEDIA_FIX = {  # paleta padrao usada na pagina Midia (nao muda com o tema)
 }
 
 THEMES = [
-    {"key": "meia-noite", "label": "Meia-noite",
-     "desc": "azul profundo para dirigir a noite",
-     "bg": "#000308", "bg2": "#04070d", "panel": "#0b1220", "panel2": "#121a2b",
-     "panel3": "#1a2540", "line": "#16223a", "line2": "#233356", "text": "#e8f0ff",
-     "muted": "#8294b5", "dim": "#5a6a87", "accent": "#4a7bff", "accent2": "#7aa0ff",
-     "blue": "#5a8dff", "cyan": "#46c7e6", "purple": "#8f7bff", "green": "#2fd89a",
-     "amber": "#ffb84a", "red": "#e33d43"},
-    {"key": "oceano", "label": "Oceano",
-     "desc": "tons de mar com acento ciano turquesa",
-     "bg": "#00131b", "bg2": "#021d27", "panel": "#06293a", "panel2": "#0a354c",
-     "panel3": "#0f4663", "line": "#0d3b52", "line2": "#165574", "text": "#ddfeff",
-     "muted": "#6fa4b5", "dim": "#4a7a8a", "accent": "#21d4d4", "accent2": "#5fe0e0",
-     "blue": "#2bb8d8", "cyan": "#3ee6e6", "green": "#35e6b0", "amber": "#ffcf5a",
-     "red": "#ff6b7a"},
-    {"key": "floresta", "label": "Floresta",
-     "desc": "verde esmeralda suave, agressivo ao olho",
-     "bg": "#050b07", "bg2": "#081109", "panel": "#0d2013", "panel2": "#12291a",
-     "panel3": "#1a3a24", "line": "#172e1d", "line2": "#24462e", "text": "#e4ffe9",
-     "muted": "#86b596", "dim": "#5b7d63", "accent": "#34d17c", "accent2": "#6ce6a4",
-     "cyan": "#47d8c0", "green": "#3ee67f", "amber": "#ffd166", "blue": "#4aa8ff",
-     "red": "#ff5a5f"},
-    {"key": "carbono", "label": "Carbono",
-     "desc": "grafite neutro, estilo escuro elegante",
-     "bg": "#08080a", "bg2": "#0d0d10", "panel": "#17181c", "panel2": "#1f2025",
-     "panel3": "#292a30", "line": "#2b2c32", "line2": "#3e4048", "text": "#f2f2f4",
-     "muted": "#9a9ba3", "dim": "#66686f", "accent": "#8d9aa6", "accent2": "#b8c2cc",
-     "blue": "#7ab2ff", "green": "#4ad090", "amber": "#ffc84d", "red": "#e33d43"},
-    {"key": "vinho", "label": "Vinho",
-     "desc": "bordo e rosados, painel esportivo",
-     "bg": "#12050a", "bg2": "#1a0710", "panel": "#26101a", "panel2": "#331421",
-     "panel3": "#451a2b", "line": "#3a1424", "line2": "#551d34", "text": "#ffe9f0",
-     "muted": "#c08ba0", "dim": "#8a5f70", "accent": "#ff4d79", "accent2": "#ff7f9e",
-     "purple": "#b06bff", "amber": "#ffb020", "green": "#4ad090", "red": "#ff3946"},
-    {"key": "solar", "label": "Solar",
-     "desc": "ambar e laranja, clima de fim de tarde",
-     "bg": "#16100a", "bg2": "#1e150c", "panel": "#2a2013", "panel2": "#362a18",
-     "panel3": "#47381f", "line": "#3c2c17", "line2": "#574022", "text": "#fff3d9",
-     "muted": "#c2a075", "dim": "#8a7250", "accent": "#ff9b2e", "accent2": "#ffb95e",
-     "amber": "#ffcf6b", "red": "#ff5a3d", "green": "#9adc6b", "blue": "#6fc2ff"},
-    {"key": "tesla", "label": "Tesla",
-     "desc": "claro, branco estilo painel de carro eletrico",
-     "bg": "#ffffff", "bg2": "#f7f8fa", "panel": "#ffffff", "panel2": "#f0f1f4",
-     "panel3": "#e3e5ea", "line": "#e0e2e8", "line2": "#c6c9d2", "text": "#17181d",
-     "muted": "#6a6c75", "dim": "#999aa3", "accent": "#1a1a1e", "accent2": "#3a3a40",
-     "blue": "#2f7fd6", "green": "#1fae76", "amber": "#e09a10", "red": "#d6323a"},
-    {"key": "ambar", "label": "Ambar",
-     "desc": "instrumento retro ambar sobre preto",
-     "bg": "#070400", "bg2": "#0d0700", "panel": "#191100", "panel2": "#241a00",
-     "panel3": "#332505", "line": "#2e2004", "line2": "#4a3406", "text": "#ffdca8",
-     "muted": "#bd9255", "dim": "#7d6038", "accent": "#ffb320", "accent2": "#ffcf5e",
-     "amber": "#ffdd8a", "green": "#ffb320", "red": "#ff6a3d", "blue": "#ffb320"},
-    {"key": "neon", "label": "Neon",
-     "desc": "roxo e rosa neon para quem curte destaque",
-     "bg": "#04000a", "bg2": "#0a0214", "panel": "#160526", "panel2": "#1f0834",
-     "panel3": "#2b0d47", "line": "#26093f", "line2": "#3b1060", "text": "#f4e9ff",
-     "muted": "#a68bcc", "dim": "#6f5a90", "accent": "#c95bff", "accent2": "#e29aff",
-     "purple": "#d372ff", "cyan": "#52f0ff", "pink": "#ff6bcb", "green": "#66ffbc",
-     "amber": "#ffb35e", "red": "#e33d43"},
-    {"key": "aurora", "label": "Aurora",
-     "desc": "verde aurora boreal com toque turquesa",
-     "bg": "#01060a", "bg2": "#02111a", "panel": "#04202b", "panel2": "#062c3a",
-     "panel3": "#0a3a4c", "line": "#093340", "line2": "#104f63", "text": "#e2fff6",
-     "muted": "#7fb5ad", "dim": "#557d77", "accent": "#46e6b8", "accent2": "#7ef2d6",
-     "green": "#52ffca", "cyan": "#52e0ff", "purple": "#9a7bff", "amber": "#ffd76b",
-     "red": "#ff5f7a"},
+    {"key": "ferrari", "label": "Ferrari — Rosso Corsa",
+     "desc": "vermelho de corrida com amarelo Modena",
+     "bg": "#0a0303", "bg2": "#120505", "panel": "#1a0a0a", "panel2": "#241010",
+     "panel3": "#341616", "line": "#341414", "line2": "#4d1e1e", "text": "#fff2ee",
+     "muted": "#d18b8b", "dim": "#8a4d4d", "accent": "#ff2800", "accent2": "#ff5a33",
+     "red": "#ff2800", "amber": "#ffc400", "green": "#21c36b", "blue": "#4a8dff"},
+    {"key": "porsche", "label": "Porsche — Guards",
+     "desc": "prata e ouro sob o vermelho Guards",
+     "bg": "#04070a", "bg2": "#080d12", "panel": "#0d141b", "panel2": "#131d26",
+     "panel3": "#1c2a36", "line": "#18242f", "line2": "#2a3b4a", "text": "#eef4fa",
+     "muted": "#8aa0b3", "dim": "#5a6f80", "accent": "#d8b24a", "accent2": "#f0d488",
+     "red": "#c8102e", "amber": "#e9c14a", "green": "#22c07a", "blue": "#4a90d9"},
+    {"key": "bmw", "label": "BMW — M Azul",
+     "desc": "painel claro com azul M e vermelho",
+     "bg": "#020608", "bg2": "#050b10", "panel": "#c9d3dd", "panel2": "#acb8c6",
+     "panel3": "#8b98a8", "line": "#0e2438", "line2": "#1d3f5c", "text": "#05101c",
+     "muted": "#3a5169", "dim": "#6b7f93", "accent": "#1c69d4", "accent2": "#5f9ceb",
+     "red": "#e2231a", "amber": "#e0a020", "green": "#1fae76", "blue": "#1c69d4"},
+    {"key": "amg", "label": "Mercedes-AMG — Petronas",
+     "desc": "cinza AMG com verde petronas",
+     "bg": "#0a0b0d", "bg2": "#101216", "panel": "#17191e", "panel2": "#1e2127",
+     "panel3": "#262a32", "line": "#262a31", "line2": "#3a4049", "text": "#f2f4f7",
+     "muted": "#979ca6", "dim": "#63676f", "accent": "#00a19b", "accent2": "#4fd9d2",
+     "red": "#d5001c", "amber": "#e0a020", "green": "#21c07a", "blue": "#4a90d9"},
+    {"key": "lambo", "label": "Lamborghini — Giallo",
+     "desc": "amarelo Giallo sobre preto, estilo hexagonal",
+     "bg": "#08090a", "bg2": "#0f1012", "panel": "#16181b", "panel2": "#1f2226",
+     "panel3": "#2b2f35", "line": "#2a2e34", "line2": "#414750", "text": "#f5f6f8",
+     "muted": "#a2a7af", "dim": "#6b7078", "accent": "#d4a017", "accent2": "#f2c94c",
+     "red": "#e02020", "amber": "#d4a017", "green": "#21c45a", "blue": "#4a90d9"},
+    {"key": "audi", "label": "Audi — Sport",
+     "desc": "grafite limpo com vermelho Sport",
+     "bg": "#08090b", "bg2": "#0e1013", "panel": "#17191d", "panel2": "#202329",
+     "panel3": "#2a2e35", "line": "#262a31", "line2": "#3c424b", "text": "#f4f5f7",
+     "muted": "#9aa0a8", "dim": "#646a73", "accent": "#e2231a", "accent2": "#ff6b60",
+     "red": "#e2231a", "amber": "#e0a020", "green": "#21c07a", "blue": "#4a90d9"},
+    {"key": "tesla", "label": "Tesla — Minimalista",
+     "desc": "claro e minimalista, painel de eletrico",
+     "bg": "#f5f6f8", "bg2": "#ffffff", "panel": "#ffffff", "panel2": "#eef0f3",
+     "panel3": "#e2e5ea", "line": "#dde0e6", "line2": "#c3c8d0", "text": "#14161a",
+     "muted": "#62666e", "dim": "#9498a0", "accent": "#e82127", "accent2": "#ff5a5f",
+     "red": "#e82127", "amber": "#d99a12", "green": "#1fae76", "blue": "#2f7fd6"},
+    {"key": "gr", "label": "Toyota GR — JDM",
+     "desc": "preto japones com vermelho GR",
+     "bg": "#05070a", "bg2": "#0a0e14", "panel": "#10151d", "panel2": "#171e28",
+     "panel3": "#202936", "line": "#1b2430", "line2": "#2e3d50", "text": "#eef2f7",
+     "muted": "#8697a8", "dim": "#566574", "accent": "#e60012", "accent2": "#ff5a48",
+     "red": "#e60012", "amber": "#e0a020", "green": "#21c07a", "blue": "#4a90d9"},
+    {"key": "mustang", "label": "Ford Mustang",
+     "desc": "azul Mustang com listras e vermelho",
+     "bg": "#05070d", "bg2": "#0a0e17", "panel": "#101624", "panel2": "#161e30",
+     "panel3": "#1f2940", "line": "#1c2740", "line2": "#2f3f63", "text": "#eef2fb",
+     "muted": "#8896b5", "dim": "#586787", "accent": "#4a7bd0", "accent2": "#7aa0ff",
+     "red": "#e2231a", "amber": "#e0a020", "green": "#21c07a", "blue": "#4a7bd0"},
+    {"key": "corvette", "label": "Chevrolet Corvette",
+     "desc": "amarelo Corvette sobre couro escuro",
+     "bg": "#0a0703", "bg2": "#120d05", "panel": "#1a1408", "panel2": "#241c0d",
+     "panel3": "#332810", "line": "#322508", "line2": "#4d3a10", "text": "#fff6e0",
+     "muted": "#c2a266", "dim": "#8a7038", "accent": "#f5c518", "accent2": "#ffe27a",
+     "red": "#d02020", "amber": "#f5c518", "green": "#21c07a", "blue": "#4a90d9"},
 ]
 
 NARRA = {
     "intro": (
-        "O painel do OpenDash agora tem uma secao chamada Temas. Alem do escuro, do claro e do "
-        "automatico, existem dez temas novos. Neste video eu mostro cada um deles. E o mais "
-        "importante: o tema muda apenas o painel. A pagina de Midia continua com o fundo padrao "
-        "de sempre."),
+        "O painel do OpenDash agora tem uma secao chamada Temas, inspirada nas maiores marcas "
+        "de carro do mundo. Nao e so a cor que muda: cada tema troca o fundo, o brilho, a "
+        "tipografia, o velocimetro, as lampadas e os icones do painel. Neste video eu mostro "
+        "cada um deles. E o mais importante: o tema muda apenas o painel. A pagina de Midia "
+        "continua com o fundo padrao de sempre."),
     "themalist": [
-        "Tema meia noite: azul profundo, pensado para dirigir de noite sem cansar a visao.",
-        "Tema oceano: tons de mar, com um acento ciano turquesa bem calmo.",
-        "Tema floresta: verde esmeralda suave, elegante e facil de ler.",
-        "Tema carbono: grafite neutro, um escuro classico com toque de metal.",
-        "Tema vinho: bordo com acentos rosados, estilo painel esportivo.",
-        "Tema solar: ambar e laranja, clima de fim de tarde na estrada.",
-        "Tema tesla: o mais claro, em branco, no estilo dos paineis de carros eletricos.",
-        "Tema ambar: instrumento retro, com numeros ambar sobre preto.",
-        "Tema neon: roxo com rosa neon, para quem gosta de um painel bem marcado.",
-        "Tema aurora: verde de aurora boreal com toque turquesa, meu preferido.",
+        "Tema Ferrari: vermelho Rosso Corsa com amarelo Modena e arcos bem esportivos.",
+        "Tema Porsche: prata e ouro, com o vermelho Guards nas zonas de alerta.",
+        "Tema BMW: um painel claro com o azul M e os aneis tipicos da marca.",
+        "Tema Mercedes AMG: cinza escuro com o verde petronas das pistas.",
+        "Tema Lamborghini: amarelo Giallo sobre preto, com as formas hexagonais.",
+        "Tema Audi: grafite limpo com vermelho Sport e aneis finos.",
+        "Tema Tesla: o mais claro e minimalista, sem brilho, estilo painel de eletrico.",
+        "Tema Toyota GR: preto japones com o vermelho GR das pistas.",
+        "Tema Ford Mustang: azul Mustang com listras e detalhes em vermelho.",
+        "Tema Chevrolet Corvette: amarelo Corvette sobre couro escuro, muito anos setenta.",
     ],
     "trocar": (
         "Para trocar o tema, abra Ajustes e escolha o Tema do painel. Ou edite o arquivo "
-        "config ponto yaml, na secao temas, e coloque o nome em ativo. No modo automatico, "
-        "o painel fica claro de dia e escuro de noite."),
+        "config ponto yaml, na secao temas, e coloque o nome da marca em ativo. Isso funciona "
+        "tanto no painel principal quanto no painel de velocidade. No modo automatico, o "
+        "painel fica claro de dia e escuro de noite."),
     "fim": (
-        "A troca e instantanea e vale para as duas telas, o painel principal e o painel de "
-        "velocidade. Escolha o seu favorito e bom passeio."),
+        "Sao dez temas de marca, cada um com seu fundo, sua tipografia e seu velocimetro "
+        "proprio. A troca e instantanea. Ande com o painel da sua marca favorita. Bom passeio."),
 }
 
 
@@ -269,7 +266,7 @@ def render_all():
         c.rect(0, 0, W, topbar_h, t["bg2"], None, 0, 0)
         c.rect(0, topbar_h - 2, W, 2, t["line"], None, 0, 0)
         wbrand = c.text(40, 18, "OpenDash", 22, t["accent"], bold=True)
-        c.text(40 + wbrand + 16, 24, "temas do painel", 13, t["muted"])
+        c.text(40 + wbrand + 16, 24, "temas de marcas", 13, t["muted"])
         c.text(W - 40, 14, "19:42", 22, t["text"], bold=True, anchor="end")
         c.text(W - 40, 40, "sab 31 jan", 15, t["muted"], anchor="end")
 
@@ -318,14 +315,14 @@ def render_all():
     def slide_list():
         c = C(os.path.join(BUILD, "slide_list.png"))
         c.bg("#0b0f14")
-        cols = [("#4a7bff", "Meia-noite"), ("#21d4d4", "Oceano"),
-                ("#34d17c", "Floresta"), ("#8d9aa6", "Carbono"),
-                ("#ff4d79", "Vinho"), ("#ff9b2e", "Solar"),
-                ("#1a1a1e", "Tesla"), ("#ffb320", "Ambar"),
-                ("#c95bff", "Neon"), ("#46e6b8", "Aurora")]
+        cols = [("#ff2800", "Ferrari"), ("#d8b24a", "Porsche"),
+                ("#1c69d4", "BMW"), ("#00a19b", "AMG"),
+                ("#d4a017", "Lamborghini"), ("#e2231a", "Audi"),
+                ("#e82127", "Tesla"), ("#e60012", "Toyota GR"),
+                ("#4a7bd0", "Mustang"), ("#f5c518", "Corvette")]
         wbrand = c.text(60, 40, "OpenDash", 28, "#2f81f7", bold=True)
-        c.text(60 + wbrand + 18, 48, "temas do painel", 18, "#8b949e")
-        c.text(60, 120, "Dez temas novos", 50, "#f0f6fc", bold=True)
+        c.text(60 + wbrand + 18, 48, "temas de marcas", 18, "#8b949e")
+        c.text(60, 120, "Dez marcas, dez paineis", 50, "#f0f6fc", bold=True)
         c.text(W - 60, 48, "1 / 13", 20, "#8b949e", anchor="end")
         x0, y0, tw_, th_ = 60, 210, (W - 120 - 40) / 2, 160
         for i, (col, label) in enumerate(cols):
@@ -483,7 +480,7 @@ def make_text_slides():
         PangoCairo.show_layout(x, lay)
         lay2 = PangoCairo.create_layout(x)
         lay2.set_font_description(Pango.FontDescription("DejaVu Sans 18"))
-        lay2.set_text("temas do painel", -1)
+        lay2.set_text("temas de marcas", -1)
         x.set_source_rgba(*rgb("#8b949e"))
         x.move_to(60 + lay.get_pixel_size()[0] + 18, 46)
         PangoCairo.show_layout(x, lay2)
@@ -545,17 +542,17 @@ def make_text_slides():
     slide(os.path.join(BUILD, "slide_trocar.png"), "COMO TROCAR",
           "Ajustes ou config.yaml",
           ["Ajustes -> Tema do painel (seletor)",
-           "config.yaml -> temas: ativo: meia-noite",
+           "config.yaml -> temas: ativo: ferrari",
            "auto = claro de dia, escuro de noite",
           ],
           "#2f81f7", footer="a pagina de Midia nunca muda de tema", img=img)
     slide(os.path.join(BUILD, "slide_fim.png"), "FIM",
-          "Escolha o seu favorito",
+          "Escolha a sua marca",
           ["A troca e instantanea em todas as telas",
-           "Temas: meia-noite, oceano, floresta, carbono,",
-           "vinho, solar, tesla, ambar, neon e aurora",
+           "Ferrari, Porsche, BMW, AMG, Lamborghini,",
+           "Audi, Tesla, Toyota GR, Mustang e Corvette",
           ],
-          "#e82127", footer="OpenDash - temas do painel")
+          "#e82127", footer="OpenDash - temas de marcas")
 
 
 if __name__ == "__main__":

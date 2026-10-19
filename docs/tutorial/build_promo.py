@@ -79,29 +79,46 @@ SCENES = [
     {
         "kind": "grid", "kicker": "VISÃO GERAL",
         "title": "Tudo em um só lugar",
-        "items": ["Painel e instrumentos", "Navegação com GPS",
+        "items": ["Painel esportivo", "Navegação com GPS",
+                  "Trânsito ao vivo", "Mini mapa no painel",
                   "Mídia e papel de parede", "Ar-condicionado (clima)",
                   "Diagnóstico do motor", "Aplicativos e mapas",
-                  "Câmera de ré ao engatar", "Assistente de voz",
-                  "Qualquer tela e resolução", "Ajustes e personalização"],
+                  "Câmera de ré ao engatar", "Dez temas de marcas"],
         "color": BLUE,
         "narration": (
-            "Um só sistema reúne tudo o que você precisa na estrada: instrumentos, navegação, "
-            "mídia, climatização, diagnóstico, aplicativos, câmera de ré e até um assistente de voz."),
+            "Um só sistema reúne tudo o que você precisa na estrada: painel esportivo, navegação "
+            "com trânsito ao vivo, mini mapa, mídia, climatização, diagnóstico, aplicativos, "
+            "câmera de ré e dez temas inspirados em marcas."),
     },
     # -------------------------------------------------------------- feature: painel
     {
         "kind": "feature", "image": "page_drive.png", "kicker": "PAINEL",
-        "title": "Instrumentos ao vivo",
-        "caption": "Velocidade, giro, marcha, combustível e indicadores",
+        "title": "Visual esportivo",
+        "caption": "Setas, lâmpadas, velocímetro com arco de RPM, mini mapa e sensores OBD-II",
         "callouts": [
-            {"x": 300, "y": 250, "w": 210, "h": 210, "at": 1.0, "color": RED, "label": "Velocímetro"},
-            {"x": 930, "y": 250, "w": 250, "h": 150, "at": 1.6, "color": GREEN, "label": "Conta-giros"},
+            {"x": 75, "y": 165, "w": 305, "h": 395, "at": 1.0, "color": AMBER, "label": "Setas e lâmpadas"},
+            {"x": 455, "y": 228, "w": 298, "h": 200, "at": 1.6, "color": RED, "label": "Velocímetro e RPM"},
+            {"x": 872, "y": 120, "w": 320, "h": 82, "at": 2.2, "color": GREEN, "label": "Mini mapa"},
         ],
         "color": RED,
         "narration": (
-            "Comece pelo Painel. Velocímetro redondo, conta-giros, marcha, combustível e todos os "
-            "indicadores atualizando em tempo real, com animações suaves."),
+            "Comece pelo Painel, agora com visual esportivo: setas e lâmpadas à esquerda, "
+            "velocímetro com arco de RPM no centro, o mini mapa logo abaixo do velocímetro, "
+            "e à direita seis sensores do motor atualizando em tempo real."),
+    },
+    # ---------------------------------------------------------------- feature: temas
+    {
+        "kind": "feature", "image": "page_temas.png", "kicker": "TEMAS",
+        "title": "Do seu jeito",
+        "caption": "Dez temas inspirados em marcas: Ferrari, Porsche, BMW, AMG e mais",
+        "callouts": [
+            {"x": 75, "y": 385, "w": 540, "h": 230, "at": 1.0, "color": PURPLE, "label": "Troca na hora"},
+        ],
+        "color": PURPLE,
+        "narration": (
+            "E o visual muda quando você quiser: são dez temas inspirados nas maiores marcas, "
+            "da Ferrari ao Porsche, passando por BMW, AMG e Lamborghini. Cada tema troca fundo, "
+            "brilho, tipografia, velocímetro e ícones. A troca é instantânea."),
     },
     # ------------------------------------------------------------ feature: navegacao
     {
@@ -116,6 +133,19 @@ SCENES = [
         "narration": (
             "A Navegação traz o mapa do OpenStreetMap, funciona offline, mostra a posição do GPS, "
             "o rastro do percurso e a busca de destino."),
+    },
+    # ------------------------------------------------------------ feature: transito
+    {
+        "kind": "feature", "image": "page_traffic.png", "kicker": "TRÂNSITO AO VIVO",
+        "title": "Ônibus em tempo real",
+        "caption": "Posições dos ônibus da SPTrans (Olho Vivo) desenhadas no mapa",
+        "callouts": [
+            {"x": 355, "y": 432, "w": 145, "h": 138, "at": 1.0, "color": GREEN, "label": "ônibus ao vivo"},
+        ],
+        "color": GREEN,
+        "narration": (
+            "E tem trânsito ao vivo: o OpenDash consulta o Olho Vivo, da SPTrans, e mostra no mapa "
+            "as posições dos ônibus perto do carro. Basta ativar a camada na Navegação."),
     },
     # ---------------------------------------------------------------- feature: midia
     {
@@ -183,7 +213,7 @@ SCENES = [
         "color": BLUE,
         "narration": (
             "Nos Ajustes, você configura o Wi-Fi e o Bluetooth, escolhe as telas, define as "
-            "unidades, muda o tema e atualiza o sistema direto pelo GitHub."),
+            "unidades, escolhe entre dez temas e atualiza o sistema direto pelo GitHub."),
     },
     # ------------------------------------------------------- feature: tela e escala
     {
@@ -191,8 +221,8 @@ SCENES = [
         "title": "Do tamanho que precisar",
         "caption": "Detecta a resolução e ajusta a escala da interface automaticamente",
         "callouts": [
-            {"x": 640, "y": 158, "w": 366, "h": 362, "at": 1.0, "color": BLUE, "label": "Escala automática"},
-            {"x": 640, "y": 520, "w": 366, "h": 62, "at": 1.7, "color": GREEN, "label": "Resolução detectada"},
+            {"x": 647, "y": 175, "w": 534, "h": 290, "at": 1.0, "color": BLUE, "label": "Escala automática"},
+            {"x": 655, "y": 558, "w": 215, "h": 44, "at": 1.7, "color": GREEN, "label": "Resolução detectada"},
         ],
         "color": BLUE,
         "narration": (
@@ -220,8 +250,8 @@ SCENES = [
         "caption": "Veja o OpenDash em uso, trocando de página pelo toque",
         "color": RED,
         "narration": (
-            "E aqui está o OpenDash rodando ao vivo. Repare nas animações dos instrumentos e na "
-            "troca de páginas pelo toque. É assim, no seu carro."),
+            "E aqui está o OpenDash rodando ao vivo. Repare no arco de RPM, no mini mapa e nos "
+            "sensores se atualizando, além da troca de páginas pelo toque. É assim, no seu carro."),
     },
     # ------------------------------------------------------------ segunda tela
     {

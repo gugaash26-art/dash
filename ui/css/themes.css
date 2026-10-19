@@ -1,209 +1,354 @@
-:root[data-theme="meia-noite"] {
-  --bg: #000308;
-  --bg-2: #04070d;
-  --panel: #0b1220;
-  --panel-2: #121a2b;
-  --panel-3: #1a2540;
-  --line: #16223a;
-  --line-2: #233356;
-  --text: #e8f0ff;
-  --muted: #8294b5;
-  --dim: #5a6a87;
+/* ============================================================================
+   OpenDash — temas de marcas de carros
+   ----------------------------------------------------------------------------
+   Cada tema troca, além da paleta, o "design" do painel:
+     --font        tipografia (esportiva / digital / luxo)
+     --accent      cor do arco do velocimetro, setas e destaques
+     --accent-2    cor secundaria (halo/brilho)
+     --gauge       cor do conta-giros interno
+     --pointer     estilo do ponteiro/agulha do velocimetro
+     --icon-style  traco dos icones das lampadas (ver style.css)
+     --redline     cor da zona vermelha / redline
+   Os valores "auto/dark/light" mantem o comportamento generico anterior.
+   ============================================================================ */
 
-  --accent: #4a7bff;
+/* ---------------------------------------------------------- 1. Ferrari --- */
+:root[data-theme="ferrari"] {
+  --bg: #0a0303;
+  --bg-2: #120505;
+  --panel: #1a0a0a;
+  --panel-2: #241010;
+  --panel-3: #341616;
+  --line: #341414;
+  --line-2: #4d1e1e;
+  --text: #fff2ee;
+  --muted: #d18b8b;
+  --dim: #8a4d4d;
+
+  --accent: #ff2800;
+  --accent-2: #ff5a33;
+  --red: #ff2800;
+  --red-2: #ff5a48;
+  --amber: #ffc400;
+  --green: #21c36b;
+  --blue: #4a8dff;
+  --cyan: #4fd6e6;
+  --purple: #b56bff;
+
+  --font: "Eurostile", "Michroma", "Rajdhani", "Bank Gothic", "Arial Narrow", Arial, sans-serif;
+  --icon-style: race;
+  --redline: #ff2800;
+}
+:root[data-theme="ferrari"] .app {
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(255, 40, 0, .14), transparent 60%),
+    linear-gradient(180deg, #120505, #050101);
+}
+:root[data-theme="ferrari"] .brand-name { letter-spacing: 4px; font-weight: 600; }
+
+/* ---------------------------------------------------------- 2. Porsche --- */
+:root[data-theme="porsche"] {
+  --bg: #04070a;
+  --bg-2: #080d12;
+  --panel: #0d141b;
+  --panel-2: #131d26;
+  --panel-3: #1c2a36;
+  --line: #18242f;
+  --line-2: #2a3b4a;
+  --text: #eef4fa;
+  --muted: #8aa0b3;
+  --dim: #5a6f80;
+
+  --accent: #d8b24a;
+  --accent-2: #f0d488;
+  --red: #c8102e;
+  --red-2: #e04a5a;
+  --amber: #e9c14a;
+  --green: #22c07a;
+  --blue: #4a90d9;
+  --cyan: #46c7e6;
+  --purple: #9a7bff;
+
+  --font: "Rajdhani", "Bahnschrift", "DIN", "Arial Narrow", Arial, sans-serif;
+  --icon-style: rings;
+  --redline: #c8102e;
+}
+:root[data-theme="porsche"] .app {
+  background:
+    radial-gradient(110% 70% at 50% -10%, rgba(216, 178, 74, .12), transparent 58%),
+    linear-gradient(180deg, #080d12, #030507);
+}
+
+/* ------------------------------------------------------------ 3. BMW ----- */
+:root[data-theme="bmw"] {
+  --bg: #020608;
+  --bg-2: #050b10;
+  --panel: #c9d3dd;
+  --panel-2: #acb8c6;
+  --panel-3: #8b98a8;
+  --line: #0e2438;
+  --line-2: #1d3f5c;
+  --text: #05101c;
+  --muted: #3a5169;
+  --dim: #6b7f93;
+
+  --accent: #1c69d4;
+  --accent-2: #5f9ceb;
+  --red: #e2231a;
+  --red-2: #ff5a4d;
+  --amber: #e0a020;
+  --green: #1fae76;
+  --blue: #1c69d4;
+  --cyan: #35b0e6;
+  --purple: #7a4fd0;
+
+  --font: "Bahnschrift", "DIN", "Rajdhani", "Arial Narrow", Arial, sans-serif;
+  --icon-style: rings;
+  --redline: #e2231a;
+}
+:root[data-theme="bmw"] .app {
+  background:
+    radial-gradient(120% 80% at 50% -12%, rgba(28, 105, 212, .18), transparent 60%),
+    linear-gradient(180deg, #050b10, #010406);
+}
+:root[data-theme="bmw"] .brand-name { color: #8fb8e8; }
+
+/* --------------------------------------------------- 4. Mercedes-AMG ---- */
+:root[data-theme="amg"] {
+  --bg: #0a0b0d;
+  --bg-2: #101216;
+  --panel: #17191e;
+  --panel-2: #1e2127;
+  --panel-3: #262a32;
+  --line: #262a31;
+  --line-2: #3a4049;
+  --text: #f2f4f7;
+  --muted: #979ca6;
+  --dim: #63676f;
+
+  --accent: #00a19b;
+  --accent-2: #4fd9d2;
+  --red: #d5001c;
+  --red-2: #ff5a48;
+  --amber: #e0a020;
+  --green: #21c07a;
+  --blue: #4a90d9;
+  --cyan: #46c7d6;
+  --purple: #9a7bff;
+
+  --font: "Bahnschrift", "DIN", "Rajdhani", "Arial Narrow", Arial, sans-serif;
+  --icon-style: rings;
+  --redline: #d5001c;
+}
+:root[data-theme="amg"] .app {
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(0, 161, 155, .16), transparent 60%),
+    linear-gradient(180deg, #101216, #060708);
+}
+
+/* ---------------------------------------------------- 5. Lamborghini ----- */
+:root[data-theme="lambo"] {
+  --bg: #08090a;
+  --bg-2: #0f1012;
+  --panel: #16181b;
+  --panel-2: #1f2226;
+  --panel-3: #2b2f35;
+  --line: #2a2e34;
+  --line-2: #414750;
+  --text: #f5f6f8;
+  --muted: #a2a7af;
+  --dim: #6b7078;
+
+  --accent: #d4a017;
+  --accent-2: #f2c94c;
+  --red: #e02020;
+  --red-2: #ff5a48;
+  --amber: #d4a017;
+  --green: #21c45a;
+  --blue: #4a90d9;
+  --cyan: #46c7d6;
+  --purple: #9a7bff;
+
+  --font: "Eurostile", "Michroma", "Rajdhani", "Arial Narrow", Arial, sans-serif;
+  --icon-style: hex;
+  --redline: #e02020;
+}
+:root[data-theme="lambo"] .app {
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(212, 160, 23, .14), transparent 60%),
+    linear-gradient(180deg, #0f1012, #050505);
+}
+:root[data-theme="lambo"] .cluster,
+:root[data-theme="lambo"] .chip,
+:root[data-theme="lambo"] .gear-badge { --hex: 1; }
+:root[data-theme="lambo"] .chip { border-radius: 6px; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+
+/* ------------------------------------------------------------ 6. Audi ---- */
+:root[data-theme="audi"] {
+  --bg: #08090b;
+  --bg-2: #0e1013;
+  --panel: #17191d;
+  --panel-2: #202329;
+  --panel-3: #2a2e35;
+  --line: #262a31;
+  --line-2: #3c424b;
+  --text: #f4f5f7;
+  --muted: #9aa0a8;
+  --dim: #646a73;
+
+  --accent: #e2231a;
+  --accent-2: #ff6b60;
+  --red: #e2231a;
+  --red-2: #ff5a48;
+  --amber: #e0a020;
+  --green: #21c07a;
+  --blue: #4a90d9;
+  --cyan: #46c7d6;
+  --purple: #9a7bff;
+
+  --font: "Bahnschrift", "DIN", "Rajdhani", "Arial", sans-serif;
+  --icon-style: rings;
+  --redline: #e2231a;
+}
+:root[data-theme="audi"] .app {
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(226, 35, 26, .12), transparent 60%),
+    linear-gradient(180deg, #0e1013, #050607);
+}
+
+/* ---------------------------------------------------- 7. Tesla (claro) --- */
+:root[data-theme="tesla"] {
+  --bg: #f5f6f8;
+  --bg-2: #ffffff;
+  --panel: #ffffff;
+  --panel-2: #eef0f3;
+  --panel-3: #e2e5ea;
+  --line: #dde0e6;
+  --line-2: #c3c8d0;
+  --text: #14161a;
+  --muted: #62666e;
+  --dim: #9498a0;
+
+  --accent: #e82127;
+  --accent-2: #ff5a5f;
+  --red: #e82127;
+  --red-2: #ff5a5f;
+  --amber: #d99a12;
+  --green: #1fae76;
+  --blue: #2f7fd6;
+  --cyan: #2fa8d6;
+  --purple: #7a5fd0;
+
+  --font: "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --icon-style: minimal;
+  --redline: #e82127;
+}
+:root[data-theme="tesla"] .app {
+  background: linear-gradient(180deg, #ffffff, #eef0f3);
+}
+:root[data-theme="tesla"] .btn { background: var(--text); color: #fff; border-color: var(--text); }
+
+/* ------------------------------------------------- 8. Toyota GR (JDM) ---- */
+:root[data-theme="gr"] {
+  --bg: #05070a;
+  --bg-2: #0a0e14;
+  --panel: #10151d;
+  --panel-2: #171e28;
+  --panel-3: #202936;
+  --line: #1b2430;
+  --line-2: #2e3d50;
+  --text: #eef2f7;
+  --muted: #8697a8;
+  --dim: #56657480;
+
+  --accent: #e60012;
+  --accent-2: #ff5a48;
+  --red: #e60012;
+  --red-2: #ff5a48;
+  --amber: #e0a020;
+  --green: #21c07a;
+  --blue: #4a90d9;
+  --cyan: #46c7d6;
+  --purple: #9a7bff;
+
+  --font: "Rajdhani", "Bahnschrift", "DIN", "Arial Narrow", Arial, sans-serif;
+  --icon-style: race;
+  --redline: #e60012;
+}
+:root[data-theme="gr"] .app {
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(230, 0, 18, .16), transparent 60%),
+    linear-gradient(180deg, #0a0e14, #030507);
+}
+
+/* --------------------------------------------------- 9. Ford Mustang ----- */
+:root[data-theme="mustang"] {
+  --bg: #05070d;
+  --bg-2: #0a0e17;
+  --panel: #101624;
+  --panel-2: #161e30;
+  --panel-3: #1f2940;
+  --line: #1c2740;
+  --line-2: #2f3f63;
+  --text: #eef2fb;
+  --muted: #8896b5;
+  --dim: #586787;
+
+  --accent: #4a7bd0;
   --accent-2: #7aa0ff;
-  --blue: #5a8dff;
+  --red: #e2231a;
+  --red-2: #ff5a48;
+  --amber: #e0a020;
+  --green: #21c07a;
+  --blue: #4a7bd0;
   --cyan: #46c7e6;
   --purple: #8f7bff;
-  --green: #2fd89a;
-  --amber: #ffb84a;
+
+  --font: "Rajdhani", "Bahnschrift", "DIN", "Arial", sans-serif;
+  --icon-style: race;
+  --redline: #e2231a;
+}
+:root[data-theme="mustang"] .app {
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(74, 123, 208, .18), transparent 60%),
+    linear-gradient(180deg, #0a0e17, #030409);
 }
 
-:root[data-theme="oceano"] {
-  --bg: #00131b;
-  --bg-2: #021d27;
-  --panel: #06293a;
-  --panel-2: #0a354c;
-  --panel-3: #0f4663;
-  --line: #0d3b52;
-  --line-2: #165574;
-  --text: #ddfeff;
-  --muted: #6fa4b5;
-  --dim: #4a7a8a;
+/* ------------------------------------------------- 10. Chevrolet Corvette */
+:root[data-theme="corvette"] {
+  --bg: #0a0703;
+  --bg-2: #120d05;
+  --panel: #1a1408;
+  --panel-2: #241c0d;
+  --panel-3: #332810;
+  --line: #322508;
+  --line-2: #4d3a10;
+  --text: #fff6e0;
+  --muted: #c2a266;
+  --dim: #8a7038;
 
-  --accent: #21d4d4;
-  --accent-2: #5fe0e0;
-  --blue: #2bb8d8;
-  --cyan: #3ee6e6;
-  --green: #35e6b0;
-  --amber: #ffcf5a;
-  --red: #ff6b7a;
-}
-
-:root[data-theme="floresta"] {
-  --bg: #050b07;
-  --bg-2: #081109;
-  --panel: #0d2013;
-  --panel-2: #12291a;
-  --panel-3: #1a3a24;
-  --line: #172e1d;
-  --line-2: #24462e;
-  --text: #e4ffe9;
-  --muted: #86b596;
-  --dim: #5b7d63;
-
-  --accent: #34d17c;
-  --accent-2: #6ce6a4;
-  --green: #3ee67f;
-  --cyan: #47d8c0;
-  --amber: #ffd166;
-  --blue: #4aa8ff;
-  --red: #ff5a5f;
-}
-
-:root[data-theme="carbono"] {
-  --bg: #08080a;
-  --bg-2: #0d0d10;
-  --panel: #17181c;
-  --panel-2: #1f2025;
-  --panel-3: #292a30;
-  --line: #2b2c32;
-  --line-2: #3e4048;
-  --text: #f2f2f4;
-  --muted: #9a9ba3;
-  --dim: #66686f;
-
-  --accent: #8d9aa6;
-  --accent-2: #b8c2cc;
-  --blue: #7ab2ff;
-  --red: #e33d43;
-  --green: #4ad090;
-  --amber: #ffc84d;
-}
-
-:root[data-theme="vinho"] {
-  --bg: #12050a;
-  --bg-2: #1a0710;
-  --panel: #26101a;
-  --panel-2: #331421;
-  --panel-3: #451a2b;
-  --line: #3a1424;
-  --line-2: #551d34;
-  --text: #ffe9f0;
-  --muted: #c08ba0;
-  --dim: #8a5f70;
-
-  --accent: #ff4d79;
-  --accent-2: #ff7f9e;
-  --red: #ff3946;
-  --red-2: #ff6672;
-  --purple: #b06bff;
-  --amber: #ffb020;
-  --green: #4ad090;
-}
-
-:root[data-theme="solar"] {
-  --bg: #16100a;
-  --bg-2: #1e150c;
-  --panel: #2a2013;
-  --panel-2: #362a18;
-  --panel-3: #47381f;
-  --line: #3c2c17;
-  --line-2: #574022;
-  --text: #fff3d9;
-  --muted: #c2a075;
-  --dim: #8a7250;
-
-  --accent: #ff9b2e;
-  --accent-2: #ffb95e;
-  --amber: #ffcf6b;
-  --red: #ff5a3d;
-  --green: #9adc6b;
-  --blue: #6fc2ff;
-}
-
-:root[data-theme="tesla"] {
-  --bg: #ffffff;
-  --bg-2: #f7f8fa;
-  --panel: #ffffff;
-  --panel-2: #f0f1f4;
-  --panel-3: #e3e5ea;
-  --line: #e0e2e8;
-  --line-2: #c6c9d2;
-  --text: #17181d;
-  --muted: #6a6c75;
-  --dim: #999aa3;
-
-  --accent: #1a1a1e;
-  --accent-2: #3a3a40;
-  --blue: #2f7fd6;
-  --red: #d6323a;
-  --green: #1fae76;
-  --amber: #e09a10;
-}
-
-:root[data-theme="ambar"] {
-  --bg: #070400;
-  --bg-2: #0d0700;
-  --panel: #191100;
-  --panel-2: #241a00;
-  --panel-3: #332505;
-  --line: #2e2004;
-  --line-2: #4a3406;
-  --text: #ffdca8;
-  --muted: #bd9255;
-  --dim: #7d6038;
-
-  --accent: #ffb320;
-  --accent-2: #ffcf5e;
-  --amber: #ffdd8a;
-  --green: #ffb320;
-  --red: #ff6a3d;
-  --blue: #ffb320;
-}
-
-:root[data-theme="neon"] {
-  --bg: #04000a;
-  --bg-2: #0a0214;
-  --panel: #160526;
-  --panel-2: #1f0834;
-  --panel-3: #2b0d47;
-  --line: #26093f;
-  --line-2: #3b1060;
-  --text: #f4e9ff;
-  --muted: #a68bcc;
-  --dim: #6f5a90;
-
-  --accent: #c95bff;
-  --accent-2: #e29aff;
-  --purple: #d372ff;
-  --cyan: #52f0ff;
-  --pink: #ff6bcb;
-  --green: #66ffbc;
-  --amber: #ffb35e;
-}
-
-:root[data-theme="aurora"] {
-  --bg: #01060a;
-  --bg-2: #02111a;
-  --panel: #04202b;
-  --panel-2: #062c3a;
-  --panel-3: #0a3a4c;
-  --line: #093340;
-  --line-2: #104f63;
-  --text: #e2fff6;
-  --muted: #7fb5ad;
-  --dim: #557d77;
-
-  --accent: #46e6b8;
-  --accent-2: #7ef2d6;
-  --green: #52ffca;
-  --cyan: #52e0ff;
+  --accent: #f5c518;
+  --accent-2: #ffe27a;
+  --red: #d02020;
+  --red-2: #ff5a48;
+  --amber: #f5c518;
+  --green: #21c07a;
+  --blue: #4a90d9;
+  --cyan: #46c7d6;
   --purple: #9a7bff;
-  --amber: #ffd76b;
-  --red: #ff5f7a;
-}
 
+  --font: "Eurostile", "Michroma", "Rajdhani", "Arial Narrow", Arial, sans-serif;
+  --icon-style: hex;
+  --redline: #d02020;
+}
+:root[data-theme="corvette"] .app {
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(245, 197, 24, .16), transparent 60%),
+    linear-gradient(180deg, #120d05, #060401);
+}
+:root[data-theme="corvette"] .chip { border-radius: 8px; }
+
+/* ----------------------------------------- pagina de midia (paleta fixa) - */
 .page[data-page="media"] {
   --bg: #000000;
   --bg-2: #0a0a0b;

@@ -46,6 +46,9 @@ class App:
 
     def grab(self):
         win = self.win.get_window()
+        self.win.resize(W + 1, H + 1)
+        self.win.resize(W, H)
+        self.view.queue_draw()
         pb = Gdk.pixbuf_get_from_window(win, 0, 0, W, H)
         if pb is not None:
             pb.savev(OUT, "png", [], [])

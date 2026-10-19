@@ -172,8 +172,8 @@ DEFAULTS = {
 }
 
 PANEL_THEMES = [
-    "auto", "dark", "light", "meia-noite", "oceano", "floresta", "carbono",
-    "vinho", "solar", "tesla", "ambar", "neon", "aurora",
+    "auto", "dark", "light", "ferrari", "porsche", "bmw", "amg",
+    "lambo", "audi", "tesla", "gr", "mustang", "corvette",
 ]
 
 EDITABLE = [
