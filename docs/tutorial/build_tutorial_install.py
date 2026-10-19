@@ -3,7 +3,7 @@
 
 Cobre a instalacao completa em Debian 12 ou Armbian numa Orange Pi Zero 3:
 preparar o cartao SD, primeiro boot, SSH, atualizar o sistema, instalar o
-OpenDash, testar no navegador, kiosk em tela cheia e os extras (Arduino, GPS,
+OpenDash, testar no navegador, kiosk em tela cheia e os extras (ESP32, GPS,
 assistente de voz e GNOME Maps nativo). Mostra os comandos num painel de
 terminal, com a mesma narracao neural e o mesmo avatar dos outros tutoriais.
 
@@ -95,11 +95,11 @@ SCENES = [
                  "Instalar o OpenDash (comandos)",
                  "Testar no navegador",
                  "Kiosk em tela cheia",
-                 "Extras: Arduino, GPS, voz e mapas"],
+                 "Extras: ESP32, GPS, voz e mapas"],
         "narration": (
             "O caminho é este: primeiro preparamos o cartão de memória e o sistema; depois "
             "instalamos o OpenDash com os comandos, um por um; em seguida testamos no navegador e "
-            "deixamos em tela cheia. No fim, os extras: Arduino, GPS, assistente de voz e o "
+            "deixamos em tela cheia. No fim, os extras: ESP32, GPS, assistente de voz e o "
             "GNOME Maps."),
     },
     {
@@ -278,7 +278,7 @@ SCENES = [
     },
     # ------------------------------------------------------- PASSO 10
     {
-        "kind": "term", "kicker": "EXTRAS", "title": "10. Arduino e GPS (opcional)",
+        "kind": "term", "kicker": "EXTRAS", "title": "10. ESP32 e GPS (opcional)",
         "term_title": "orange pi zero 3 — terminal",
         "caption": ["Passo 10 de 12 · dados reais do carro"],
         "lines": [
@@ -288,7 +288,7 @@ SCENES = [
             "# GPS USB é detectado sozinho",
         ],
         "narration": (
-            "Passo dez, opcional: ligar o Arduino e o GPS. Conecte o Arduino pela USB, grave o "
+            "Passo dez, opcional: ligar o ESP32 e o GPS. Conecte o ESP32 pela USB, grave o "
             "sketch que está na pasta arduino, e confira se a porta apareceu. O GPS por USB é "
             "detectado automaticamente. Se você não tem o hardware, o Modo Simulação já cobre os "
             "testes."),

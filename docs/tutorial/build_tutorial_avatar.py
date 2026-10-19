@@ -118,7 +118,7 @@ SCENES = [
                  "Os dados atualizam 10 vezes por segundo",
                  "Tela touch mostra o painel em tela cheia"],
         "narration": (
-            "O sistema tem duas partes. O Arduino lê o barramento CAN OBD dois, os sensores "
+            "O sistema tem duas partes. O ESP32 lê o barramento CAN OBD dois, os sensores "
             "analógicos e as entradas digitais, e envia tudo pela porta USB. O Orange Pi roda "
             "o servidor e a interface web, que atualiza dez vezes por segundo numa tela touch."),
     },
@@ -164,7 +164,7 @@ SCENES = [
         "caption": ["Ventilador e ar-condicionado acionam relés reais"],
         "narration": (
             "Na página Clima, os comandos de ventilador e ar-condicionado não são só visuais: "
-            "eles acionam relés ligados ao Arduino."),
+            "eles acionam relés ligados ao ESP32."),
     },
     {
         "kind": "ui", "kicker": "INTERFACE", "title": "Página Diagnóstico",
@@ -289,7 +289,7 @@ SCENES = [
             {"x": 545, "y": 215, "w": 380, "h": 120, "label": "câmera ao vivo", "color": "0x1f9bd1"},
         ],
         "narration": (
-            "Quinta novidade: a câmera de ré. Como o Arduino informa a marcha, assim que você "
+            "Quinta novidade: a câmera de ré. Como o ESP32 informa a marcha, assim que você "
             "engata a ré o OpenDash abre a câmera em tela cheia, com linhas guia para a manobra. "
             "Nas configurações você escolhe o disparo, o dispositivo e o tamanho da imagem. "
             "Tudo automático, sem apertar nada."),

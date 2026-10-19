@@ -146,7 +146,7 @@ Depois o painel usa `bluetoothctl` normalmente.
 
 ### GPS por UART (opcional)
 
-O Arduino vai por **USB** (recomendado) e não precisa de UART. Para um GPS
+O ESP32 vai por **USB** (recomendado) e não precisa de UART. Para um GPS
 ligado na UART da Orange Pi, habilite o overlay da UART na configuração da
 placa (`/boot/dietpiEnv.txt` nas imagens Allwinner, ou `armbianEnv.txt` quando
 presente) e garanta que o console serial não está usando a mesma UART. A fonte

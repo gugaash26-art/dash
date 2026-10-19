@@ -49,6 +49,7 @@ SECTION_COLORS = {
     "MONTAGEM": "0xdb6d28",
     "PLATAFORMA": "0xdb6d28",
     "ARDUINO": "0x1f9e82",
+    "ESP32": "0x1f9e82",
     "INSTALAÇÃO": "0x2f81f7",
     "CONFIGURAÇÃO": "0x8957e5",
     "KIOSK": "0x2ea043",
@@ -66,10 +67,10 @@ SCENES = [
     {
         "kicker": "INTRODUÇÃO", "title": "OpenDash",
         "body": ["Painel automotivo estilo Tesla",
-                 "para Orange Pi + Arduino"],
+                 "para Orange Pi + ESP32"],
         "narration": (
             "Olá! Bem-vindo ao guia de instalação do OpenDash, um painel automotivo "
-            "digital que roda no Orange Pi e lê os dados do seu carro com um Arduino. "
+            "digital que roda no Orange Pi e lê os dados do seu carro com um ESP32. "
             "Neste vídeo vamos ver o que você precisa, como montar, como instalar e como "
             "usar o painel. Vamos começar."),
     },
@@ -79,16 +80,16 @@ SCENES = [
         "caption": ["A animação de inicialização do OpenDash"],
         "narration": (
             "Ao ligar, o OpenDash mostra a animação de inicialização enquanto verifica "
-            "os sensores e conecta ao Arduino. Em poucos segundos o painel está pronto."),
+            "os sensores e conecta ao ESP32. Em poucos segundos o painel está pronto."),
     },
     {
         "kicker": "VISÃO GERAL", "title": "Como funciona",
-        "body": ["Arduino lê OBD-II (CAN) e sensores",
+        "body": ["ESP32 lê OBD-II (CAN) e sensores",
                  "Orange Pi roda servidor e interface web",
                  "Os dados atualizam 10 vezes por segundo",
                  "Tela touch mostra o painel em kiosk"],
         "narration": (
-            "O sistema tem quatro partes. O Arduino lê o barramento CAN OBD dois, "
+            "O sistema tem quatro partes. O ESP32 lê o barramento CAN OBD dois, "
             "os sensores analógicos e as entradas digitais, e envia tudo pela porta USB. "
             "O Orange Pi roda o servidor e a interface web, que atualiza dez vezes por segundo. "
             "E a tela touch exibe o painel em tela cheia."),
@@ -118,38 +119,53 @@ SCENES = [
             "no boot e configura tudo do jeito certo, tanto no Armbian quanto no Raspberry Pi OS ou Debian."),
     },
     {
-        "kicker": "MONTAGEM", "title": "Ligação do CAN",
-        "body": ["MCP2515: CS no 10, SCK no 52",
-                 "SI no 51, SO no 50, VCC em 5V",
-                 "CAN-H no pino 6 do OBD-II",
-                 "CAN-L no pino 14 do OBD-II"],
+        "kind": "image", "image": "conexao-can-esp32.png",
+        "kicker": "MONTAGEM", "title": "Ligação CAN / OBD-II",
         "narration": (
-            "Vamos à montagem. Esta é a ligação do CAN. O módulo MCP vinte e cinco quinze usa os "
-            "pinos de SPI: CS no dez, clock no cinquenta e dois, e dados nos pinos cinquenta e um "
-            "e cinquenta. O CAN H vai no pino seis da tomada OBD dois, e o CAN L no pino quatorze. "
-            "Alimente o módulo em cinco volts."),
+            "Agora a ligação do CAN, específica para o ESP32. O módulo MCP vinte e cinco quinze "
+            "usa SPI: CS no GPIO cinco, clock no dezoito, MISO no dezenove e MOSI no vinte e três. "
+            "Alimente o módulo em três vírgula três volts e una os GNDs. O CAN H vai no pino seis "
+            "da tomada OBD dois, e o CAN L no pino quatorze. Se o módulo for de cinco volts, "
+            "use um level shifter nos sinais SPI."),
     },
     {
-        "kicker": "MONTAGEM", "title": "Sensores e entradas",
-        "body": ["Ignição pós-chave no pino D22",
-                 "Chaves para GND nos pinos D2 a D9",
-                 "Analógicos: A0 óleo, A1 combustível",
-                 "A2 temperatura de óleo, A3 bateria",
-                 "Bateria via divisor de 30k e 10k"],
+        "kind": "image", "image": "conexao-sensores-esp32.png",
+        "kicker": "MONTAGEM", "title": "Sensores analógicos",
         "narration": (
-            "Depois vêm os sensores. A ignição, depois da chave, vai no pino vinte e dois. "
-            "As chaves de seta, farol, cinto e freio de mão ligam no GND, usando os pinos de dois a nove. "
-            "Os sensores analógicos vão nas entradas A zero a A três. E para medir a bateria, "
-            "use um divisor de tensão com resistores de trinta e dez quilo ohms."),
+            "Os sensores analógicos vão nos GPIOs trinta e quatro, trinta e cinco, trinta e seis "
+            "e trinta e nove. Como o ESP32 lê no máximo três vírgula três volts, sensores de cinco "
+            "volts precisam de divisor de tensão. Para a bateria, use trinta e nove quilo ohms e "
+            "dez quilo ohms: a saída fica em torno de dois vírgula quatro cinco volts em doze volts "
+            "e nunca passa de três vírgula três. Ajuste o BATT DIVIDER no config ponto h."),
     },
     {
-        "kicker": "ARDUINO", "title": "Gravar o Arduino",
-        "body": ["1. Instale a biblioteca mcp_can",
+        "kind": "image", "image": "conexao-entradas-saidas-esp32.png",
+        "kicker": "MONTAGEM", "title": "Entradas, saídas e GPS",
+        "narration": (
+            "As chaves de seta, farol, cinto, porta, freio de mão, alerta, ignição e ré ligam "
+            "uma ponta no GPIO e a outra no GND. O firmware usa pull-up interno, então a entrada "
+            "fica ativa em nível baixo. As saídas acionam buzzer, LED e os relés de ventilador e "
+            "ar condicionado por módulos de relé. O GPS usa o GPIO quatorze como RX, ligado no TX "
+            "do módulo, e deve ser alimentado em três vírgula três volts."),
+    },
+    {
+        "kind": "image", "image": "conexao-alimentacao-esp32.png",
+        "kicker": "MONTAGEM", "title": "Alimentação",
+        "narration": (
+            "Na alimentação, a bateria de doze volts passa por um fusível de três amperes e por um "
+            "conversor DC-DC para cinco volts, com pelo menos três amperes. Esse cinco volts vai no "
+            "VIN ou cinco V do ESP32 e também na tela. O pino três vírgula três é saída regulada: "
+            "use ele para o módulo CAN e o GPS, nunca para entrar cinco volts. Todos os GNDs precisam "
+            "ser comuns."),
+    },
+    {
+        "kicker": "ESP32", "title": "Gravar o ESP32",
+        "body": ["1. Instale a biblioteca MCP_CAN",
                  "2. Abra o arquivo car_dash.ino",
                  "3. Selecione a placa ESP32",
                  "4. Grave — sem CAN entra em modo demo"],
         "narration": (
-            "Para gravar o Arduino: na IDE, instale a biblioteca mcp_can, abra o arquivo car dash ponto ino, "
+            "Para gravar o ESP32: na IDE, instale a biblioteca M C P CAN, abra o arquivo car dash ponto ino, "
             "selecione a placa ESP32 e grave. Se o CAN ainda não estiver conectado, "
             "o firmware entra em modo demonstração, então você pode testar na bancada pelo monitor serial."),
     },
@@ -194,12 +210,12 @@ SCENES = [
     {
         "kicker": "CONFIGURAÇÃO", "title": "Primeira configuração",
         "body": ["Abra http://IP-do-Pi:8080",
-                 "Sem Arduino? Ative Modo simulação",
+                 "Sem ESP32? Ative Modo simulação",
                  "Ajuste tanque, consumo e odômetro",
                  "Escolha unidades: km/h, Celsius, litros"],
         "narration": (
             "No navegador, abra o endereço do Orange Pi na porta oitenta e oitenta. "
-            "Se ainda não tem o Arduino, ative o modo simulação nos ajustes para ver tudo funcionando. "
+            "Se ainda não tem o ESP32, ative o modo simulação nos ajustes para ver tudo funcionando. "
             "Depois configure a capacidade do tanque, o consumo nominal, o odômetro e as unidades de medida."),
     },
     {
@@ -253,7 +269,7 @@ SCENES = [
             "Esta é a página Navegação. O mapa usa OpenStreetMap, com a posição do carro em tempo real, "
             "o rastro percorrido e o rumo. Na lateral você vê a velocidade do GPS, os satélites e a altitude. "
             "Você também pode buscar um endereço e traçar a rota até o destino. "
-            "O GPS pode vir do Arduino ou de um módulo USB ligado ao Orange Pi."),
+            "O GPS pode vir do ESP32 ou de um módulo USB ligado ao Orange Pi."),
     },
     {
         "kind": "ui", "kicker": "APPS", "title": "Lançador de aplicativos",
@@ -275,7 +291,7 @@ SCENES = [
         "caption": ["Ventilador e ar-condicionado acionam relés reais"],
         "narration": (
             "Na página Clima, os comandos de ventilador e ar-condicionado não são só visuais: "
-            "ao tocar, eles acionam os relés ligados ao Arduino."),
+            "ao tocar, eles acionam os relés ligados ao ESP32."),
     },
     {
         "kind": "ui", "kicker": "INTERFACE", "title": "Página Diagnóstico",
@@ -291,7 +307,7 @@ SCENES = [
         "caption": ["Unidades, tema, brilho, modo simulação e porta serial"],
         "narration": (
             "E em Ajustes você define as unidades, o tema claro ou escuro, o brilho da tela, "
-            "o modo simulação e a porta serial do Arduino."),
+            "o modo simulação e a porta serial do ESP32."),
     },
     {
         "kind": "ui", "kicker": "TELA E ESCALA", "title": "Qualquer tela",
@@ -317,7 +333,7 @@ SCENES = [
         "narration": (
             "Outra novidade é a câmera de ré. Quando você engata a marcha à ré, o OpenDash mostra a "
             "câmera em tela cheia, com linhas guia para ajudar na manobra. "
-            "Como o Arduino informa a marcha, a troca é automática. "
+            "Como o ESP32 informa a marcha, a troca é automática. "
             "Nas configurações você escolhe o disparo, o dispositivo e o tamanho da imagem."),
     },
     # ---- animacao final ----
@@ -465,6 +481,15 @@ def make_ui_frame(idx, total, scene):
     return png
 
 
+def make_image_frame(idx, total, scene):
+    img = os.path.join(ASSETS, scene["image"])
+    png = os.path.join(BUILD, f"slide_{idx}.png")
+    run(["ffmpeg", "-y", "-i", img,
+         "-vf", f"scale={W}:{H}:flags=lanczos,format=yuv420p",
+         "-frames:v", "1", png])
+    return png
+
+
 def make_voice(idx, scene):
     mp3 = os.path.join(BUILD, f"voice_{idx}.mp3")
     wav = os.path.join(BUILD, f"voice_{idx}.wav")
@@ -539,6 +564,9 @@ def main():
         wav = make_voice(i, scene)
         if kind == "ui":
             png = make_ui_frame(i, total, scene)
+            seg = make_segment_still(i, png, wav)
+        elif kind == "image":
+            png = make_image_frame(i, total, scene)
             seg = make_segment_still(i, png, wav)
         elif kind == "anim":
             seg = make_segment_anim(i, total, scene, wav)

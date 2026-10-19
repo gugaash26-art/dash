@@ -8,20 +8,24 @@ selecionados em `car_dash/board_config.h` conforme a placa.
 
 | Placa | Perfil | Status | Observação |
 |---|---|---|---|
-| ESP32 | `esp32` | completo | pinagem original, todos os sinais diretos |
-| Arduino Uno/Nano | `uno-nano` | completo | exige expansor **PCF8574** para 8 entradas; GPS por SoftwareSerial |
-| Arduino Leonardo/Micro | `leonardo` | completo | PCF8574; I2C em D2/D3; GPS em D8/D9 |
-| ESP32 clássico | `esp32` | completo | 3,3 V; pinagem direta |
+| ESP32 DevKit clássico | `esp32` | completo | 3,3 V; pinagem direta; alvo principal |
 | ESP32-S3 | `esp32s3` | experimental | 3,3 V; pinagem direta |
-| ESP32-C3 | `esp32c3` | experimental | 3,3 V; exige PCF8574 |
+| ESP32-C3 | `esp32c3` | experimental | 3,3 V; exige expansor PCF8574 |
 | Raspberry Pi Pico/RP2040 | `rp2040` | experimental | 3,3 V; pinagem direta |
 | Teensy 4.0/4.1 | `teensy4` | experimental | 3,3 V; pinagem direta |
+| Arduino Uno/Nano | `uno-nano` | legado | expansor PCF8574; GPS por SoftwareSerial |
+| Arduino Leonardo/Micro | `leonardo` | legado | PCF8574; I2C em D2/D3; GPS em D8/D9 |
 | Outra | `custom` | manual | defina `CARDASH_CUSTOM_PINS` e a pinagem |
 
+> **Alvo do projeto: ESP32 DevKit clássico.** As demais placas continuam no
+> `board_config.h` para compatibilidade, mas o tutorial e a montagem usam a
+> pinagem do ESP32.
+
 > **Placas de 3,3 V:** os sinais analógicos do carro chegam a 5 V. Use divisor
-> de tensão (ou sensor 3,3 V) em A0–A3. O divisor da bateria precisa manter a
-> saída abaixo de 3,3 V; ajuste `BATT_DIVIDER` e `OIL_PSI_*` de acordo com o
-> hardware. O MCP2515 também deve ser de 3,3 V ou ter level shifter.
+> de tensão (ou sensor 3,3 V) em GPIO34/35/36/39. Para a bateria, use **39 kΩ
+> e 10 kΩ** (saída ≈2,45 V em 12 V e ≈2,94 V em 14,4 V) e ajuste
+> `BATT_DIVIDER` para `4.9`. O MCP2515 também deve ser de 3,3 V ou ter level
+> shifter.
 
 ## Bibliotecas
 
@@ -32,24 +36,27 @@ selecionados em `car_dash/board_config.h` conforme a placa.
 
 ## Pinagem por placa
 
-### ESP32
+### ESP32 (DevKit clássico)
 
-| Sinal | Pino | Sinal | Pino |
+| Sinal | GPIO | Sinal | GPIO |
 |---|---|---|---|
-| CAN CS | D10 | Buzzer | D12 |
-| CAN SCK | D52 | LED | D13 |
-| CAN MOSI | D51 | Relé ventilador | D44 |
-| CAN MISO | D50 | Relé A/C | D45 |
-| Analógico óleo | A0 | Seta esquerda | D2 |
-| Analógico combustível | A1 | Seta direita | D3 |
-| Analógico temp. óleo | A2 | Farol baixo | D4 |
-| Analógico bateria | A3 | Farol alto | D5 |
-| GPS RX | D19 | Freio de mão | D6 |
-| GPS TX | D18 | Cinto | D7 |
-|  |  | Porta | D8 |
-|  |  | Alerta | D9 |
-|  |  | Ignição | D22 |
-|  |  | Ré | D46 |
+| CAN CS | 5 | Buzzer | 22 |
+| CAN SCK | 18 | LED | 2 |
+| CAN MISO | 19 | Relé ventilador | 12 |
+| CAN MOSI | 23 | Relé A/C | 15 |
+| Analógico óleo | 34 | Seta esquerda | 25 |
+| Analógico combustível | 35 | Seta direita | 26 |
+| Analógico temp. óleo | 36 | Farol baixo | 27 |
+| Analógico bateria | 39 | Farol alto | 32 |
+| GPS RX | 14 | Freio de mão | 33 |
+| GPS TX | — | Cinto | 4 |
+|  |  | Porta | 13 |
+|  |  | Alerta | 16 |
+|  |  | Ignição | 17 |
+|  |  | Ré | 21 |
+
+O módulo CAN deve ser alimentado em **3,3 V** (ou usar level shifter nos sinais
+SPI). O GPS usa `GPIO14` como RX; o TX do ESP32 não é usado neste perfil.
 
 ### Arduino Uno/Nano (PCF8574 obrigatório)
 
@@ -68,25 +75,6 @@ selecionados em `car_dash/board_config.h` conforme a placa.
 O PCF8574 (endereço `0x20`) fornece: seta esquerda, seta direita, farol baixo,
 farol alto, cinto, porta, alerta e ignição (bits 0–7). As entradas são ativas
 em LOW, com pull-up no módulo.
-
-### ESP32 clássico
-
-| Sinal | GPIO | Sinal | GPIO |
-|---|---|---|---|
-| CAN CS | 5 | Buzzer | 22 |
-| CAN SCK | 18 | LED | 2 |
-| CAN MISO | 19 | Relé ventilador | 12 |
-| CAN MOSI | 23 | Relé A/C | 15 |
-| Analógico óleo | 34 | Seta esquerda | 25 |
-| Analógico combustível | 35 | Seta direita | 26 |
-| Analógico temp. óleo | 36 | Farol baixo | 27 |
-| Analógico bateria | 39 | Farol alto | 32 |
-| GPS RX | 14 | Freio de mão | 33 |
-| GPS TX | — | Cinto | 4 |
-|  |  | Porta | 13 |
-|  |  | Alerta | 16 |
-|  |  | Ignição | 17 |
-|  |  | Ré | 21 |
 
 ### ESP32-S3 / C3, RP2040 e Teensy
 
@@ -111,23 +99,20 @@ no topo de `config.h` antes do `#include "board_config.h"`, ou edite o perfil.
 ## Compilação de teste
 
 ```bash
-arduino-cli core install arduino:avr
+arduino-cli core install esp32:esp32
 arduino-cli lib install mcp_can
-arduino-cli compile --fqbn arduino:avr:mega arduino/car_dash
-arduino-cli compile --fqbn arduino:avr:uno arduino/car_dash
-arduino-cli compile --fqbn arduino:avr:leonardo arduino/car_dash
+arduino-cli compile --fqbn esp32:esp32:esp32 arduino/car_dash
 ```
 
-No Uno/Nano o firmware usa ~89% da RAM (1836 bytes) por causa do JSON, GPS e
-expansor. Para uso intenso, prefira ESP32 ou ESP32; no Uno, reduza `STATE_SIZE`
-ou desligue GPS se necessário.
+O alvo principal é o **ESP32 DevKit clássico**. As compilações AVR continuam
+disponíveis para as placas legadas, mas não são o foco do projeto.
 
 ## JSON enviado
 
 A versão 2 acrescenta `board` e `adc`:
 
 ```json
-{"v":2,"board":"esp32","adc":10,"ms":12345,"obd":1,"speed":64, ...}
+{"v":2,"board":"esp32","adc":12,"ms":12345,"obd":1,"speed":64, ...}
 ```
 
 O servidor aceita chaves extras; a tela de diagnóstico mostra a placa e a

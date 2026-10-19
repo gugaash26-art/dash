@@ -10,7 +10,7 @@
 #define INPUT_ACTIVE_LOW   1
 #define DEBOUNCE_MS       25
 
-#define BATT_DIVIDER      4.0
+#define BATT_DIVIDER      4.9
 #define OIL_PSI_MIN_V     0.5
 #define OIL_PSI_MAX_V     4.5
 #define OIL_PSI_MAX       100.0

@@ -193,76 +193,90 @@ Guia completo, arquitetura e solução de problemas:
 
 ### 2.1 Ligação do ESP32
 
-**Barramento CAN / tomada OBD‑II**
+Os diagramas abaixo mostram todas as conexões do ESP32 usadas pelo firmware.
 
-| MCP2515 | ESP32 | OBD‑II |
+![Ligação CAN/OBD-II no ESP32](docs/tutorial/assets/conexao-can-esp32.png)
+
+**CAN / OBD-II**
+
+| MCP2515 | ESP32 | OBD-II |
 |---|---|---|
-| VCC | 5V | 16 (+12 V, opcional) |
+| VCC | 3V3 | — |
 | GND | GND | 4/5 |
-| CS | D10 | — |
-| SCK | D52 | — |
-| SI (MOSI) | D51 | — |
-| SO (MISO) | D50 | — |
+| CS | GPIO5 | — |
+| SCK | GPIO18 | — |
+| SI (MOSI) | GPIO23 | — |
+| SO (MISO) | GPIO19 | — |
 | CAN‑H | — | pino 6 |
 | CAN‑L | — | pino 14 |
 
+Use um módulo CAN de **3,3 V** (ex.: SN65HVD230) ou um MCP2515 com level
+shifter. O ESP32 não tolera 5 V nos GPIOs. Se o módulo já tiver terminação de
+120 Ω, não adicione outra.
+
+![Sensores analógicos no ESP32](docs/tutorial/assets/conexao-sensores-esp32.png)
+
 **Sensores analógicos**
 
-| Sensor | Pino | Calibração (config.h) |
+| Sensor | GPIO | Calibração (`config.h`) |
 |---|---|---|
-| Pressão do óleo (0,5–4,5 V) | A0 | `OIL_PSI_MIN_V`, `OIL_PSI_MAX` |
-| Nível de combustível (boia) | A1 | `FUEL_ADC_EMPTY`, `FUEL_ADC_FULL` |
-| Temperatura do óleo (0,5–4,5 V) | A2 | `OILT_SCALE` |
-| Tensão da bateria (divisor) | A3 | `BATT_DIVIDER` |
+| Pressão do óleo (0,5–4,5 V) | 34 | `OIL_PSI_MIN_V`, `OIL_PSI_MAX` |
+| Nível de combustível (boia) | 35 | `FUEL_ADC_EMPTY`, `FUEL_ADC_FULL` |
+| Temperatura do óleo (0,5–4,5 V) | 36 | `OILT_SCALE` |
+| Tensão da bateria (divisor) | 39 | `BATT_DIVIDER` |
 
-Divisor de tensão para A3 (12 V → ~3–4 V): **R1 = 30 kΩ** (do +12 V para A3) e
-**R2 = 10 kΩ** (de A3 para GND) → `BATT_DIVIDER = 4.0`. Nunca ligue 12 V direto no pino.
+Sensores de 5 V precisam de divisor (ex.: 10 kΩ / 10 kΩ) para a entrada não
+passar de 3,3 V. Para a bateria use **R1 = 39 kΩ** (do +12 V para o nó) e
+**R2 = 10 kΩ** (do nó para GND), com `BATT_DIVIDER = 4.9`. Em 12 V a saída fica
+em ≈2,45 V; em 14,4 V, ≈2,94 V. Nunca ligue 12 V direto no GPIO.
 
-**Entradas digitais** (chave para GND, usa `INPUT_PULLUP` — ativo em LOW)
+![Entradas, saídas e GPS no ESP32](docs/tutorial/assets/conexao-entradas-saidas-esp32.png)
 
-| Função | Pino | Função | Pino |
+**Entradas digitais** (chave para GND, `INPUT_PULLUP`, ativo em LOW)
+
+| Função | GPIO | Função | GPIO |
 |---|---|---|---|
-| Seta esquerda | D2 | Cinto | D7 |
-| Seta direita | D3 | Porta aberta | D8 |
-| Farol baixo | D4 | Pisca alerta | D9 |
-| Farol alto | D5 | Ignição (pós‑chave) | D22 |
-| Freio de mão | D6 | | |
+| Seta esquerda | 25 | Cinto | 4 |
+| Seta direita | 26 | Porta aberta | 13 |
+| Farol baixo | 27 | Pisca alerta | 16 |
+| Farol alto | 32 | Ignição (pós‑chave) | 17 |
+| Freio de mão | 33 | Marcha à ré | 21 |
 
-**Saídas**
+**Saídas e GPS**
 
-| Saída | Pino | Uso |
+| Sinal | GPIO | Uso |
 |---|---|---|
-| Buzzer ativo | D12 | aviso sonoro |
-| LED status | D13 | pisca = OBD online |
-| Relé ventilador | D44 | clima (passo > 0) |
-| Relé ar‑condicionado | D45 | clima (A/C ligado) |
+| Buzzer ativo | 22 | aviso sonoro |
+| LED status | 2 | pisca = OBD online |
+| Relé ventilador | 12 | clima (passo > 0) |
+| Relé ar‑condicionado | 15 | clima (A/C ligado) |
+| GPS RX | 14 | TX do módulo GPS (9600 baud) |
 
-### 2.2 Placa de junção (shield)
+![Alimentação do ESP32](docs/tutorial/assets/conexao-alimentacao-esp32.png)
 
-O diretório [`hardware/`](hardware/) traz uma **placa de junção** no formato shield
-do Mega 2560 (101,5 × 53,3 mm) que reúne alimentação protegida, CAN/OBD‑II, GPS,
-as 10 entradas digitais, as 4 analógicas e as saídas — com fusível, proteção de
-polaridade reversa, TVS, zeners e filtros.
+**Alimentação**
 
-- [`hardware/out/schematic.svg`](hardware/out/schematic.svg) / `.png` — esquema completo
-- [`hardware/out/board.svg`](hardware/out/board.svg) / `.png` — desenho mecânico
-- [`hardware/out/bom.csv`](hardware/out/bom.csv) — lista de materiais
-- [`hardware/out/netlist.csv`](hardware/out/netlist.csv) — todas as conexões
-- [`hardware/README.md`](hardware/README.md) — montagem, solda, jumpers e testes
+- Bateria 12 V → fusível 3 A → DC‑DC 12 V/5 V 3 A.
+- 5 V vai no **VIN/5V** do ESP32 e na tela HDMI.
+- 3V3 do ESP32 alimenta MCP2515/GPS de 3,3 V; nunca injete 5 V no pino 3V3.
+- Una todos os GNDs (bateria, DC‑DC, ESP32, tela e módulos).
 
-O esquema é **gerado por código** (`hardware/generate.py`) a partir da pinagem do
-perfil Mega em `arduino/car_dash/board_config.h`. A placa pode ser feita em perfboard seguindo a netlist
-ou fabricada (o desenho mecânico não inclui trilhas/Gerbers).
+### 2.2 Módulos recomendados
+
+- **CAN:** MCP2515 + transceptor 3,3 V (SN65HVD230) ou módulo com level shifter.
+- **GPS:** NEO‑6M/8M alimentado em 3,3 V; TX → GPIO14.
+- **Alimentação:** DC‑DC 12 V → 5 V 3 A com fusível de 2–3 A.
+- **Saídas:** módulo de relé para ventilador e A/C; buzzer ativo e LED com resistor.
 
 ---
 
-## 3. Software do Arduino
+## 3. Software do ESP32
 
 1. Instale a IDE do Arduino e a biblioteca **MCP_CAN** (Library Manager →
    “mcp_can by coryjfowler”) ou Seeed “CAN_BUS_Shield”.
 2. Abra `arduino/car_dash/car_dash.ino` (ajuste `config.h` para calibrar os
    sensores; a pinagem fica em `board_config.h`).
-3. Selecione a placa: **ESP32 2560**, **ESP32 Dev Module**, **ESP32S3**,
+3. Selecione a placa: **ESP32 Dev Module**, **ESP32S3**,
    **ESP32C3**, **Raspberry Pi Pico**, **Teensy 4.x**, **Arduino Uno/Nano** ou **Leonardo/Micro**.
    O perfil é detectado automaticamente; veja [`arduino/README.md`](arduino/README.md)
    para a pinagem e o expansor PCF8574 do Uno/Nano.
@@ -272,7 +286,7 @@ ou fabricada (o desenho mecânico não inclui trilhas/Gerbers).
 Formato enviado pela serial (1 linha JSON a cada 100 ms):
 
 ```json
-{"v":2,"board":"esp32","adc":10,"ms":12345,"obd":1,"mil":0,"dtcn":0,"speed":64,"rpm":2340,"coolant":88,
+{"v":2,"board":"esp32","adc":12,"ms":12345,"obd":1,"mil":0,"dtcn":0,"speed":64,"rpm":2340,"coolant":88,
  "iat":30,"oilt":90,"throttle":12,"fuel":61,"volt":14.12,"oilp":42.0,"batt":14.0,
  "runtime":900,"load":34,"hl":1,"hb":0,"lt":0,"rt":0,"hz":0,"brk":0,"sbl":0,
  "door":0,"ign":1,"fan":0,"ac":0,"dtc":[]}

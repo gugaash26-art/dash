@@ -1,7 +1,7 @@
 # OpenDash no Raspberry Pi
 
 O painel roda igual em **Orange Pi**, **Raspberry Pi** e **DietPi**. Este guia cobre
-o que muda no Raspberry Pi: sistema, serial (Arduino/GPS), câmera CSI de ré e tela
+o que muda no Raspberry Pi: sistema, serial (ESP32/GPS), câmera CSI de ré e tela
 HDMI. Em DietPi (qualquer placa), veja também [`dietpi.md`](dietpi.md).
 
 Testado em **Raspberry Pi 4 / 5** com **Raspberry Pi OS (Bookworm, 64 bits)**. Funciona
@@ -33,7 +33,7 @@ Para **não** aplicar isso, use `--no-rpi`. Depois, **reinicie** para valer.
 > por `dietpi-autostart 17` (sem depender do desktop). O guia completo está em
 > [`dietpi.md`](dietpi.md).
 
-## 2. Arduino (serial)
+## 2. ESP32 (serial)
 
 O microcontrolador (ESP32, ESP32, Pico/RP2040, Teensy ou Uno/Nano) se
 conecta por **USB**. No Raspberry Pi ele aparece em `/dev/ttyACM0` (ou
@@ -61,7 +61,7 @@ Duas opções:
 
 No painel, **Ajustes → Câmera de ré** controla o disparo (`ao engatar a ré`, `manual`,
 `sempre`, `desligado`), backend, resolução, linhas guia e espelhamento. Ao engatar a **ré**,
-a imagem abre em **tela cheia** (via `/camera/stream`, MJPEG). No Arduino, o sinal de ré
+a imagem abre em **tela cheia** (via `/camera/stream`, MJPEG). No ESP32, o sinal de ré
 entra em `PIN_REVERSE` (`arduino/car_dash/board_config.h`) e vira o campo `rev` no JSON.
 
 Teste rápido (modo simulação):
