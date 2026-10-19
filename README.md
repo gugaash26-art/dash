@@ -904,6 +904,26 @@ A cena do **mapa no cluster** usa `assets/page_cluster_nav.png`, capturado por
 `capture_cluster_nav.py` com a **navegação ativa** no servidor e **GPS ligado** (para o
 marcador do carro aparecer). Para teste rápido, use `TUT_ONLY=3`.
 
+### Temas do painel — `opendash-temas.mp4`
+
+Um vídeo de **1m43s** (13 cenas) que apresenta a seção **temas**: a lista dos **10 novos
+temas** (meia-noite, oceano, floresta, carbono, vinho, solar, tesla, ambar, neon e aurora),
+um **dashboard de demonstração** desenhado em cada paleta (velocidade, motor, voltagem,
+carga e o cartão Mídia, que **não acompanha** o tema) e **como trocar** (seletor em
+Ajustes ou `temas: ativo:` no `config.yaml`).
+
+```bash
+mpv docs/tutorial/opendash-temas.mp4
+```
+
+Para regerar (requer `ffmpeg`, `ffprobe` e `edge-tts`, com internet para a voz;
+os PNGs usam cairo/Pango do Python do sistema):
+
+```bash
+python3 docs/tutorial/build_temas.py --render   # fase 1: os 13 slides (PNG)
+/car-dash/.venv/bin/python docs/tutorial/build_temas.py   # fase 2: voz + vídeo
+```
+
 ---
 
 ## 12. Assistente de voz (IA) — grátis e de código aberto
