@@ -167,14 +167,21 @@ DEFAULTS = {
         "extra_args": "",
     },
     "paths": {"data_dir": str(ROOT / "data"), "db": str(ROOT / "data" / "cardash.db")},
+    "temas": {"ativo": "auto"},
     "ui": {"boot_animation": True, "theme": "auto", "brightness": 100},
 }
+
+PANEL_THEMES = [
+    "auto", "dark", "light", "meia-noite", "oceano", "floresta", "carbono",
+    "vinho", "solar", "tesla", "ambar", "neon", "aurora",
+]
 
 EDITABLE = [
     ("units.speed", ["kmh", "mph"]),
     ("units.temp", ["c", "f"]),
     ("units.volume", ["l", "gal"]),
     ("ui.theme", ["auto", "dark", "light"]),
+    ("temas.ativo", PANEL_THEMES),
     ("ui.brightness", None),
     ("ui.boot_animation", None),
     ("trip.fuel_capacity_l", None),

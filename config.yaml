@@ -155,6 +155,9 @@ paths:
   data_dir: /car-dash/data
   db: /car-dash/data/cardash.db
 
+temas:                      # tema do painel (NAO muda a pagina Multimidia)
+  ativo: auto               # auto | dark | light | meia-noite | oceano | floresta | carbono | vinho | solar | tesla | ambar | neon | aurora
+
 ui:
   boot_animation: true
   theme: auto

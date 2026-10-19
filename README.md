@@ -163,6 +163,10 @@ Guia completo, arquitetura e solução de problemas:
 
 **Ajustes**
 - Unidades (km/h↔mph, °C↔°F, L↔gal), tema claro/escuro/auto, brilho, animação de boot
+- **Temas do painel (novidade)**: além de escuro/claro/automático há **10 temas novos**
+  (Meia-noite, Oceano, Floresta, Carbono, Vinho, Solar, Tesla, Âmbar, Neon e Aurora).
+  Troque em **Ajustes → Tema do painel** ou em `config.yaml` na seção `temas:` — e
+  **a página Mídia continua no seu fundo padrão**, o tema só muda o resto do painel
 - Modo simulação (sem Arduino), porta serial, tanque, consumo nominal, odômetro, nome do carro
 - Reiniciar/desligar (opcional, requer `CARDASH_ALLOW_POWER=1`)
 
@@ -566,6 +570,10 @@ camera:                                                  # câmera de ré
   flip_h: false
   flip_v: false
   extra_args: ""                                         # argumentos extras para o ffmpeg/rpicam
+temas:                                                   # tema do painel (NÃO muda a Mídia)
+  ativo: auto                                            # auto | dark | light | meia-noite | oceano |
+                                                         # floresta | carbono | vinho | solar |
+                                                         # tesla | ambar | neon | aurora
 ```
 
 > **GPS.** Com `source: auto` o servidor usa o USB (se presente) e, senão, o GPS do

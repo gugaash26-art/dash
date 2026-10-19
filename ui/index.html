@@ -8,6 +8,7 @@
 <title>OpenDash</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/themes.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230a0a0b'/><path d='M9 22 16 9l7 13' stroke='%23f5f5f7' stroke-width='3' fill='none' stroke-linejoin='round'/></svg>">
 </head>
 <body>
@@ -429,8 +430,22 @@
 
         <div class="card">
           <div class="card-title">Interface</div>
-          <label class="field">Tema
-            <select data-setting="ui.theme"><option value="auto">automático</option><option value="dark">escuro</option><option value="light">claro</option></select>
+          <label class="field">Tema do painel
+            <select data-setting="temas.ativo">
+              <option value="auto">automático (claro de dia, escuro de noite)</option>
+              <option value="dark">escuro padrão</option>
+              <option value="light">claro padrão</option>
+              <option value="meia-noite">Meia-noite</option>
+              <option value="oceano">Oceano</option>
+              <option value="floresta">Floresta</option>
+              <option value="carbono">Carbono</option>
+              <option value="vinho">Vinho</option>
+              <option value="solar">Solar</option>
+              <option value="tesla">Tesla</option>
+              <option value="ambar">Âmbar</option>
+              <option value="neon">Neon</option>
+              <option value="aurora">Aurora</option>
+            </select>
           </label>
           <label class="field">Brilho <input type="range" data-setting="ui.brightness" min="20" max="100"></label>
           <label class="switch"><input type="checkbox" data-setting="ui.boot_animation"><span></span>Animação de boot</label>

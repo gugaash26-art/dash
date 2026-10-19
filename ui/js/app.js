@@ -282,6 +282,8 @@
 
   function applyTheme(theme) {
     let t = theme;
+    const ativo = (ctx.settings && ctx.settings["temas.ativo"]) || "";
+    if (ativo && ativo !== "auto") t = ativo;
     if (t === "auto") {
       const h = new Date().getHours();
       t = h >= 7 && h < 19 ? "light" : "dark";
@@ -687,7 +689,7 @@
       info.textContent = "ajustes salvos";
       clearTimeout(saveTimer);
       saveTimer = setTimeout(() => { info.textContent = ""; }, 2200);
-      if (key === "ui.theme") applyTheme(value);
+      if (key === "ui.theme" || key === "temas.ativo") applyTheme((ctx.settings && ctx.settings["ui.theme"]) || "auto");
       if (key === "ui.brightness") applyBrightness(Number(value));
       if (key.indexOf("display.") === 0) loadDisplay();
       if (key.indexOf("camera.") === 0) loadCamera();

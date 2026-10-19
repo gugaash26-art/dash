@@ -219,6 +219,8 @@
 
   function applyTheme(theme) {
     let t = theme;
+    const ativo = (ctx.settings && ctx.settings["temas.ativo"]) || "";
+    if (ativo && ativo !== "auto") t = ativo;
     if (t === "auto") {
       const h = new Date().getHours();
       t = h >= 7 && h < 19 ? "light" : "dark";

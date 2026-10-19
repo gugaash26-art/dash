@@ -1,0 +1,222 @@
+:root[data-theme="meia-noite"] {
+  --bg: #000308;
+  --bg-2: #04070d;
+  --panel: #0b1220;
+  --panel-2: #121a2b;
+  --panel-3: #1a2540;
+  --line: #16223a;
+  --line-2: #233356;
+  --text: #e8f0ff;
+  --muted: #8294b5;
+  --dim: #5a6a87;
+
+  --accent: #4a7bff;
+  --accent-2: #7aa0ff;
+  --blue: #5a8dff;
+  --cyan: #46c7e6;
+  --purple: #8f7bff;
+  --green: #2fd89a;
+  --amber: #ffb84a;
+}
+
+:root[data-theme="oceano"] {
+  --bg: #00131b;
+  --bg-2: #021d27;
+  --panel: #06293a;
+  --panel-2: #0a354c;
+  --panel-3: #0f4663;
+  --line: #0d3b52;
+  --line-2: #165574;
+  --text: #ddfeff;
+  --muted: #6fa4b5;
+  --dim: #4a7a8a;
+
+  --accent: #21d4d4;
+  --accent-2: #5fe0e0;
+  --blue: #2bb8d8;
+  --cyan: #3ee6e6;
+  --green: #35e6b0;
+  --amber: #ffcf5a;
+  --red: #ff6b7a;
+}
+
+:root[data-theme="floresta"] {
+  --bg: #050b07;
+  --bg-2: #081109;
+  --panel: #0d2013;
+  --panel-2: #12291a;
+  --panel-3: #1a3a24;
+  --line: #172e1d;
+  --line-2: #24462e;
+  --text: #e4ffe9;
+  --muted: #86b596;
+  --dim: #5b7d63;
+
+  --accent: #34d17c;
+  --accent-2: #6ce6a4;
+  --green: #3ee67f;
+  --cyan: #47d8c0;
+  --amber: #ffd166;
+  --blue: #4aa8ff;
+  --red: #ff5a5f;
+}
+
+:root[data-theme="carbono"] {
+  --bg: #08080a;
+  --bg-2: #0d0d10;
+  --panel: #17181c;
+  --panel-2: #1f2025;
+  --panel-3: #292a30;
+  --line: #2b2c32;
+  --line-2: #3e4048;
+  --text: #f2f2f4;
+  --muted: #9a9ba3;
+  --dim: #66686f;
+
+  --accent: #8d9aa6;
+  --accent-2: #b8c2cc;
+  --blue: #7ab2ff;
+  --red: #e33d43;
+  --green: #4ad090;
+  --amber: #ffc84d;
+}
+
+:root[data-theme="vinho"] {
+  --bg: #12050a;
+  --bg-2: #1a0710;
+  --panel: #26101a;
+  --panel-2: #331421;
+  --panel-3: #451a2b;
+  --line: #3a1424;
+  --line-2: #551d34;
+  --text: #ffe9f0;
+  --muted: #c08ba0;
+  --dim: #8a5f70;
+
+  --accent: #ff4d79;
+  --accent-2: #ff7f9e;
+  --red: #ff3946;
+  --red-2: #ff6672;
+  --purple: #b06bff;
+  --amber: #ffb020;
+  --green: #4ad090;
+}
+
+:root[data-theme="solar"] {
+  --bg: #16100a;
+  --bg-2: #1e150c;
+  --panel: #2a2013;
+  --panel-2: #362a18;
+  --panel-3: #47381f;
+  --line: #3c2c17;
+  --line-2: #574022;
+  --text: #fff3d9;
+  --muted: #c2a075;
+  --dim: #8a7250;
+
+  --accent: #ff9b2e;
+  --accent-2: #ffb95e;
+  --amber: #ffcf6b;
+  --red: #ff5a3d;
+  --green: #9adc6b;
+  --blue: #6fc2ff;
+}
+
+:root[data-theme="tesla"] {
+  --bg: #ffffff;
+  --bg-2: #f7f8fa;
+  --panel: #ffffff;
+  --panel-2: #f0f1f4;
+  --panel-3: #e3e5ea;
+  --line: #e0e2e8;
+  --line-2: #c6c9d2;
+  --text: #17181d;
+  --muted: #6a6c75;
+  --dim: #999aa3;
+
+  --accent: #1a1a1e;
+  --accent-2: #3a3a40;
+  --blue: #2f7fd6;
+  --red: #d6323a;
+  --green: #1fae76;
+  --amber: #e09a10;
+}
+
+:root[data-theme="ambar"] {
+  --bg: #070400;
+  --bg-2: #0d0700;
+  --panel: #191100;
+  --panel-2: #241a00;
+  --panel-3: #332505;
+  --line: #2e2004;
+  --line-2: #4a3406;
+  --text: #ffdca8;
+  --muted: #bd9255;
+  --dim: #7d6038;
+
+  --accent: #ffb320;
+  --accent-2: #ffcf5e;
+  --amber: #ffdd8a;
+  --green: #ffb320;
+  --red: #ff6a3d;
+  --blue: #ffb320;
+}
+
+:root[data-theme="neon"] {
+  --bg: #04000a;
+  --bg-2: #0a0214;
+  --panel: #160526;
+  --panel-2: #1f0834;
+  --panel-3: #2b0d47;
+  --line: #26093f;
+  --line-2: #3b1060;
+  --text: #f4e9ff;
+  --muted: #a68bcc;
+  --dim: #6f5a90;
+
+  --accent: #c95bff;
+  --accent-2: #e29aff;
+  --purple: #d372ff;
+  --cyan: #52f0ff;
+  --pink: #ff6bcb;
+  --green: #66ffbc;
+  --amber: #ffb35e;
+}
+
+:root[data-theme="aurora"] {
+  --bg: #01060a;
+  --bg-2: #02111a;
+  --panel: #04202b;
+  --panel-2: #062c3a;
+  --panel-3: #0a3a4c;
+  --line: #093340;
+  --line-2: #104f63;
+  --text: #e2fff6;
+  --muted: #7fb5ad;
+  --dim: #557d77;
+
+  --accent: #46e6b8;
+  --accent-2: #7ef2d6;
+  --green: #52ffca;
+  --cyan: #52e0ff;
+  --purple: #9a7bff;
+  --amber: #ffd76b;
+  --red: #ff5f7a;
+}
+
+.page[data-page="media"] {
+  --bg: #000000;
+  --bg-2: #0a0a0b;
+  --panel: #141416;
+  --panel-2: #1c1d20;
+  --panel-3: #26272c;
+  --line: #2a2b30;
+  --line-2: #3a3b41;
+  --text: #f5f5f7;
+  --muted: #9a9aa2;
+  --dim: #63646c;
+  --accent: #4a9eff;
+  --accent-2: #79b8ff;
+  background-color: var(--bg);
+  color: var(--text);
+}
