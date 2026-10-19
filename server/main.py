@@ -22,6 +22,7 @@ from .native import Native
 from .net import Net
 from .screens import Screens
 from .store import BUILTIN_APP_IDS, DEFAULT_APPS, Store
+from .traffic import Traffic
 from .updater import Updater
 from .wallpaper import Wallpaper
 from .ws import WSConn, accept_key
@@ -70,6 +71,7 @@ wallpaper = Wallpaper(cfg)
 native = Native(cfg)
 display = Display(cfg)
 camera = Camera(cfg, hub)
+traffic = Traffic(cfg)
 
 
 def auto_update_check():
@@ -300,6 +302,37 @@ class Handler(BaseHTTPRequestHandler):
             return self._error(400, err)
         return self._json(result)
 
+    def _traffic_buses(self, parsed):
+        qs = parse_qs(parsed.query)
+        try:
+            lat = float((qs.get("lat") or [""])[0])
+            lon = float((qs.get("lon") or [""])[0])
+        except ValueError:
+            lat = lon = None
+        try:
+            radius = float((qs.get("radius") or qs.get("r") or ["0"])[0])
+        except ValueError:
+            radius = None
+        if lat is None or lon is None:
+            gps = (hub.snapshot() or {}).get("gps") or {}
+            if gps.get("lat") is not None and gps.get("lon") is not None:
+                try:
+                    lat = float(gps.get("lat"))
+                    lon = float(gps.get("lon"))
+                except (TypeError, ValueError):
+                    lat = lon = None
+        if not traffic.enabled():
+            return {"enabled": False, "hr": "", "updated": 0,
+                    "count": 0, "vehicles": [], "status": traffic.status()}
+        try:
+            payload = traffic.buses(lat, lon, radius)
+            payload["enabled"] = True
+            return payload
+        except Exception as exc:
+            return {"enabled": True, "hr": "", "updated": 0, "count": 0,
+                    "vehicles": [], "error": str(exc)[:200],
+                    "status": traffic.status()}
+
     def _camera_action(self, payload):
         payload = payload or {}
         action = str(payload.get("action") or "status")
@@ -387,7 +420,22 @@ class Handler(BaseHTTPRequestHandler):
                     "google_key": config_mod._get(cfg, "maps.google_key"),
                     "zoom": config_mod._get(cfg, "maps.zoom"),
                 },
+                "traffic": traffic.status(),
             })
+        if path == "/api/traffic":
+            return self._json(self._traffic_buses(parsed))
+        if path == "/api/traffic/lines":
+            q = (parse_qs(parsed.query).get("q") or [""])[0]
+            try:
+                return self._json(traffic.lines(q))
+            except Exception as exc:
+                return self._json({"lines": [], "error": str(exc)[:200]})
+        if path == "/api/traffic/line":
+            cl = (parse_qs(parsed.query).get("codigoLinha") or [""])[0]
+            try:
+                return self._json(traffic.line_vehicles(cl))
+            except Exception as exc:
+                return self._json({"vehicles": [], "error": str(exc)[:200]})
         if path == "/api/gps/track":
             minutes = int((parse_qs(parsed.query).get("minutes") or ["180"])[0])
             minutes = max(1, min(1440, minutes))

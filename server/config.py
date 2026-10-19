@@ -90,6 +90,18 @@ DEFAULTS = {
         "google_key": "",
         "zoom": 16,
     },
+    "traffic": {
+        "enabled": False,
+        "token": "",
+        "token_env": "APILIB_TOKEN",
+        "client_id": "",
+        "client_secret": "",
+        "base_url": "https://gateway.apilib.prefeitura.sp.gov.br/sptrans/olhovivo/v2.1",
+        "token_url": "https://gateway.apilib.prefeitura.sp.gov.br/token",
+        "refresh_s": 25,
+        "radius_km": 12,
+        "max_vehicles": 1500,
+    },
     "apps": {"seed_defaults": True},
     "agent": {
         "enabled": True,
@@ -180,6 +192,16 @@ EDITABLE = [
     ("maps.provider", ["osm", "google"]),
     ("maps.tile_url", None),
     ("maps.google_key", None),
+    ("traffic.enabled", None),
+    ("traffic.token", None),
+    ("traffic.token_env", None),
+    ("traffic.client_id", None),
+    ("traffic.client_secret", None),
+    ("traffic.base_url", None),
+    ("traffic.token_url", None),
+    ("traffic.refresh_s", None),
+    ("traffic.radius_km", None),
+    ("traffic.max_vehicles", None),
     ("agent.enabled", None),
     ("agent.mic_device", None),
     ("agent.record_seconds", None),
@@ -288,6 +310,17 @@ def validate_setting(key: str, value):
         value = str(value)[:64]
     if key in ("maps.tile_url", "maps.google_key"):
         value = str(value)[:256]
+    if key == "traffic.enabled":
+        value = bool(value)
+    if key in ("traffic.token", "traffic.token_env", "traffic.client_id",
+               "traffic.client_secret", "traffic.base_url", "traffic.token_url"):
+        value = str(value or "")[:256]
+    if key == "traffic.refresh_s":
+        value = max(10, min(300, int(value)))
+    if key in ("traffic.radius_km",):
+        value = max(1.0, min(60.0, float(value)))
+    if key == "traffic.max_vehicles":
+        value = max(50, min(8000, int(value)))
     if key in ("agent.enabled", "agent.speak", "agent.play_local"):
         value = bool(value)
     if key == "agent.record_seconds":

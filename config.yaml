@@ -70,6 +70,18 @@ maps:
   google_key: ""
   zoom: 16
 
+traffic:                  # transito ao vivo (onibus) - Olho Vivo/SPTrans via gateway apilib
+  enabled: false          # ligar apos colocar a credencial da apilib
+  token: ""               # Bearer da apilib (melhor usar env/token_env para nao salvar a chave)
+  token_env: APILIB_TOKEN # variavel de ambiente com o token alternativa
+  client_id: ""           # opcional: renova o token sozinho (client_credentials na apilib)
+  client_secret: ""
+  base_url: https://gateway.apilib.prefeitura.sp.gov.br/sptrans/olhovivo/v2.1
+  token_url: https://gateway.apilib.prefeitura.sp.gov.br/token
+  refresh_s: 25           # intervalo minimo entre chamadas ao Olho Vivo
+  radius_km: 12           # raio ao redor do carro para listar onibus
+  max_vehicles: 1500
+
 apps:
   seed_defaults: true
 

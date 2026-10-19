@@ -1461,7 +1461,99 @@
     }
   }
 
-  // ---------------------------------------------- GNOME Maps (app nativo)
+   // ---------------------------------------------- GNOME Maps (app nativo)
+   const traffic = { layer: null, on: false, busy: false, at: 0, count: 0, err: "", timer: 0 };
+
+   function trafficState() {
+     try { traffic.on = localStorage.getItem("cardash.traffic") === "1"; } catch (e) {}
+     return traffic.on;
+   }
+   function trafficStore(on) {
+     traffic.on = !!on;
+     try { localStorage.setItem("cardash.traffic", on ? "1" : "0"); } catch (e) {}
+   }
+
+   function updateTrafficUi() {
+     const box = $("#navTraffic");
+     if (!box) return;
+     const st = ctx.trafficCfg || {};
+     const ok = st.enabled || false;
+     box.checked = ok && traffic.on;
+     const info = $("#navTrafficInfo");
+     if (!info) return;
+     if (!ok) {
+       info.textContent = "desativado no servidor: coloque a credencial da apilib (config.yaml > traffic)";
+     } else if (traffic.err) {
+       info.textContent = "erro: " + traffic.err;
+     } else if (traffic.count) {
+       info.textContent = traffic.count + " ônibus perto de você (" + (st.hr || "ao vivo") + ")";
+     } else {
+       info.textContent = "carregando…";
+     }
+   }
+
+   function trafficMarkerColor(v) {
+     return v && v.sl === 1 ? "#38b26f" : "#4aa8ff";
+   }
+
+   function renderTraffic(payload) {
+     if (!nav.map) return;
+     if (!traffic.layer) traffic.layer = L.layerGroup().addTo(nav.map);
+     traffic.layer.clearLayers();
+     (payload && payload.vehicles || []).forEach((v) => {
+       if (v.lat == null || v.lon == null) return;
+       L.circleMarker([v.lat, v.lon], {
+         radius: 5, weight: 1.5, color: "#08243a",
+         fillColor: trafficMarkerColor(v), fillOpacity: 0.9,
+       }).bindTooltip(`<b>${esc(v.c || "ônibus")}</b><br>${esc(v.lt1 || "")} → ${esc(v.lt0 || "")}`, {
+         direction: "top", offset: [0, -6],
+       }).addTo(traffic.layer);
+     });
+   }
+
+   function setTrafficLayer(on) {
+     trafficStore(on);
+     updateTrafficUi();
+     if (!nav.map) return;
+     if (on) {
+       if (!traffic.layer) traffic.layer = L.layerGroup().addTo(nav.map);
+       loadTraffic(true);
+       if (traffic.timer) clearInterval(traffic.timer);
+       traffic.timer = setInterval(() => {
+         if (traffic.on && !document.hidden && ctx.page === "nav") loadTraffic(false);
+       }, 30000);
+     } else {
+       if (traffic.layer) { nav.map.removeLayer(traffic.layer); traffic.layer = null; }
+       if (traffic.timer) { clearInterval(traffic.timer); traffic.timer = 0; }
+     }
+   }
+
+   function loadTraffic(force) {
+     if (!traffic.on || !nav.map) return;
+     if (!force && Date.now() - traffic.at < 20000) return;
+     traffic.at = Date.now();
+     if (traffic.busy) return;
+     traffic.busy = true;
+     const q = new URLSearchParams();
+     const g = (ctx.data && ctx.data.gps) || {};
+     if (g.has && g.lat != null && g.lon != null) {
+       q.set("lat", Number(g.lat).toFixed(5));
+       q.set("lon", Number(g.lon).toFixed(5));
+     }
+     api("/api/traffic" + (q.toString() ? "?" + q.toString() : "")).then((d) => {
+       traffic.busy = false;
+       traffic.err = (d && d.error) || "";
+       traffic.count = (d && d.count) || 0;
+       renderTraffic(d);
+       updateTrafficUi();
+     }).catch((e) => {
+       traffic.busy = false;
+       traffic.err = "falha na rede";
+       updateTrafficUi();
+     });
+   }
+
+
   const nativeState = { apps: [] };
 
   function nativeInfo(text) { const el = $("#nativeInfo"); if (el) el.textContent = text; }
@@ -1543,6 +1635,8 @@
   function loadApps() {
     api("/api/apps").then((data) => {
       if (data.maps) applyMapConfig(data.maps);
+      ctx.trafficCfg = data.traffic || null;
+      updateTrafficUi();
       ctx.appsCache = data.apps || [];
       renderApps(ctx.appsCache);
     }).catch(() => {});
@@ -1875,6 +1969,9 @@
     nav.follow = true;
     if (nav.marker && nav.map) nav.map.setView(nav.marker.getLatLng(), 16);
   });
+  const navTrafficBox = $("#navTraffic");
+  if (navTrafficBox) navTrafficBox.addEventListener("change", () => setTrafficLayer(navTrafficBox.checked));
+  if (trafficState()) setTrafficLayer(true);
 
   async function startup() {
     connect();

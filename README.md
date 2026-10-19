@@ -110,6 +110,8 @@ Guia completo, arquitetura e solução de problemas:
 - Mapa **OpenStreetMap** (Leaflet) com posição, rastro percorrido e rumo; Google opcional
 - HUD com latitude/longitude, velocidade do GPS, satélites, altitude, HDOP e fonte
 - Busca de endereço (geocodificação) e traçado de rota (**OSRM**), com botão centralizar
+- **Trânsito ao vivo (ônibus SPTrans)**: camada opcional no mapa com os ônibus reais em
+  tempo real (Olho Vivo via gateway apilib) perto do carro, verde/azul por sentido
 - GPS vindo do **Arduino** (NMEA no `Serial1`) ou de um módulo **USB** no Orange Pi,
   com detecção automática da fonte
 
@@ -617,7 +619,10 @@ Variáveis de ambiente:
 | GET | `/api/native` | apps nativos disponíveis (GNOME Maps, Spotube, YouTube/Red) + se o lançamento está habilitado |
 | POST | `/api/native/launch` | `{"app":"gnome-maps","lat":…,"lon":…}`, `{"app":"spotube"}` ou `{"app":"red-app"}` abre o app nativo |
 | POST | `/api/native/close` | `{"app":"gnome-maps"}` fecha o app nativo |
-| GET | `/api/apps` | lista de apps + configuração de mapas |
+| GET | `/api/apps` | lista de apps + configuração de mapas e trânsito |
+| GET | `/api/traffic` | ônibus ao vivo (Olho Vivo) perto do carro (`?lat=&lon=&radius=`) |
+| GET | `/api/traffic/lines?q=` | busca de linhas de ônibus (Olho Vivo) |
+| GET | `/api/traffic/line?codigoLinha=` | ônibus de uma linha (Olho Vivo) |
 | POST | `/api/apps` | cria/atualiza app (`{name,url,icon,color,kind}`) |
 | DELETE | `/api/apps/{id}` | remove um app |
 | GET/POST | `/api/settings` | lê/salva ajustes |
@@ -1133,6 +1138,32 @@ sudo snap install red-app
   painel) e `red-app <link>` abre um vídeo — útil para chamar de um atalho ou script.
 - O lançamento é protegido pelo mesmo `CARDASH_ALLOW_NATIVE=1` do GNOME Maps.
 - O assistente entende “abrir o Spotube”, “abrir o YouTube” e “tocar … no Spotube”.
+
+### Trânsito ao vivo (ônibus SPTrans / Olho Vivo)
+
+Na página **Navegação** existe a opção **“Trânsito ao vivo (ônibus SPTrans)”**: uma camada no
+mapa com os **ônibus reais em tempo real** perto do carro — verde = indo para o terminal do
+carro, azul = vindo do outro sentido. Os dados vêm da **API Olho Vivo (SPTrans)**, que a
+Prefeitura também publica dentro do seu gateway **apilib**, então a mesma credencial da
+apilib liberada para a API **OlhoVivo** funciona aqui:
+
+```yaml
+traffic:
+  enabled: true
+  token_env: APILIB_TOKEN                 # ou token: "SEU_TOKEN" direto no config
+  refresh_s: 25
+  radius_km: 12                           # raio ao redor do carro
+  max_vehicles: 1500
+```
+
+- Exporte a credencial no ambiente do serviço, sem colocar no git:
+  `export APILIB_TOKEN=...` (settando no `cardash.service` ou em `data/agent.env`).
+- Com `client_id`/`client_secret` de aplicativo apilib, o servidor renova o token sozinho
+  (OAuth2 `client_credentials` em `https://gateway.apilib.prefeitura.sp.gov.br/token`).
+- Os dados passam pelo servidor (`/api/traffic`) e a chave nunca é exposta no navegador.
+- A base “lentidão” da CET no apilib é **histórica (2001–2018)** — por isso o trânsito usado
+  aqui é o **tempo real** do Olho Vivo (ônibus; a cidade não publica lentidão de carros por
+  trecho em API aberta).
 
 ---
 
