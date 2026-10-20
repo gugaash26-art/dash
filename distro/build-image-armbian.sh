@@ -9,7 +9,9 @@
 #
 # Diferencas em relacao ao caminho DietPi (build-image.sh):
 #   - a base vem de https://dl.armbian.com/<slug>/<Release>_<branch>_<variant>.img.xz
-#   - a particao FAT de boot tem armbianEnv.txt (label armbi_boot), nao dietpi.txt
+#   - as imagens Armbian para o H618 sao de particao unica (raiz ext4, com
+#     /boot/armbianEnv.txt dentro dela); o script tambem aceita o layout com
+#     particao FAT de boot separada
 #   - o primeiro boot automatico e feito por /root/.not_logged_in_yet (preseed)
 #     + /root/provisioning.sh (script de provisionamento), injetados na raiz ext4
 set -euo pipefail
@@ -91,23 +93,51 @@ IMG="$WORK/$ID.img"
 echo "-- descompactando"
 xz -dc "$BASE" > "$IMG"
 
-# --- localiza a particao FAT de boot (armbianEnv.txt) e a raiz ext4 -----------
+# --- localiza a raiz ext4 e a particao FAT de boot (se existir) --------------
+# As imagens Armbian tem dois layouts:
+#   - particao unica: so a raiz ext4, com /boot/armbianEnv.txt dentro dela;
+#   - duas particoes: FAT de boot (armbianEnv.txt) + raiz ext4.
+# Tratamos os dois casos. HDD/SSD: sfdisk -d pode usar GPT; procuramos a maior
+# particao Linux (tipos '83' no MBR ou 'Linux filesystem' no GPT).
 FAT_OFF=""; FAT_SIZE=""; ROOT_START=""; ROOT_SIZE=""
 while read -r START SIZE TYPE; do
+  OFF=$((START * 512))
+  case "$TYPE" in
+    83|linux|Linux) ;;
+    *) continue ;;
+  esac
+  if [ "$SIZE" -gt "${ROOT_SIZE:-0}" ]; then
+    ROOT_START="$START"; ROOT_SIZE="$SIZE"
+  fi
+done < <(sfdisk -d "$IMG" | sed -nE \
+  's/^[^:]+ : start=[[:space:]]*([0-9]+), size=[[:space:]]*([0-9]+), type=([^,]+).*/\1 \2 \3/p')
+
+# Em layout MBR, procura explicitamente a FAT com armbianEnv.txt.
+while read -r START SIZE TYPE; do
+  [ "$TYPE" = "c" ] || continue
   OFF=$((START * 512))
   if mdir -i "$IMG@@$OFF" ::/armbianEnv.txt >/dev/null 2>&1; then
     FAT_OFF="$OFF"; FAT_SIZE="$SIZE"
   fi
-  if [ "$TYPE" = "83" ] && [ "$SIZE" -gt "${ROOT_SIZE:-0}" ]; then
-    ROOT_START="$START"; ROOT_SIZE="$SIZE"
-  fi
 done < <(sfdisk -d "$IMG" | sed -nE \
   's/^[^:]+ : start=[[:space:]]*([0-9]+), size=[[:space:]]*([0-9]+), type=([0-9a-fA-F]+).*/\1 \2 \3/p')
 
-[ -n "$FAT_OFF" ] && echo "-- boot FAT: offset $FAT_OFF ($((FAT_SIZE * 512 / 1024 / 1024)) MiB)"
-[ -n "$FAT_OFF" ] || die "nao achei a particao FAT com armbianEnv.txt"
 [ -n "$ROOT_START" ] || die "nao achei a particao raiz ext4"
 echo "-- raiz: setor $ROOT_START ($((ROOT_SIZE * 512 / 1024 / 1024)) MiB)"
+[ -n "$FAT_OFF" ] && echo "-- boot FAT: offset $FAT_OFF ($((FAT_SIZE * 512 / 1024 / 1024)) MiB)"
+
+# Extrai a raiz agora: ela guarda o payload e (no layout de particao unica) o
+# armbianEnv.txt dentro de /boot.
+ROOT_IMG="$WORK/root.ext4"
+dd if="$IMG" of="$ROOT_IMG" bs=512 skip="$ROOT_START" count="$ROOT_SIZE" status=none
+ENV_IN_ROOT=0
+if debugfs -R 'stat /boot/armbianEnv.txt' "$ROOT_IMG" 2>/dev/null | grep -q 'Inode:'; then
+  ENV_IN_ROOT=1
+  echo "-- armbianEnv.txt esta na raiz (/boot); layout de particao unica"
+fi
+
+[ -n "$FAT_OFF" ] || [ "$ENV_IN_ROOT" = 1 ] \
+  || die "nao achei armbianEnv.txt (nem na FAT nem em /boot da raiz)"
 
 # --- payload do OpenDash (fonte + servidor + UI) -----------------------------
 echo "-- gerando payload"
@@ -151,10 +181,8 @@ PRESET_NET_WIFI_COUNTRYCODE="BR"
 EOF
 
 # --- injeta payload + preseed + provisioning na raiz ext4 --------------------
+# (a raiz ja foi extraida em $ROOT_IMG na etapa de deteccao)
 echo "-- injetando payload e provisionamento na raiz ext4"
-ROOT_IMG="$WORK/root.ext4"
-dd if="$IMG" of="$ROOT_IMG" bs=512 skip="$ROOT_START" count="$ROOT_SIZE" status=none
-
 rm_rootfs() { debugfs -w -R "rm $1" "$ROOT_IMG" >/dev/null 2>&1 || true; }
 ensure_dir() { debugfs -w -R "mkdir $1" "$ROOT_IMG" >/dev/null 2>&1 || true; }
 write_rootfs() {
@@ -184,7 +212,13 @@ dd if="$ROOT_IMG" of="$IMG" bs=512 seek="$ROOT_START" conv=notrunc status=none
 
 # --- verificacoes -------------------------------------------------------------
 echo "-- verificando imagem"
-mdir -i "$IMG@@$FAT_OFF" ::/armbianEnv.txt >/dev/null
+if [ -n "$FAT_OFF" ]; then
+  mdir -i "$IMG@@$FAT_OFF" ::/armbianEnv.txt >/dev/null \
+    || die "armbianEnv.txt ausente na FAT"
+elif [ "$ENV_IN_ROOT" = 1 ]; then
+  debugfs -R 'stat /boot/armbianEnv.txt' "$ROOT_IMG" 2>/dev/null | grep -q 'Inode:' \
+    || die "armbianEnv.txt ausente em /boot da raiz"
+fi
 debugfs -R 'stat /root/provisioning.sh' "$ROOT_IMG" 2>/dev/null | grep -q 'Inode:'
 debugfs -R 'stat /root/.not_logged_in_yet' "$ROOT_IMG" 2>/dev/null | grep -q 'Inode:'
 debugfs -R 'stat /opt/opendash-runtime.tar.gz' "$ROOT_IMG" 2>/dev/null | grep -q 'Inode:'

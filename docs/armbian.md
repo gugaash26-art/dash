@@ -83,8 +83,9 @@ Se o adaptador ainda não aparecer, verifique o diagnóstico na seção 7.
 
 ## 4. Configuração antes do primeiro boot (opcional)
 
-A partição FAT do boot é `armbi_boot` e contém `armbianEnv.txt`. As chaves
-`OPENDASH_*` **não ficam na FAT** neste caminho: elas vêm de
+A partição do sistema é uma **raiz ext4 única** (não há partição FAT). O
+`armbianEnv.txt` fica em `/boot` dentro dessa raiz — edite-o por SSH/console se
+precisar. As chaves `OPENDASH_*` **não ficam no boot** neste caminho: elas vêm de
 `/opt/opendash-image.conf` (embutido na raiz ext4 no build). Para mudar o modo de
 tela antes de gravar, edite esse arquivo na imagem, ou ajuste depois em
 `/opt/opendash/data/screens.env`.
@@ -141,8 +142,10 @@ sudo /opt/opendash/firstboot.sh
 1. baixa a imagem oficial da Armbian de
    `https://dl.armbian.com/<slug>/<Release>_<branch>_<variant>.img.xz` e confere
    contra o `.sha` (que a Armbian publica como `<hash> <arquivo>`);
-2. descompacta, localiza via `sfdisk` a partição FAT que contém `armbianEnv.txt`
-   e a maior partição Linux (rootfs ext4);
+2. descompacta, localiza via `sfdisk` a raiz ext4 (maior partição Linux). As
+   imagens Armbian para o H618 são de **partição única** — o `armbianEnv.txt`
+   fica em `/boot` dentro da própria raiz (o script também suporta o layout com
+   partição FAT de boot separada, quando existir);
 3. gera `opendash-runtime.tar.gz` com `distro/make-runtime.sh`;
 4. injeta na raiz ext4, com `debugfs` (sem loop/mount):
    - `/opt/opendash-runtime.tar.gz` + `.sha256` + `/opt/opendash-image.conf`;
@@ -191,7 +194,7 @@ journalctl -u cardash -f
 | Aspecto | DietPi (`build-image.sh`) | Armbian (`build-image-armbian.sh`) |
 |---|---|---|
 | Base | `dietpi.com/downloads/images` | `dl.armbian.com/<slug>` |
-| Partição de boot | FAT com `dietpi.txt` (`DIETPISETUP`) | FAT com `armbianEnv.txt` (`armbi_boot`) |
+| Partição de boot | FAT com `dietpi.txt` (`DIETPISETUP`) | raiz ext4 única; `armbianEnv.txt` em `/boot` (suporta também FAT separada) |
 | Config do 1º boot | `dietpi.txt` + `dietpi-wifi.txt` na FAT | `/root/.not_logged_in_yet` (preseed) na rootfs |
 | Script do 1º boot | `/boot/Automation_Custom_Script.sh` | `/root/provisioning.sh` |
 | Wi‑Fi | `dietpi-config` / `dietpi-wifi.txt` | NetworkManager (`nmtui`/`nmcli`) + firmware AIC8800 |
