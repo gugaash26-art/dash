@@ -71,6 +71,20 @@ publica os arquivos `.img.xz`, `.sha256` e o manifesto em um Release. Copie-o pa
 Guia completo, arquitetura e solução de problemas:
 **[`docs/distro.md`](docs/distro.md)**.
 
+### Variante Armbian (Wi‑Fi no Orange Pi Zero 3 / H618)
+
+Se o **Wi‑Fi não aparecer** no Orange Pi Zero 3/Zero 3W (chip AIC8800/XR829) com a
+imagem DietPi, use a variante **Armbian**, que já traz o driver e o firmware:
+
+```bash
+./distro/build-image-armbian.sh zero3   # distro/out/OpenDash-OS-Armbian-*-zero3-arm64.img.xz
+```
+
+Mesma proposta (OpenDash embutido, primeiro boot automático, kiosk em 1 ou 2
+telas), com a base Armbian Debian Trixie e Wi‑Fi via NetworkManager. Guia:
+**[`docs/armbian.md`](docs/armbian.md)**; placas em
+[`distro/boards-armbian.conf`](distro/boards-armbian.conf).
+
 ---
 
 ## 1. Recursos
@@ -666,11 +680,15 @@ Variáveis de ambiente:
 car-dash/
 ├── docs/tutorial/         vídeo-tutorial (slides narrados) + gerador
 ├── docs/distro.md         OpenDash OS: imagens, build, primeiro boot
+├── docs/armbian.md        OpenDash OS (Armbian): Wi‑Fi no Zero 3/H618
 ├── docs/dietpi.md         guia do DietPi (Orange Pi Zero 3 em diante)
-├── distro/                build das imagens prontas (DietPi + first boot)
-│   ├── boards.conf        placas e imagens base
-│   ├── build-image.sh     injeta payload/config e gera .img.xz
-│   ├── firstboot.sh       instalação automática no primeiro boot
+├── distro/                build das imagens prontas (DietPi/Armbian + first boot)
+│   ├── boards.conf        placas e imagens base DietPi
+│   ├── build-image.sh     injeta payload/config e gera .img.xz (DietPi)
+│   ├── firstboot.sh       instalação automática no primeiro boot (DietPi)
+│   ├── boards-armbian.conf   placas e slugs Armbian
+│   ├── build-image-armbian.sh  build da imagem base Armbian
+│   ├── firstboot-armbian.sh    provisionamento do primeiro boot (Armbian)
 │   └── make-runtime.sh    tarball mínimo do OpenDash
 ├── arduino/car_dash/      sketch + board_config.h + config.h (Mega/ESP32/Uno etc.)
 ├── hardware/              placa de junção (esquema, BOM, netlist, desenho)

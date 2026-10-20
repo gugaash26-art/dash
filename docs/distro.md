@@ -4,6 +4,11 @@ Esta é a documentação da **distro**: uma imagem `.img.xz` que você grava no 
 SD, liga na placa e o painel OpenDash abre sozinho. Não é preciso instalar Python,
 navegador, X11 ou configurar autostart na mão.
 
+> **Variante Armbian:** há uma segunda base, a **[Armbian](https://www.armbian.com/)**,
+> recomendada para o **Orange Pi Zero 3 / Zero 3W (H618)** e outras placas onde o
+> Wi‑Fi não sobe no DietPi. Veja [`armbian.md`](armbian.md). Esta página documenta
+> a base DietPi (padrão histórico).
+
 A base é o **[DietPi](https://dietpi.com/)** (Debian enxuto, mantido para SBCs),
 com os seguintes ajustes:
 
@@ -246,7 +251,7 @@ Para gerar uma prévia sem release: Actions → **OpenDash OS images** → Run w
 | Fica no console após o primeiro boot | `/var/lib/opendash/firstboot.log`; rode o firstboot de novo |
 | Painel não abre | `systemctl status cardash`, `journalctl -u cardash -f`; `curl localhost:8080/health` |
 | Tela preta no kiosk | X11 instalado? `dietpi-autostart` está em 17? `data/dietpi.env` existe? |
-| Wi‑Fi não conecta | `dietpi-wifi.txt` (SSID/senha), `AUTO_SETUP_NET_WIFI_ENABLED=1`, país `BR` |
+| Wi‑Fi não conecta | `dietpi-wifi.txt` (SSID/senha), `AUTO_SETUP_NET_WIFI_ENABLED=1`, país `BR`; se o adaptador nem aparecer (ex.: Orange Pi Zero 3/H618), use a variante Armbian em [`armbian.md`](armbian.md) |
 | Chromium não abre como root | o kiosk já passa `--no-sandbox`; confira `kiosk/kiosk.sh` |
 | Segunda tela no lugar errado | `OPENDASH_TOUCH_SIZE/POS` e `BAR_SIZE/POS`; veja `xrandr` |
 | Atualização falha | repositório em `/opt` root; use `sudo git pull` |
