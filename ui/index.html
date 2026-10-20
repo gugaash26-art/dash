@@ -266,6 +266,31 @@
             <div class="hint">a reprodução de mídia é um mock de interface — conecte o player real via API quando quiser</div>
           </div>
 
+          <div class="card" id="radioCard">
+            <div class="card-title">Rádio FM · Si4703</div>
+            <div class="radio-display">
+              <div class="radio-freq"><b id="radioFreq">89.1</b><span>MHz</span></div>
+              <div class="radio-tags">
+                <span class="radio-tag" id="radioStereo">mono</span>
+                <span class="radio-tag" id="radioRssi">sinal --</span>
+                <span class="radio-tag" id="radioPs">—</span>
+              </div>
+            </div>
+            <div class="radio-tune">
+              <button class="btn btn-ghost" id="radioSeekDn">◀ seek</button>
+              <button class="btn btn-ghost" id="radioTuneDn">−0.1</button>
+              <button class="btn btn-ghost" id="radioTuneUp">+0.1</button>
+              <button class="btn btn-ghost" id="radioSeekUp">seek ▶</button>
+            </div>
+            <label class="field">Estação (MHz) <input type="number" id="radioDial" min="87.5" max="108" step="0.1"></label>
+            <div class="radio-rt" id="radioRt">—</div>
+            <div class="net-head">
+              <span class="net-status" id="radioStatus">—</span>
+              <button class="btn btn-ghost" id="radioToggle">Ligar</button>
+            </div>
+            <div class="hint">Receptor FM Si4703 via I2C (0x10) no Raspberry Pi 4. Ative o I2C e instale i2c-tools para usar o hardware.</div>
+          </div>
+
           <div class="card agent-card">
             <div class="agent-head">
               <div class="card-title">Assistente · IA</div>
@@ -537,6 +562,23 @@
             <button class="btn btn-ghost" id="camTest">Testar</button>
           </div>
           <div class="hint">Webcam USB (V4L2) ou câmera do Raspberry Pi (libcamera). Ao engatar a ré o painel abre a câmera em tela cheia. Espelhar é útil em câmeras frontais.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Rádio FM (Si4703)</div>
+          <label class="switch"><input type="checkbox" data-setting="radio.enabled"><span></span>Rádio habilitado</label>
+          <label class="field">Barramento I2C <input type="number" data-setting="radio.bus" min="0" max="9" step="1"></label>
+          <label class="field">Estação padrão (MHz) <input type="number" data-setting="radio.frequency" min="87.5" max="108" step="0.1"></label>
+          <label class="field">Volume do rádio (0-15) <input type="number" data-setting="radio.volume" min="0" max="15" step="1"></label>
+          <div class="btn-row">
+            <label class="switch"><input type="checkbox" data-setting="radio.mono"><span></span>Forçar mono</label>
+            <label class="switch"><input type="checkbox" data-setting="radio.rds"><span></span>RDS ligado</label>
+          </div>
+          <div class="net-head">
+            <span class="net-status" id="radioSetStatus">—</span>
+            <button class="btn btn-ghost" id="radioSetTest">Testar</button>
+          </div>
+          <div class="hint">Módulo FM Si4703 no I2C 0x10 (pinos SDA/SCL + RST). Ative o I2C com <code>raspi-config</code> e instale <code>i2c-tools</code>. A frequência e volume também aparecem na página Mídia.</div>
         </div>
 
         <div class="card">

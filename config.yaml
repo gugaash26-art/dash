@@ -119,6 +119,19 @@ media:                    # pagina Multimidia
   wallpaper: ""           # URL externa ou /media/wallpaper (imagem enviada)
   fit: cover              # cover | contain | fill
 
+radio:                    # radio FM Si4703 via I2C (Raspberry Pi 4)
+  enabled: true           # liga/desliga o receptor FM
+  bus: 1                  # barramento I2C (/dev/i2c-1)
+  frequency: 89.1         # estacao padrao em MHz
+  band: 0                 # 0 = 87.5-108 MHz (EUA/Europa) | 1 = 76-90 (Japao)
+  spacing: 2              # 1 = 200 kHz | 2 = 100 kHz | 3 = 50 kHz
+  volume: 8               # volume do chip (0-15)
+  mono: false             # forcar mono (melhora sinal fraco)
+  rds: true               # liga o decodificador RDS (PS/nome da estacao)
+  min_khz: 87500          # limite inferior de sintonia (kHz)
+  max_khz: 108000         # limite superior de sintonia (kHz)
+  poll_s: 0.6             # intervalo de leitura dos registradores (s)
+
 native:                   # apps nativos (GNOME Maps) abertos no Orange Pi
   enabled: true           # liga/desliga o lancamento de apps nativos
   display: ":0"           # display X onde o app abre

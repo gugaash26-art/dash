@@ -443,6 +443,16 @@ button.pill { cursor: pointer; }
 .sources { display: flex; flex-direction: column; gap: 8px; }
 .source { text-align: left; padding: 12px 14px; border-radius: var(--radius-s); border: 1px solid var(--line); background: transparent; color: var(--text); font-size: 14px; }
 .source.is-active { border-color: rgba(74,158,255,.5); background: rgba(74,158,255,.12); color: var(--accent-2); }
+.radio-display { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 4px 0 10px; }
+.radio-freq { display: flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums; }
+.radio-freq b { font-size: 42px; font-weight: 300; letter-spacing: 1px; line-height: 1; }
+.radio-freq span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; }
+.radio-tags { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.radio-tag { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 20px; padding: 2px 8px; white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+.radio-tag.is-on { color: var(--accent-2); border-color: rgba(74,158,255,.5); }
+.radio-tune { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.radio-tune .btn { padding: 8px 4px; font-size: 12px; }
+.radio-rt { font-size: 12px; color: var(--muted); min-height: 18px; margin: 6px 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hint { font-size: 11px; color: var(--dim); line-height: 1.5; }
 
 .media-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; overflow: auto; }

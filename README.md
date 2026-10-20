@@ -89,6 +89,9 @@ Guia completo, arquitetura e solução de problemas:
 
 **Mídia e Clima**
 - Player de interface (fontes: rádio/Bluetooth/USB/aux, progresso e volume)
+- **Rádio FM real (Si4703)**: receptor FM via **I2C** (Raspberry Pi 4) com sintonia
+  por frequência, **seek**, volume, mono/estéreo, sinal (RSSI) e **RDS** (nome da
+  estação `PS` e texto `RT`), controlável pela página Mídia e pelos Ajustes
 - **Papel de parede** da página Mídia: use uma **URL** ou **envie uma imagem** do
   aparelho (PNG/JPG/WEBP/GIF/BMP, até 8 MB); a imagem fica salva e é restaurada sozinha
 - Climatização: velocidade do ventilador (0–4) e ar‑condicionado **enviam comandos
@@ -573,6 +576,18 @@ camera:                                                  # câmera de ré
   flip_h: false
   flip_v: false
   extra_args: ""                                         # argumentos extras para o ffmpeg/rpicam
+radio:                                                   # rádio FM Si4703 via I2C (Raspberry Pi 4)
+  enabled: true                                          # liga/desliga o receptor FM
+  bus: 1                                                 # barramento I2C (/dev/i2c-1)
+  frequency: 89.1                                        # estação padrão em MHz
+  band: 0                                                # 0 = 87.5-108 MHz | 1 = 76-90 MHz
+  spacing: 2                                             # 1 = 200 | 2 = 100 | 3 = 50 kHz
+  volume: 8                                              # volume do chip (0-15)
+  mono: false                                            # forçar mono (sinal fraco)
+  rds: true                                              # decodificador RDS (nome da estação)
+  min_khz: 87500                                         # limite inferior de sintonia
+  max_khz: 108000                                        # limite superior de sintonia
+  poll_s: 0.6                                            # intervalo de leitura dos registradores
 temas:                                                   # tema do painel (NÃO muda a Mídia)
   ativo: auto                                            # auto | dark | light | ferrari | porsche |
                                                          # bmw | amg | lambo | audi | tesla |
@@ -623,6 +638,8 @@ Variáveis de ambiente:
 | GET | `/api/display` | adaptação de tela: escala, polegadas, orientação, DPI e escala calculada |
 | GET | `/api/camera` | status da câmera de ré (backend, dispositivo, se está ativa) |
 | POST | `/api/camera` | `{"action":"start\|stop\|toggle\|status"}` liga/desliga a câmera |
+| GET | `/api/radio` | status do rádio FM Si4703 (`freq`, `stereo`, `rssi`, `ps`, `rt`, `power`, `available`) |
+| POST | `/api/radio` | `{"action":"on\|off\|tune\|seek\|volume\|mute\|mono","frequency":…,"up":true,"level":8,"on":true}` |
 | GET | `/api/nav` | navegação ativa: `dest` (destino) e `route` (pontos da rota) — usado pelo painel de velocidade |
 | POST | `/api/nav` | `{"dest":{"lat","lon","name"},"route":[[lat,lon],…]}` define a rota; `{"clear":true}` encerra |
 | GET | `/camera/stream` | stream **MJPEG** ao vivo (multipart/x-mixed-replace) |
@@ -666,6 +683,7 @@ car-dash/
 │   ├── updater.py        atualização via Git (verificar/instalar/reiniciar)
 │   ├── screens.py        monitores HDMI (xrandr) + escolha painel/cluster
 │   ├── wallpaper.py      papel de parede da Mídia (URL ou upload)
+│   ├── radio.py          rádio FM Si4703 via I2C (smbus2) — sintonia, seek, RDS
 │   ├── native.py         apps nativos (GNOME Maps, Spotube, YouTube/Red) — abrir/fechar
 │   ├── sim.py            gerador de dados para bancada (inclui GPS)
 │   ├── alerts.py         regras de alerta
@@ -1105,6 +1123,23 @@ Uma **webcam USB** (V4L2, capturada com `ffmpeg`) ou a **câmera CSI do Raspberr
 Dependências: `./install.sh --camera` (instala `ffmpeg` + `v4l-utils`; e `rpicam-apps`/
 `libcamera-apps` no Raspberry Pi). Rotas: `/api/camera`, `/camera/stream` (MJPEG) e
 `/camera/frame.jpg`.
+
+### Rádio FM (Si4703)
+
+O painel controla um **receptor FM Si4703** ligado ao **I2C** do Raspberry Pi 4
+(endereço `0x10`). Na página **Mídia** o cartão **Rádio FM · Si4703** mostra a
+frequência, o **sinal (RSSI)**, **mono/estéreo**, o nome da estação (**RDS PS**) e o
+texto (**RDS RT**), com botões de sintonia (**−0.1/+0.1**), **seek** e ligar/desligar.
+
+- **Ajustes → Rádio FM (Si4703)**: ligar/desligar, barramento I2C, estação padrão,
+  volume do chip (0–15), forçar mono e RDS.
+- **Ligação**: `VCC` → 3.3 V, `GND` → GND, `SDA`/`SCL` → pinos I2C do Pi (GPIO2/GPIO3
+  no Raspberry Pi — SDA=3, SCL=5), `RST` → um GPIO. Ative o I2C com `raspi-config`
+  (Interface Options → I2C) e instale as dependências com `pip install -r requirements.txt`
+  (inclui `smbus2`). Sem o hardware, o cartão apenas informa “indisponível” e o resto do
+  painel segue normal.
+- Rotas: `GET /api/radio` (status) e `POST /api/radio`
+  (`{"action":"on|off|tune|seek|volume|mute|mono", …}`).
 
 ### Papel de parede (Mídia)
 

@@ -158,6 +158,12 @@ class Hub:
         self.gps_state = GpsState()
         self.gps_reader = None
         self._last_track = 0.0
+        self.radio = {
+            "power": False, "available": False, "freq": 89.1, "freq_khz": 89100,
+            "stereo": False, "rssi": 0, "tuned": False, "seeking": False,
+            "muted": False, "mono": False, "ps": "", "rt": "", "pi": "",
+            "station": "FM 89.1",
+        }
         self.state = self._blank()
         self.nav = {"dest": None, "route": [], "active": False, "updated": 0}
 
@@ -219,6 +225,7 @@ class Hub:
             "mode": {"sim": self.force_sim, "port": None, "gps": None,
                      "gps_src": "none"},
             "nav": {"active": False, "dest": None, "route_n": 0, "updated": 0},
+            "radio": dict(self.radio),
         }
 
     @staticmethod
@@ -290,6 +297,7 @@ class Hub:
             }
             st["climate"] = {"fan": st["fan"], "ac": st["ac"]}
             st["nav"] = self._nav_summary()
+            st["radio"] = dict(self.radio)
             self.state = st
             self._maybe_track(gps, ts)
 
@@ -504,6 +512,13 @@ class Hub:
                 self.state["nav"] = self._nav_summary()
             return {"ok": True, "active": bool(self.nav["active"]),
                     "route_n": len(self.nav["route"]), "updated": self.nav["updated"]}
+
+    def set_radio(self, obj):
+        """Estado do radio FM (Si4703) publicado pelo driver em background."""
+        with self.lock:
+            self.radio = dict(obj)
+            if self.state is not None:
+                self.state["radio"] = dict(self.radio)
 
     def command(self, obj: dict):
         if not isinstance(obj, dict):

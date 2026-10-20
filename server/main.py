@@ -20,6 +20,7 @@ from .display import Display
 from .hub import Hub
 from .native import Native
 from .net import Net
+from .radio import Radio
 from .screens import Screens
 from .store import BUILTIN_APP_IDS, DEFAULT_APPS, Store
 from .traffic import Traffic
@@ -72,6 +73,7 @@ native = Native(cfg)
 display = Display(cfg)
 camera = Camera(cfg, hub)
 traffic = Traffic(cfg)
+radio = Radio(cfg, hub)
 
 
 def auto_update_check():
@@ -240,7 +242,26 @@ class Handler(BaseHTTPRequestHandler):
         hub.apply_settings(clean)
         for key, value in clean.items():
             config_mod._set(cfg, key, value)
+        self._apply_radio_settings(clean)
         return {"ok": True, "settings": clean}, None
+
+    def _apply_radio_settings(self, clean):
+        keys = [k for k in clean if k.startswith("radio.")]
+        if not keys:
+            return
+        radio.bus = int(config_mod._get(cfg, "radio.bus") or 1)
+        enabled = bool(config_mod._get(cfg, "radio.enabled"))
+        if not enabled:
+            radio.power_off()
+        else:
+            if not radio.available:
+                radio.start()
+            if "radio.volume" in clean:
+                radio.set_volume(config_mod._get(cfg, "radio.volume"))
+            if "radio.mono" in clean:
+                radio.set_mono(config_mod._get(cfg, "radio.mono"))
+            if "radio.frequency" in clean:
+                radio.set_frequency(config_mod._get(cfg, "radio.frequency"))
 
     def _persist(self, clean):
         store.set_settings(clean)
@@ -355,6 +376,36 @@ class Handler(BaseHTTPRequestHandler):
             return self._error(400, "action invalida")
         return self._json(camera.status())
 
+    def _radio_action(self, payload):
+        payload = payload or {}
+        action = str(payload.get("action") or "status")
+        if action == "on":
+            radio.start()
+            if payload.get("frequency") is not None:
+                radio.set_frequency(payload.get("frequency"))
+            if payload.get("volume") is not None:
+                radio.set_volume(payload.get("volume"))
+        elif action == "off":
+            radio.power_off()
+        elif action == "freq" or action == "tune":
+            freq = payload.get("frequency", payload.get("freq"))
+            if freq is None:
+                return self._error(400, "frequencia obrigatoria")
+            radio.set_frequency(freq)
+        elif action == "seek":
+            radio.seek(up=bool(payload.get("up", True)))
+        elif action == "volume":
+            radio.set_volume(payload.get("level", payload.get("volume", 8)))
+        elif action == "mute":
+            radio.set_muted(bool(payload.get("on", True)))
+        elif action == "mono":
+            radio.set_mono(bool(payload.get("on", True)))
+        elif action != "status":
+            return self._error(400, "action invalida")
+        if action == "on" and not radio.available:
+            radio.start()
+        return radio.status()
+
     def _camera_frame(self):
         frame, _ts = camera.latest()
         if not frame:
@@ -453,6 +504,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(updater.status())
         if path == "/api/media":
             return self._json(wallpaper.get())
+        if path == "/api/radio":
+            return self._json(radio.status())
         if path == "/media/wallpaper":
             data, ctype = wallpaper.read()
             if not data:
@@ -513,6 +566,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._native_close(self._body())
         if path == "/api/camera":
             return self._camera_action(self._body())
+        if path == "/api/radio":
+            return self._json(self._radio_action(self._body()))
         if path == "/api/nav":
             return self._json(hub.set_nav(self._body()))
         payload = self._body()
@@ -619,6 +674,8 @@ def main():
     host = cfg["server"]["host"]
     port = int(cfg["server"]["port"])
     hub.start()
+    if (cfg.get("radio") or {}).get("enabled", True):
+        radio.start()
     threading.Thread(target=ticker, daemon=True, name="ticker").start()
     if (cfg.get("update") or {}).get("auto_check", True):
         threading.Thread(target=auto_update_check, daemon=True, name="updater").start()
@@ -631,6 +688,7 @@ def main():
         STOP.set()
         hub.shutdown()
         camera.shutdown()
+        radio.shutdown()
         threading.Thread(target=server.shutdown, daemon=True).start()
 
     signal.signal(signal.SIGTERM, shutdown)
@@ -646,6 +704,7 @@ def main():
         STOP.set()
         hub.shutdown()
         camera.shutdown()
+        radio.shutdown()
         server.server_close()
         log("servidor parado")
 

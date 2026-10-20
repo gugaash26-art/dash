@@ -36,6 +36,7 @@
     turn: { lt: 0, rt: 0, next: 0, phase: 1 },
     climate: { fan: 0, ac: 0, defrost: 0, recirc: 0, temp: 22 },
     media: { playing: false, pos: 0, source: "Rádio FM", t: 0 },
+    radio: null,
     disp: { speed: 0, rpm: 0, coolant: 20, iat: 20, oilt: 20, fuel: 50, throttle: 0, load: 0, volt: 12.4, oilp: 0, batt: 12.4 },
   };
 
@@ -137,8 +138,8 @@
     $$(".page").forEach((p) => p.classList.toggle("is-active", p.dataset.page === name));
     $$(".tab").forEach((t) => t.classList.toggle("is-active", t.dataset.pageGo === name));
     if (name === "energy") { loadTrips(); loadChart(true); }
-    if (name === "settings") { loadSettings(); loadSystem(); loadNetwork(); loadUpdate(); loadScreens(); loadDisplay(); loadCamera(); }
-    if (name === "media") { loadWallpaper(); }
+    if (name === "settings") { loadSettings(); loadSystem(); loadNetwork(); loadUpdate(); loadScreens(); loadDisplay(); loadCamera(); loadRadio(); }
+    if (name === "media") { loadWallpaper(); loadRadio(); }
     if (name === "diag") { loadDtcs(); }
     if (name === "nav") { initNav(); loadNative(); }
     if (name === "apps") loadApps();
@@ -214,6 +215,18 @@
     }
     updateAlerts(data.alerts || []);
     updateConn(data);
+    if (data.radio) { ctx.radio = data.radio; renderRadio(data.radio); }
+    if (data.radio && ctx.media && ctx.media.source === "Rádio FM") syncRadioMedia(data.radio);
+  }
+
+  function syncRadioMedia(r) {
+    if (!r) return;
+    const title = r.ps ? r.ps : ("FM " + (r.freq_khz / 1000).toFixed(1));
+    const artist = r.rt || ("Rádio FM " + (r.freq_khz / 1000).toFixed(1) + (r.stereo ? " · estéreo" : " · mono"));
+    if ($("#mediaTitle")) $("#mediaTitle").textContent = title;
+    if ($("#mediaArtist")) $("#mediaArtist").textContent = artist;
+    if ($("#miniTitle")) $("#miniTitle").textContent = title;
+    if ($("#miniArtist")) $("#miniArtist").textContent = artist;
   }
 
   function updateConn(data) {
@@ -664,6 +677,68 @@
   const camTest = $("#camTest");
   if (camTest) camTest.addEventListener("click", () => cameraAction("toggle"));
 
+  // ------------------------------------------------------------ rádio FM (Si4703)
+  function renderRadio(st) {
+    ctx.radio = st;
+    const freq = $("#radioFreq");
+    if (freq) freq.textContent = (st.freq_khz / 1000).toFixed(1);
+    const dial = $("#radioDial");
+    if (dial && document.activeElement !== dial) dial.value = (st.freq_khz / 1000).toFixed(1);
+    const stereo = $("#radioStereo");
+    if (stereo) {
+      stereo.textContent = st.stereo ? "estéreo" : "mono";
+      stereo.classList.toggle("is-on", !!st.stereo);
+    }
+    const rssi = $("#radioRssi");
+    if (rssi) rssi.textContent = "sinal " + (st.rssi || 0);
+    const ps = $("#radioPs");
+    if (ps) ps.textContent = st.ps || "—";
+    const rt = $("#radioRt");
+    if (rt) rt.textContent = st.rt || "—";
+    const tog = $("#radioToggle");
+    if (tog) tog.textContent = st.power ? "Desligar" : "Ligar";
+    const info = $("#radioStatus");
+    if (info) {
+      if (!st.enabled) info.textContent = "desligado nos ajustes";
+      else if (!st.available) info.textContent = "indisponível" + (st.reason ? " (" + st.reason + ")" : "");
+      else info.textContent = (st.power ? "ligado" : "pronto") + (st.seeking ? " · procurando" : "") + (st.tuned ? " · sintonizado" : "");
+    }
+    const setInfo = $("#radioSetStatus");
+    if (setInfo) {
+      if (!st.enabled) setInfo.textContent = "desligado";
+      else if (!st.available) setInfo.textContent = "indisponível" + (st.reason ? " (" + st.reason + ")" : "");
+      else setInfo.textContent = "I2C " + st.bus + " · " + st.address + (st.power ? " · ligado" : "");
+    }
+    return st;
+  }
+
+  function loadRadio() {
+    return api("/api/radio").then(renderRadio).catch(() => {});
+  }
+
+  function radioAction(action, extra) {
+    return api("/api/radio", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(Object.assign({ action }, extra || {})),
+    }).then(renderRadio).catch(() => null);
+  }
+
+  const radioDial = $("#radioDial");
+  if (radioDial) radioDial.addEventListener("change", () => radioAction("tune", { frequency: Number(radioDial.value) }));
+  const rtUp = $("#radioTuneUp");
+  if (rtUp) rtUp.addEventListener("click", () => radioAction("tune", { frequency: (ctx.radio ? ctx.radio.freq_khz / 1000 : 89.1) + 0.1 }));
+  const rtDn = $("#radioTuneDn");
+  if (rtDn) rtDn.addEventListener("click", () => radioAction("tune", { frequency: (ctx.radio ? ctx.radio.freq_khz / 1000 : 89.1) - 0.1 }));
+  const rsUp = $("#radioSeekUp");
+  if (rsUp) rsUp.addEventListener("click", () => radioAction("seek", { up: true }));
+  const rsDn = $("#radioSeekDn");
+  if (rsDn) rsDn.addEventListener("click", () => radioAction("seek", { up: false }));
+  const rTog = $("#radioToggle");
+  if (rTog) rTog.addEventListener("click", () => radioAction(ctx.radio && ctx.radio.power ? "off" : "on"));
+  const rsTest = $("#radioSetTest");
+  if (rsTest) rsTest.addEventListener("click", () => radioAction("on"));
+
   function loadSystem() {
     api("/api/system").then((s) => {
       const rows = [
@@ -696,6 +771,7 @@
       if (key === "ui.brightness") applyBrightness(Number(value));
       if (key.indexOf("display.") === 0) loadDisplay();
       if (key.indexOf("camera.") === 0) loadCamera();
+      if (key.indexOf("radio.") === 0) loadRadio();
     }).catch(() => {});
   }
 
@@ -1218,6 +1294,10 @@
     $$(".source").forEach((x) => x.classList.remove("is-active"));
     b.classList.add("is-active");
     ctx.media.source = b.dataset.source;
+    if (b.dataset.source === "Rádio FM" && ctx.radio && ctx.radio.available) {
+      syncRadioMedia(ctx.radio);
+      return;
+    }
     const meta = MEDIA[i] || { title: b.dataset.source, artist: "OpenDash" };
     $("#mediaTitle").textContent = meta.title;
     $("#mediaArtist").textContent = meta.artist;
